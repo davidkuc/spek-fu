@@ -1,0 +1,14 @@
+{
+  "name": "plugins-index.json",
+  "description": "Index of ai/plugins — plugin container",
+  "path": "ai/plugins/",
+  "children": [
+    {
+      "name": "skf",
+      "type": "folder",
+      "description": "Spek-Fu plugin — single plugin containing all framework capabilities (skills, agents, commands, knowledge, rules, templates)",
+      "path": "ai/plugins/skf/",
+      "index": "ai/plugins/skf/skf-index.json"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "prompts-index.json",
+  "description": "Index of .github/prompts — synced VS Code slash command prompts (source of truth: ai/plugins/skf/commands/)",
+  "path": ".github/prompts/",
+  "children": [
+    {
+      "name": "gov-update.prompt.md",
+      "type": "file",
+      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
+      "path": ".github/prompts/gov-update.prompt.md"
+    },
+    {
+      "name": "meta-knowledge-manage.prompt.md",
+      "type": "file",
+      "description": "Appends lessons to, retrieves lessons from, and searches `knowledge-database.md` files. USE FOR: recording lessons from user-requested fixes, surfacing advisory lessons before tasks, keyword search across lessons. DO NOT USE FOR: implementing tasks, applying code changes, or managing other documentation.",
+      "path": ".github/prompts/meta-knowledge-manage.prompt.md"
+    },
+    {
+      "name": "meta-script-manage.prompt.md",
+      "type": "file",
+      "description": "Scaffolds and validates framework scripts in `ai/scripts/`. USE FOR: authoring new scripts, auditing existing scripts against policy, fixing incomplete headers. DO NOT USE FOR: running scripts, managing skill/agent/knowledge files, or modifying files outside `ai/scripts/`.",
+      "path": ".github/prompts/meta-script-manage.prompt.md"
+    },
+    {
+      "name": "meta-skill-manage.prompt.md",
+      "type": "file",
+      "description": "Scaffolds, evaluates, and refines skill files in the AI framework. USE FOR: creating new skills from requirements, scoring skill drafts against the design catalogue, applying catalogue fixes until zero violations remain. DO NOT USE FOR: running skills, syncing documentation, or modifying files outside the skill directory.",
+      "path": ".github/prompts/meta-skill-manage.prompt.md"
+    },
+    {
+      "name": "meta-knowledge-distillation.prompt.md",
+      "type": "file",
+      "description": "Distills lessons from `knowledge-database.md` into reusable PT0xx pattern files, and merges duplicate or similar lessons into single consolidated entries. USE FOR: running pattern distillation from accumulated general-recurring lessons (requires 3+ per cluster), consolidating duplicate or near-duplicate lessons into a single refined entry. DO NOT USE FOR: recording or retrieving lessons, implementing tasks, or modifying non-pattern files outside the merge operation.",
+      "path": ".github/prompts/meta-knowledge-distillation.prompt.md"
+    }
+  ]
+}

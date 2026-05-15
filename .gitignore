@@ -1,0 +1,10 @@
+# spek-fu
+.orchestration-temp/
+context.md
+export-framework.py
+export.md
+plan.md
+
+## Python
+__pycache__/
+*.pyc

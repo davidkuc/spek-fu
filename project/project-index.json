@@ -1,0 +1,32 @@
+{
+  "name": "project-index.json",
+  "description": "Index of the project folder — project-specific documentation and architectural decisions",
+  "path": "project/",
+  "children": [
+    {
+      "name": "business-requirements.md",
+      "type": "file",
+      "description": "Business goals, stakeholders, use cases",
+      "path": "project/business-requirements.md"
+    },
+    {
+      "name": "project-spec.md",
+      "type": "file",
+      "description": "High-level project specification",
+      "path": "project/project-spec.md"
+    },
+    {
+      "name": "technical-spec.md",
+      "type": "file",
+      "description": "Technical architecture and design decisions",
+      "path": "project/technical-spec.md"
+    },
+    {
+      "name": "adrs",
+      "type": "folder",
+      "description": "Architectural Decision Records",
+      "path": "project/adrs/",
+      "index": "project/adrs/adrs-index.json"
+    }
+  ]
+}

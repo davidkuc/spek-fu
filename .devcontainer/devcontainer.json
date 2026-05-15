@@ -1,0 +1,92 @@
+{
+    "name": "Spek-Fu",
+
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/python:1": { "version": "3.12" }
+    },
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "GitHub.copilot",
+                "GitHub.copilot-chat",
+
+                "EditorConfig.EditorConfig",
+                "eamodio.gitlens"
+            ],
+
+            "settings": {
+                "chat.tools.terminal.autoApprove": {
+                    "ls": true,
+                    "cat": true,
+                    "head": true,
+                    "tail": true,
+                    "wc": true,
+                    "pwd": true,
+                    "grep": true,
+                    "find": true,
+                    "echo": true,
+                    "which": true,
+                    "uname": true,
+                    "Get-ChildItem": true,
+                    "Get-Content": true,
+                    "Get-Location": true,
+                    "Write-Output": true,
+                    "Select-String": true,
+                    "Test-Path": true,
+                    "npm list": true,
+                    "npm test": true,
+                    "npm run lint": true,
+                    "pip list": true,
+                    "pytest": true,
+                    "cargo tree": true,
+                    "cargo test": true,
+                    "go test": true,
+                    "/^git\\s+(status|diff|log|show|branch)\\b/": true,
+                    "ai/scripts/**": true,
+                    "/^pwsh\\s+ai\\/scripts/": true,
+                    "rm": false,
+                    "rmdir": false,
+                    "del": false,
+                    "sudo": false,
+                    "curl": false,
+                    "wget": false,
+                    "eval": false,
+                    "kill": false,
+                    "killall": false,
+                    "chmod": false,
+                    "chown": false,
+                    "Invoke-Expression": false,
+                    "iex": false,
+                    "/^rm\\s+-rf/": false,
+                    "/^git\\s+(push|reset|clean)\\b/": false,
+                    "/^docker\\s+(rm|rmi|system\\s+prune)\\b/": false,
+                    "/^kubectl\\s+(delete|apply)\\b/": false,
+                    "/^terraform\\s+(apply|destroy)\\b/": false
+                },
+                "chat.customAgentInSubagent.enabled": true,
+                "files.watcherExclude": {
+                    "**/.orchestration-temp/**": true
+                },
+                "search.exclude": {
+                    "**/node_modules": true,
+                    "**/bin": true,
+                    "**/obj": true
+                }
+            }
+        }
+    },
+
+    "remoteUser": "vscode",
+
+    "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+
+    "postStartCommand": "bash -lc 'watch_limit=$(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null || echo 0); if [ \"$watch_limit\" -lt 524288 ]; then echo \"WARNING: fs.inotify.max_user_watches=$watch_limit (recommended >= 524288). File watchers may fail silently.\"; fi'",
+
+    "forwardPorts": [
+    ]
+}

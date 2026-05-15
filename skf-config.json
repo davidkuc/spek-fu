@@ -1,0 +1,17 @@
+{
+  "environment": "devcontainer",
+  "maxClarificationLoops": 3,
+
+  "skf-general-orchestrator": {
+    "maxPlanRevisions": 3,
+    "maxWaveRetries": 1,
+    "maxSubagentRetries": 1,
+    "complexityThresholds": {
+      "simpleMaxFiles": 3,
+      "standardMaxFiles": 10,
+      "complexMinFiles": 11
+    },
+    "approvalTimeoutBehavior": "wait-for-explicit-response"
+  }
+}
+

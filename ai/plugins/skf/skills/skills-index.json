@@ -1,0 +1,603 @@
+{
+  "name": "skills-index.json",
+  "description": "Index of ai/plugins/skf/skills — distilled skill metadata for routing and discovery",
+  "path": "ai/plugins/skf/skills/",
+  "tag-library": "ai/plugins/skf/knowledge/skill-tags.md",
+  "children": [
+    {
+      "id": "gov-update",
+      "type": "file",
+      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
+      "path": "ai/plugins/skf/skills/gov-update.md",
+      "version": 1.0,
+      "tags": [
+        "governance",
+        "constitution",
+        "approval",
+        "framework",
+        "index",
+        "sync"
+      ],
+      "inputs": [
+        "Changed files list, orchestration plan, or direct user-described changes with context (required)",
+        "env: runtime environment — 'devcontainer' or 'host' (required)"
+      ],
+      "outputs": [
+        "Count of changes applied/skipped",
+        "Governance update summary",
+        "Index sync script output"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does NOT perform analysis, modify source code, or touch iteration in-progress files.",
+      "name": "gov-update",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "impl-implement",
+      "type": "file",
+      "description": "Executes implementation tasks from an orchestrator-supplied plan, returning a structured Result block. USE FOR: applying a task, task list, or plan against the codebase. DO NOT USE FOR: multi-task orchestration, architectural changes, or updating tracking files.",
+      "path": "ai/plugins/skf/skills/impl-implement.md",
+      "version": 1.0,
+      "tags": [
+        "implementation",
+        "build",
+        "testing"
+      ],
+      "inputs": [
+        "Task description, task list, or plan from the orchestrator (required)",
+        "Relevant spec or plan excerpts for context (optional)",
+        "Build mode: fast or full (optional, defaults to fast)",
+        "Test filter expression (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Result block with status, what changed, build result, test result, verification",
+        "Subtasks discovered during execution"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not update tracking files, invoke manage_todo_list, orchestrate tasks, or handle architectural changes.",
+      "name": "impl-implement",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "meta-knowledge-manage",
+      "type": "file",
+      "description": "Appends lessons to, retrieves lessons from, and searches `knowledge-database.md` files. USE FOR: recording lessons from user-requested fixes, surfacing advisory lessons before tasks, keyword search across lessons. DO NOT USE FOR: implementing tasks, applying code changes, or managing other documentation.",
+      "path": "ai/plugins/skf/skills/meta-knowledge-manage.md",
+      "version": 1.0,
+      "tags": [
+        "meta",
+        "capture",
+        "database",
+        "framework"
+      ],
+      "inputs": [
+        "Operation to perform: write, read, or search (required)",
+        "Task description — required for read and search (optional)",
+        "Lesson text to record — required for write (optional)",
+        "Knowledge database file paths — required for read and write (optional)",
+        "Keyword search query — required for search (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Operation result: recorded, found, or not_found",
+        "Matching lesson objects (for read and search)",
+        "distillation-recommended: true — emitted in write output when lesson count >= knowledgeDistillationThreshold (optional)"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "Does NOT implement tasks, apply code changes, or manage any file other than `knowledge-database.md`.",
+      "name": "meta-knowledge-manage",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "meta-script-manage",
+      "type": "file",
+      "description": "Scaffolds and validates framework scripts in `ai/scripts/`. USE FOR: authoring new scripts, auditing existing scripts against policy, fixing incomplete headers. DO NOT USE FOR: running scripts, managing skill/agent/knowledge files, or modifying files outside `ai/scripts/`.",
+      "path": "ai/plugins/skf/skills/meta-script-manage.md",
+      "version": 1.0,
+      "tags": [
+        "meta",
+        "lifecycle",
+        "framework",
+        "validation"
+      ],
+      "inputs": [
+        "Operation to perform: create or validate (required)",
+        "Script purpose description — required for create (optional)",
+        "Script file path — required for validate (optional)",
+        "Language override for create, python or powershell (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Path to created or modified script file",
+        "Validation report with per-check status",
+        "One-line operation summary"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not run or execute scripts, manage skill/agent/knowledge files, or modify any file outside ai/scripts/ without user approval.",
+      "name": "meta-script-manage",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "meta-skill-manage",
+      "type": "file",
+      "description": "Scaffolds, evaluates, and refines skill files in the AI framework. USE FOR: creating new skills from requirements, scoring skill drafts against the design catalogue, applying catalogue fixes until zero violations remain. DO NOT USE FOR: running skills, syncing documentation, or modifying files outside the skill directory.",
+      "path": "ai/plugins/skf/skills/meta-skill-manage.md",
+      "version": 1.0,
+      "tags": [
+        "meta",
+        "skill",
+        "lifecycle",
+        "evaluation"
+      ],
+      "inputs": [
+        "Operation to perform: create, evaluate, or refine (required)",
+        "Skill description — required for create (optional)",
+        "Group assignment — optional for create (optional)",
+        "Skill draft file path or content — required for evaluate and refine (optional)",
+        "Evaluation report path or content — required for refine (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Path to created or refined skill file (create and refine)",
+        "Evaluation report (evaluate and refine)",
+        "One-line summary"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not run or invoke skills, handle documentation sync, or modify any file outside the skill directory without user approval.",
+      "name": "meta-skill-manage",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-artifact-coherence-check",
+      "type": "file",
+      "description": "Verifies that all outputs produced by Wave N are present and compatible with the inputs expected by Wave N+1 according to the orchestration plan. USE FOR: inter-wave coherence checks after a wave completes; detecting missing outputs or path mismatches before the next wave starts.",
+      "path": "ai/plugins/skf/skills/orch-artifact-coherence-check.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "artifacts",
+        "coherence",
+        "validation"
+      ],
+      "inputs": [
+        "Index of the wave just completed (required)",
+        "Index of the wave about to start (required)",
+        "Relative path to the orchestration plan markdown file (required)",
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Path to .orchestration-temp/wave-{N}-coherence-report.md (coherence report)",
+        "Summary of coherence check result"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It writes only to `.orchestration-temp/wave-{N}-coherence-report.md`. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility.",
+      "name": "orch-artifact-coherence-check",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-branch-analyze",
+      "type": "file",
+      "description": "Analyzes all files in a single framework branch and produces a structured summary of their relevance to the current orchestration context. Designed for parallel dispatch — one instance per branch produced by the upstream branching step. USE FOR: reading and summarizing framework files in a single domain branch; assessing file-level relevance against a stated goal; producing per-branch input for orchestrator planning.",
+      "path": "ai/plugins/skf/skills/orch-branch-analyze.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "framework",
+        "branching",
+        "analysis"
+      ],
+      "inputs": [
+        "Path to one framework-traversal-branched-###.json file in .orchestration-temp/ (required)",
+        "Free-form context summary of the orchestration request (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "framework-branch-analysis-###.json written to .orchestration-temp/",
+        "Analysis Summary block emitted inline in chat"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT group or split entries, does NOT traverse indexes, and does NOT modify any framework file. Each instance is designed to run concurrently with other branch-analysis instances — one instance per branch file.",
+      "name": "orch-branch-analyze",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-final-orchestration-validation",
+      "type": "file",
+      "description": "Reads all artifacts produced by an orchestration run and produces a final quality report covering completeness, consistency, and correctness. USE FOR: end-of-orchestration quality gate before closure; verifying that all planned outputs were actually produced and meet basic quality criteria.",
+      "path": "ai/plugins/skf/skills/orch-final-orchestration-validation.md",
+      "version": 1.0,
+      "tags": [
+        "quality",
+        "orchestration",
+        "quality-gate",
+        "reporting"
+      ],
+      "inputs": [
+        "Path to .orchestration-temp/orchestration-summary.md or inline summary text (required)",
+        "Explicit list of file paths to check (required)",
+        "Path to the relevant iteration spec.md (optional)",
+        "Path to the relevant iteration plan.md (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Overall quality gate result: ok, blocked, or fail",
+        "Path to .orchestration-temp/final-quality-report.md",
+        "One-line summary of the quality assessment"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "It does NOT apply fixes, perform per-wave verification, or analyze the framework's internal consistency outside the scope of the current run's artifacts.",
+      "name": "orch-final-orchestration-validation",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-index-traversal",
+      "type": "file",
+      "description": "Traverses the framework index hierarchy based on a free-form query, selects only the most relevant files and folders, and returns a Navigation Result report. USE FOR: discovering which framework resources are relevant to a request; locating skills, agents, flows, commands, constitution files, projects, or iterations.",
+      "path": "ai/plugins/skf/skills/orch-index-traversal.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "index",
+        "navigation",
+        "discovery"
+      ],
+      "inputs": [
+        "Free-form text describing what the caller is looking for (required)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'",
+        "Output file path for the traversal report — optional; defaults to .orchestration-temp/traversal-report.md"
+      ],
+      "outputs": [
+        "Navigation result status: ok, blocked, or fail",
+        "One-line summary of navigation result",
+        "Path to written traversal report (supplied output-path or default .orchestration-temp/traversal-report.md)"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT read resolved resource files, modify source or index files, or ask the user questions.",
+      "name": "orch-index-traversal",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-initialize",
+      "type": "file",
+      "description": "Reads skf-config.json, resolves the runtime environment, manages the .orchestration-temp/ working folder lifecycle, and writes a compact initialization report to .orchestration-temp/init-result.md. USE FOR: framework initialization at the start of every orchestration run; centralizing config loading, environment resolution, and temp-folder setup away from inline orchestrator logic. DO NOT USE FOR: per-wave state tracking, skill index navigation, or orchestration planning.",
+      "path": "ai/plugins/skf/skills/orch-initialize.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "initialization",
+        "environment",
+        "orchestration"
+      ],
+      "inputs": [
+        "workspace-root: absolute path to the workspace root (required)",
+        "env: runtime environment override — if provided, skips config-based env resolution and uses this value directly; must be devcontainer or host (optional)"
+      ],
+      "outputs": [
+        "Path to .orchestration-temp/init-result.md (always written)",
+        "Status: ok | hard-fail",
+        "hard-fail-reason: descriptive string when status is hard-fail, else none"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "Does NOT execute orchestration waves, dispatch sub-agents, or manage any file outside .orchestration-temp/ and skf-config.json.",
+      "name": "orch-initialize",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-intake-context",
+      "type": "file",
+      "description": "Accepts orchestrator-provided intake context and writes it to .orchestration-temp/intake-context.md as a structured markdown document. USE FOR: capturing user-request, complexity tier, framework traversal results, knowledge lessons, pattern selection status, clarifications, and pre-planning validation status before planning begins; overwriting a stale intake snapshot with an overwrite notice.",
+      "path": "ai/plugins/skf/skills/orch-intake-context.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "context",
+        "intake",
+        "workflow-state"
+      ],
+      "inputs": [
+        "Verbatim user request text (required)",
+        "Complexity tier, one of Simple, Standard, or Complex, with rationale (required)",
+        "Relevant files and context from framework traversal (optional)",
+        "Applicable lessons from knowledge consultation (optional)",
+        "Pattern selection status, one of ok, blocked, or skipped, with result file path (optional)",
+        "Resolved clarifications from the user (optional)",
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Path to written artifact",
+        "One-line summary of what was written"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT perform framework traversal, run knowledge consultation, execute pattern selection, modify plan or spec files, or prompt the user with questions.",
+      "name": "orch-intake-context",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-orchestration-plan",
+      "type": "file",
+      "description": "Builds a structured orchestration plan using intake context (request scope, constraints, complexity tier) and pre-decomposed wave inputs. Produces a formal plan document aligned with user intent and scope. Surfaces gaps explicitly.",
+      "path": "ai/plugins/skf/skills/orch-orchestration-plan.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "orchestration",
+        "planning",
+        "wave"
+      ],
+      "inputs": [
+        "intake-context-path: path to .orchestration-temp/intake-context.md (output of orch-intake-context; provides user request, scope, constraints, work-type classification, and complexity-tier) — required",
+        "wave-decomp-path: path to .orchestration-temp/wave-decompose.md (output of orch-wave-decompose) — required",
+        "skill-inventory-path: path to .orchestration-temp/skill-inventory.md (output of orch-skill-resolve) — required",
+        "pattern-select-result-path: path to .orchestration-temp/pattern-select-result.md (output of orch-pattern-select; provides required and advisory pattern IDs applicable to this orchestration) — optional",
+        "governance: include | skip (optional; defaults to include if omitted)",
+        "planning-strategy-hint: optional hint about which planning strategy to use (optional)",
+        "Supplementary context such as iteration folder, constraints, and prior decisions (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Inline plan document with wave assignments, decisions, reasoning, and gaps",
+        "Structured plan document written to .orchestration-temp/orchestration-plan.md",
+        "The plan document uses the pre-decomposed waves from wave-decompose.md as its wave structure."
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT execute any skill, ask the user questions, or load any files other than intake-context.md, wave-decompose.md, skill-inventory.md, and pattern-select-result.md (if provided) from the provided input paths.",
+      "name": "orch-orchestration-plan",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "orch-orchestration-summary",
+      "type": "file",
+      "description": "Compiles and writes the orchestration summary document from wave summary files and the orchestration plan. USE FOR: generating the final timestamped orchestration summary report under reports/ at the close of a workflow run; filling the summary template from wave summaries and plan data; returning the completed summary inline for chat display.",
+      "path": "ai/plugins/skf/skills/orch-orchestration-summary.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "orchestration",
+        "summary",
+        "closure"
+      ],
+      "inputs": [
+        "One-line description of what was orchestrated (required)",
+        "Task complexity tier, one of Simple, Standard, or Complex (required)",
+        "Integer count of waves that ran (required)",
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Path to written timestamped orchestration summary report",
+        "Full summary text returned inline in chat"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT modify any wave summary file, the orchestration plan, or any other artifact.",
+      "name": "orch-orchestration-summary",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-pattern-select",
+      "type": "file",
+      "description": "Selects applicable behavioral patterns for a given task from patterns-index.json. USE FOR: pattern selection during orchestrator intake; determining required vs advisory patterns before dispatch; resolving pattern conflicts.",
+      "path": "ai/plugins/skf/skills/orch-pattern-select.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "patterns",
+        "selection",
+        "signals"
+      ],
+      "inputs": [
+        "Task complexity tier — Simple, Standard, or Complex (required)",
+        "Array of signal names from the pattern-tags.md vocabulary (required)",
+        "Free-form description of the task (optional)",
+        "Override path for patterns-index.json (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok or blocked",
+        "Pattern IDs that must be included",
+        "Pattern IDs that should be included",
+        "Conflict resolutions and auto-pairs applied"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT load pattern file bodies, execute any task, or write any files.",
+      "name": "orch-pattern-select",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-pre-execution-validation",
+      "type": "file",
+      "description": "Validates wave conflicts and dependency graph in the orchestration plan before execution begins. Returns a structured PASS/FAIL report.",
+      "path": "ai/plugins/skf/skills/orch-pre-execution-validation.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "plan",
+        "validation",
+        "gate"
+      ],
+      "inputs": [
+        "Relative path to the orchestration plan file (required)",
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "One-line summary of validation result"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT modify any file, create missing artifacts, execute skills, or ask the user questions.",
+      "name": "orch-pre-execution-validation",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-resume-detect",
+      "type": "file",
+      "description": "Enumerates prior wave summary files in .orchestration-temp/ to determine whether a prior orchestration run can be resumed. USE FOR: resume detect, resume check, resume state, prior state detection, workflow resume. Returns a structured resume-state report.",
+      "path": "ai/plugins/skf/skills/orch-resume-detect.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "orchestration",
+        "resume",
+        "workflow-state"
+      ],
+      "inputs": [
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "One-line summary of resume detection result"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT modify any file, create missing artifacts, execute skills, or ask the user questions.",
+      "name": "orch-resume-detect",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-skill-resolve",
+      "type": "file",
+      "description": "Analyzes accumulated orchestration context (intake, traversal, knowledge consultation) and selects the most appropriate skills from skills-index.json for the current problem. Produces a curated skill inventory with selection rationale. USE FOR: Phase 2 before plan generation — resolving which skills are needed based on what was learned during intake.",
+      "path": "ai/plugins/skf/skills/orch-skill-resolve.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "skill-selection",
+        "planning",
+        "context-driven"
+      ],
+      "inputs": [
+        "Path to intake context file (required) — typically .orchestration-temp/intake-context.md",
+        "Path to traversal results or navigation result (optional) — if produced during intake",
+        "Path to knowledge consultation output (optional) — if produced during intake",
+        "Request summary or free-form problem description (optional, supplements intake context)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Curated skill inventory written to .orchestration-temp/skill-inventory.md",
+        "Selection rationale for each chosen skill",
+        "Count of selected skills"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT select skills without reading the gathered context. It does NOT return all skills from the index indiscriminately. It does NOT execute skills, validate skill output, or modify source files.",
+      "name": "orch-skill-resolve",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-wave-decompose",
+      "type": "file",
+      "description": "Decomposes a task into an ordered wave plan. Reads intake context, applies wave organization rules, and writes `.orchestration-temp/wave-decompose.md`. USE FOR: before orchestration planning — decomposing task scope into sequenced waves with dependencies declared. DO NOT USE FOR: plan authoring, skill assignment, or agent tier selection.",
+      "path": "ai/plugins/skf/skills/orch-wave-decompose.md",
+      "version": 1.0,
+      "tags": [
+        "planning",
+        "orchestration",
+        "decomposition",
+        "wave"
+      ],
+      "inputs": [
+        "Path to intake context file (required) — typically .orchestration-temp/intake-context.md",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Wave decomposition document written to .orchestration-temp/wave-decompose.md",
+        "Execution status: ok or blocked"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "Does NOT build the formal orchestration plan document, assign skills per task, or select agent tiers.",
+      "name": "orch-wave-decompose",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-wave-pattern-bundle",
+      "type": "file",
+      "description": "Builds a wave pattern bundle for a specific execution wave by reading the pattern-select result and resolving each required and advisory pattern to its full file body. USE FOR: assembling per-wave pattern bundles before subagent dispatch; resolving pattern IDs to full bodies via the patterns index; writing .orchestration-temp/wave-{N}-pattern-bundle.md.",
+      "path": "ai/plugins/skf/skills/orch-wave-pattern-bundle.md",
+      "version": 1.0,
+      "tags": [
+        "utility",
+        "patterns",
+        "wave",
+        "subagent"
+      ],
+      "inputs": [
+        "1-based integer wave index for which to build the bundle (required)",
+        "Complexity tier level for pattern selection — Simple, Standard, or Complex (required)",
+        "Override path for the working-state directory (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Path to written wave pattern bundle at .orchestration-temp/wave-{N}-pattern-bundle.md",
+        "Summary of pattern bundle generation"
+      ],
+      "dispatch-variant": "compact",
+      "anti-scope": "It does NOT select which patterns apply (that is the caller's responsibility), modify any pattern file, modify `patterns-index.json`, or take corrective action on missing patterns beyond logging a warning and continuing.",
+      "name": "orch-wave-pattern-bundle",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "orch-wave-verification",
+      "type": "file",
+      "description": "Composes and writes the wave summary document, then independently verifies a completed execution wave by comparing the wave plan (expected tasks and outputs) against the wave summary (actual results). USE FOR: documenting what a wave executed, confirming produced expected artifacts, and catching structural and semantic gaps before moving to the next wave. Produces both wave summary and verification report files.",
+      "path": "ai/plugins/skf/skills/orch-wave-verification.md",
+      "version": 1.0,
+      "tags": [
+        "quality",
+        "wave",
+        "verification",
+        "reporting"
+      ],
+      "inputs": [
+        "Integer wave number identifying which wave to verify (required)",
+        "Wave task list with IDs, descriptions, assigned agent or skill, and expected output files (required)",
+        "Wave execution task records (inline or as file path) — used to compose the wave summary in Step 0 (required)",
+        "Path to the wave summary markdown file or inline summary content (may be omitted if task records are provided for Step 0) (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail (WAVE PASS or WAVE FAIL)",
+        "Path to written wave summary: `.orchestration-temp/wave-{N}-summary.md`",
+        "Path to written verification artifact: `.orchestration-temp/wave-{N}-verification.md`",
+        "One-line summary of wave verification result"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "It reads produced output files to confirm existence and spot-check for placeholders, but does NOT assess deep content quality, rewrite artifacts, or execute any tasks.",
+      "name": "orch-wave-verification",
+      "recommended-tier": "fast-agent"
+    },
+    {
+      "id": "meta-knowledge-distillation",
+      "type": "file",
+      "description": "Runs a single combined flow that first consolidates duplicate or near-duplicate lessons in `knowledge-database.md`, then distills the cleaned lesson set into reusable PT0xx pattern files. USE FOR: cleaning up the knowledge database and promoting general-recurring lessons to patterns in one pass. DO NOT USE FOR: recording or retrieving lessons, implementing tasks, or modifying non-pattern files outside the distillation flow.",
+      "path": "ai/plugins/skf/skills/meta-knowledge-distillation.md",
+      "version": 1.1,
+      "tags": [
+        "meta",
+        "patterns",
+        "lifecycle",
+        "framework"
+      ],
+      "inputs": [
+        "Knowledge database file path (optional, defaults to ai/plugins/skf/knowledge/knowledge-database.md)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Duplicate/similar lessons merged in knowledge-database.md",
+        "Pattern file(s) written at ai/plugins/skf/patterns/PTxxx-name.md",
+        "patterns-index.json updated with new entries",
+        "Promoted lessons removed from knowledge-database.md",
+        "One-line summary"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does NOT record or retrieve lessons — use meta-knowledge-manage for that. Does NOT implement tasks. Modifies `knowledge-database.md` (merging duplicates and removing promoted lessons) and `ai/plugins/skf/patterns/` (writing new pattern files). Does not modify any other files.",
+      "name": "meta-knowledge-distillation",
+      "recommended-tier": "fast-agent"
+    }
+  ]
+}

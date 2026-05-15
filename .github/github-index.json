@@ -1,0 +1,27 @@
+{
+  "name": "github-index.json",
+  "description": "Index of the .github folder — GitHub configuration and synced framework artifacts",
+  "path": ".github/",
+  "children": [
+    {
+      "name": "copilot-instructions.md",
+      "type": "file",
+      "description": "Bootstrap Copilot context — SSOT pointers to ai/plugins/skf framework",
+      "path": ".github/copilot-instructions.md"
+    },
+    {
+      "name": "agents",
+      "type": "folder",
+      "description": "Canonical agent definitions used by VS Code chat",
+      "path": ".github/agents/",
+      "index": ".github/agents/agents-index.json"
+    },
+    {
+      "name": "prompts",
+      "type": "folder",
+      "description": "Canonical slash command prompts used by VS Code chat",
+      "path": ".github/prompts/",
+      "index": ".github/prompts/prompts-index.json"
+    }
+  ]
+}

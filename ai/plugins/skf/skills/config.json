@@ -1,0 +1,7 @@
+{
+  "meta-knowledge-manage": {
+    "maxRevisionAttempts": 3,
+    "maxLessonsToSurface": 10,
+    "knowledgeDistillationThreshold": 15
+  }
+}

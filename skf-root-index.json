@@ -1,0 +1,71 @@
+{
+  "name": "skf-root-index.json",
+  "description": "Root index of the Spek-Fu AI-driven development framework",
+  "path": "/",
+  "children": [
+    {
+      "name": "README.md",
+      "type": "file",
+      "description": "Root project README — quickstart, workflows, agent table, prompt conventions, and folder structure",
+      "path": "README.md"
+    },
+    {
+      "name": "context.md",
+      "type": "file",
+      "description": "Working context artifact for session management",
+      "path": "context.md"
+    },
+    {
+      "name": "skf-config.json",
+      "type": "file",
+      "description": "Root environment mode for host vs devcontainer detection",
+      "path": "skf-config.json"
+    },
+    {
+      "name": "constitution",
+      "type": "folder",
+      "description": "Project governance — versioned, immutable guardrails; non-negotiable principles for both framework and project",
+      "path": "constitution/",
+      "index": "constitution/constitution-index.json"
+    },
+    {
+      "name": "project",
+      "type": "folder",
+      "description": "Project-level documentation — business requirements, technical spec, and architectural decision records",
+      "path": "project/",
+      "index": "project/project-index.json"
+    },
+    {
+      "name": "ai",
+      "type": "folder",
+      "description": "AI framework — plugins, scripts, and orchestration; the AI agentic and technical infrastructure of the framework",
+      "path": "ai/",
+      "index": "ai/ai-index.json"
+    },
+    {
+      "name": "reports",
+      "type": "folder",
+      "description": "Analysis outputs — auto-generated, git-tracked reports",
+      "path": "reports/"
+    },
+    {
+      "name": ".github",
+      "type": "folder",
+      "description": "GitHub configuration and synced framework artifacts (agents, commands)",
+      "path": ".github/",
+      "index": ".github/github-index.json"
+    },
+    {
+      "name": "export-framework.py",
+      "type": "file",
+      "description": "",
+      "path": "export-framework.py"
+    },
+    {
+      "name": "export.md",
+      "type": "file",
+      "description": "",
+      "path": "export.md"
+    }
+  ]
+}

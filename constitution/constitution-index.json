@@ -1,0 +1,49 @@
+{
+  "name": "constitution-index.json",
+  "description": "Index of the constitution folder — immutable governance guardrails",
+  "path": "constitution/",
+  "children": [
+    {
+      "name": "constitution.md",
+      "type": "file",
+      "description": "Root constitutional file — sub-file loading rules and precedence guidance",
+      "path": "constitution/constitution.md"
+    },
+    {
+      "name": "company-principles.md",
+      "type": "file",
+      "description": "Organization values, culture, non-negotiable standards",
+      "path": "constitution/company-principles.md"
+    },
+    {
+      "name": "project-constraints.md",
+      "type": "file",
+      "description": "Tech stack, architecture boundaries, dependency rules",
+      "path": "constitution/project-constraints.md"
+    },
+    {
+      "name": "coding-standards.md",
+      "type": "file",
+      "description": "Principles-level coding standards (SD1–SD21)",
+      "path": "constitution/coding-standards.md"
+    },
+    {
+      "name": "testing-guidelines.md",
+      "type": "file",
+      "description": "Test strategy, coverage, naming, TDD workflow",
+      "path": "constitution/testing-guidelines.md"
+    },
+    {
+      "name": "ai-behavior.md",
+      "type": "file",
+      "description": "Agent constraints, gate requirements, scope limits, principles (I–VIII)",
+      "path": "constitution/ai-behavior.md"
+    },
+    {
+      "name": "governance.md",
+      "type": "file",
+      "description": "Documentation governance, SSOT policy, deduplication rules",
+      "path": "constitution/governance.md"
+    }
+  ]
+}

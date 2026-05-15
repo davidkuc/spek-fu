@@ -1,0 +1,16 @@
+{
+  "name": "scripts-index.json",
+  "description": "Registry of Python automation scripts in ai/scripts/python/",
+  "path": "ai/scripts/python/",
+  "scripts": [
+    {
+      "id": "generate-prompt-files",
+      "filename": "generate-prompt-files.py",
+      "path": "ai/scripts/python/generate-prompt-files.py",
+      "language": "python3",
+      "description": "Reads skills-index.json and generates one .prompt.md file per skill entry in .github/prompts/",
+      "usage": "python3 ai/scripts/python/generate-prompt-files.py",
+      "run_from": "workspace root"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "runbooks-index.json",
+  "description": "Index of ai/plugins/skf/runbooks — per-phase orchestrator runbooks with shared dispatch, escalation, and retry protocols",
+  "path": "ai/plugins/skf/runbooks/",
+  "children": [
+    {
+      "name": "runbook-shared.md",
+      "type": "file",
+      "description": "Shared protocols referenced by all phase runbooks: Dispatch Contract, Escalation Policy, Bounded Retry Policy, agent tiers, and routing table",
+      "path": "ai/plugins/skf/runbooks/runbook-shared.md"
+    },
+    {
+      "name": "runbook-intake.md",
+      "type": "file",
+      "description": "Phase 1 (Intake): config load, environment resolve, request analysis, complexity gating, framework research, knowledge consultation, pattern selection, clarification, intake context capture",
+      "path": "ai/plugins/skf/runbooks/runbook-intake.md"
+    },
+    {
+      "name": "runbook-plan.md",
+      "type": "file",
+      "description": "Phase 2 (Planning): action identification, wave organization, planning complexity gate, plan generation, user approval, pre-execution validation, adversarial review",
+      "path": "ai/plugins/skf/runbooks/runbook-plan.md"
+    },
+    {
+      "name": "runbook-execute.md",
+      "type": "file",
+      "description": "Phase 3 (Execution): resume detection, wave-by-wave execution with conflict detection, pattern bundles, output verification, wave verification, corrections, artifact coherence",
+      "path": "ai/plugins/skf/runbooks/runbook-execute.md"
+    },
+    {
+      "name": "runbook-close.md",
+      "type": "file",
+      "description": "Phase 4 (Closure): completion confirmation, final QA, documentation update, knowledge capture, orchestration summary, cleanup — runs unconditionally",
+      "path": "ai/plugins/skf/runbooks/runbook-close.md"
+    }
+  ]
+}

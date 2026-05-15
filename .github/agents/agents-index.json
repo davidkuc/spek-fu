@@ -1,0 +1,31 @@
+{
+  "name": "agents-index.json",
+  "description": "Index of .github/agents — canonical VS Code agent definitions",
+  "path": ".github/agents/",
+  "children": [
+    {
+      "name": "skf-general-orchestrator.agent.md",
+      "type": "file",
+      "description": "General-purpose orchestrator for the Spek-Fu AI framework. Analyzes requests, selects skills, and dispatches to the appropriate tier agent. Invoke me when you need the framework to handle a task end-to-end.",
+      "path": ".github/agents/skf-general-orchestrator.agent.md"
+    },
+    {
+      "name": "standard-agent.agent.md",
+      "type": "file",
+      "description": "Standard coding subagent backed by a capable model. Has no built-in workflow — invoke by passing a skill path and inputs in the prompt. The skill provides all logic.",
+      "path": ".github/agents/standard-agent.agent.md"
+    },
+    {
+      "name": "large-context-agent.agent.md",
+      "type": "file",
+      "description": "Large-context subagent backed by a model with larger context window. Has no built-in workflow — invoke by passing a skill path and inputs in the prompt. The skill provides all logic.",
+      "path": ".github/agents/large-context-agent.agent.md"
+    },
+    {
+      "name": "fast-agent.agent.md",
+      "type": "file",
+      "description": "Fast coding subagent backed by a lightweight model. Has no built-in workflow — invoke by passing a skill path and inputs in the prompt. The skill provides all logic.",
+      "path": ".github/agents/fast-agent.agent.md"
+    }
+  ]
+}
