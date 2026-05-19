@@ -30,8 +30,44 @@
     {
       "name": "meta-knowledge-distillation.prompt.md",
       "type": "file",
-      "description": "Distills lessons from `knowledge-database.md` into reusable PT0xx pattern files, and merges duplicate or similar lessons into single consolidated entries. USE FOR: running pattern distillation from accumulated general-recurring lessons (requires 3+ per cluster), consolidating duplicate or near-duplicate lessons into a single refined entry. DO NOT USE FOR: recording or retrieving lessons, implementing tasks, or modifying non-pattern files outside the merge operation.",
+      "description": "Runs a single combined flow that first consolidates duplicate or near-duplicate lessons in `knowledge-database.md`, then distills the cleaned lesson set into reusable PT0xx pattern files. USE FOR: cleaning up the knowledge database and promoting general-recurring lessons to patterns in one pass. DO NOT USE FOR: recording or retrieving lessons, implementing tasks, or modifying non-pattern files outside the distillation flow.",
       "path": ".github/prompts/meta-knowledge-distillation.prompt.md"
+    },
+    {
+      "name": "spec-devils-advocate.prompt.md",
+      "type": "file",
+      "description": "Adversarially reviews a spec file and produces a structured Devils Advocate Report identifying failure modes, hidden assumptions, and architectural fragility. USE FOR: adversarial spec review, red-teaming a specification, surfacing risks before planning or implementation. DO NOT USE FOR: testability assessment, implementation planning, or governance changes.",
+      "path": ".github/prompts/spec-devils-advocate.prompt.md"
+    },
+    {
+      "name": "spec-feature-draft.prompt.md",
+      "type": "file",
+      "description": "Generates a quality-validated feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
+      "path": ".github/prompts/spec-feature-draft.prompt.md"
+    },
+    {
+      "name": "spec-tasks-draft.prompt.md",
+      "type": "file",
+      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (plan.md, spec.md, data-model.md, contracts/), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
+      "path": ".github/prompts/spec-tasks-draft.prompt.md"
+    },
+    {
+      "name": "spec-tdd-draft.prompt.md",
+      "type": "file",
+      "description": "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at FEATURE_DIR/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md.",
+      "path": ".github/prompts/spec-tdd-draft.prompt.md"
+    },
+    {
+      "name": "spec-technical-draft.prompt.md",
+      "type": "file",
+      "description": "Executes the implementation planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, and quickstart.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities and typed API contracts. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work.",
+      "path": ".github/prompts/spec-technical-draft.prompt.md"
+    },
+    {
+      "name": "spec-testability-draft.prompt.md",
+      "type": "file",
+      "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at FEATURE_DIR/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; use implementation skills for test execution.",
+      "path": ".github/prompts/spec-testability-draft.prompt.md"
     }
   ]
 }

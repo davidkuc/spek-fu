@@ -1,0 +1,19 @@
+{
+  "name": "knowledge-index.json",
+  "description": "Index of ai/plugins/spec-flow/knowledge",
+  "path": "ai/plugins/spec-flow/knowledge/",
+  "children": [
+    {
+      "name": "branch-detection.md",
+      "type": "file",
+      "description": "Canonical Branch Detection procedure shared by all spec-flow skills. Resolves the active feature directory from the current git branch, with notes for the spec_path and SPECS_DIR variants.",
+      "path": "ai/plugins/spec-flow/knowledge/branch-detection.md"
+    },
+    {
+      "name": "spec-flow-workflow.md",
+      "type": "file",
+      "description": "Documents the 7-step spec-flow workflow chain, purpose of each skill, input/output artifact per step, required vs optional status, and the full artifact map",
+      "path": "ai/plugins/spec-flow/knowledge/spec-flow-workflow.md"
+    }
+  ]
+}

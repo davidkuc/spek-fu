@@ -28,9 +28,10 @@ version: 1.0
 
 ## Groups
 
-| Group | Prefix | Description |
-|-------|--------|-------------|
-| Governance | `gov` | Targeted governance changes to constitution, project, and ai-framework artifacts with per-change user approval
-| Implementation | `impl` | Code execution and direct problem solving — implement, build, test, verify, and report results
-| Meta/Framework | `meta` | Skill and agent lifecycle, framework maintenance, syncing, documentation upkeep, and knowledge management
-| Orchestration | `orch` | Orchestration-core skills required for framework routing, pattern selection, execution validation, verification, reporting, and cleanup
+| Group | Prefix | Skill Count | Description | Members |
+|-------|--------|-------------|-------------|---------|
+| Governance | `gov` | — | Targeted governance changes to constitution, project, and ai-framework artifacts with per-change user approval | |
+| Implementation | `impl` | — | Code execution and direct problem solving — implement, build, test, verify, and report results | |
+| Meta/Framework | `meta` | — | Skill and agent lifecycle, framework maintenance, syncing, documentation upkeep, and knowledge management | |
+| Orchestration | `orch` | — | Orchestration-core skills required for framework routing, pattern selection, execution validation, verification, reporting, and cleanup | |
+| Specification | `spec` | 3 | Specification creation, review, adversarial analysis, and spec quality skills | `spec-testability-draft`, `spec-tdd-draft`, `spec-clarification` |

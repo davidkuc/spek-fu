@@ -1,0 +1,11 @@
+{
+  "spec-clarification": {
+    "maxQuestionsPerLoop": 5,
+    "maxLoops": 3,
+    "questionMode": "sequential",
+    "totalQuestionBudget": 10
+  },
+  "spec-feature-draft": {
+    "maxNeedsClariMarkers": 3
+  }
+}

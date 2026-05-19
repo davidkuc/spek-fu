@@ -134,6 +134,7 @@
       "inputs": [
         "Operation to perform: create, evaluate, or refine (required)",
         "Skill description — required for create (optional)",
+        "Plugin assignment — optional for create, checked against existing plugins (optional)",
         "Group assignment — optional for create (optional)",
         "Skill draft file path or content — required for evaluate and refine (optional)",
         "Evaluation report path or content — required for refine (optional)",

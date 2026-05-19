@@ -9,6 +9,13 @@
       "description": "Spek-Fu plugin — single plugin containing all framework capabilities (skills, agents, commands, knowledge, rules, templates)",
       "path": "ai/plugins/skf/",
       "index": "ai/plugins/skf/skf-index.json"
+    },
+    {
+      "name": "spec-flow",
+      "type": "folder",
+      "description": "",
+      "path": "ai/plugins/spec-flow/",
+      "index": "ai/plugins/spec-flow/spec-flow-index.json"
     }
   ]
 }

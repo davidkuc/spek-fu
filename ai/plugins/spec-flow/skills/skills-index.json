@@ -1,0 +1,191 @@
+{
+  "name": "skills-index.json",
+  "description": "Index of ai/plugins/spec-flow/skills — skill metadata for routing and discovery",
+  "path": "ai/plugins/spec-flow/skills/",
+  "children": [
+    {
+      "id": "spec-devils-advocate",
+      "type": "file",
+      "description": "Adversarially reviews a spec file and produces a structured Devils Advocate Report identifying failure modes, hidden assumptions, and architectural fragility. USE FOR: adversarial spec review, red-teaming a specification, surfacing risks before planning or implementation. DO NOT USE FOR: testability assessment, implementation planning, or governance changes.",
+      "path": "ai/plugins/spec-flow/skills/spec-devils-advocate.md",
+      "version": 1.0,
+      "tags": [
+        "quality",
+        "adversarial",
+        "analysis",
+        "risk"
+      ],
+      "inputs": [
+        "spec_path: path to the spec.md file to review (required)",
+        "output_dir: directory where the report will be written — defaults to <spec_parent_dir>/devils-advocate/ (optional)",
+        "user_focus: optional focus area to bias analysis toward (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Path to the written devils-advocate-report.md",
+        "One-line summary of top findings"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not fix issues, rewrite the spec, or produce implementation plans. Read-only except for writing the final report.",
+      "name": "spec-devils-advocate",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-feature-draft",
+      "type": "file",
+      "description": "Generates a quality-validated feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
+      "path": "ai/plugins/spec-flow/skills/spec-feature-draft.md",
+      "version": 1.0,
+      "tags": [
+        "specification",
+        "feature",
+        "requirements"
+      ],
+      "inputs": [
+        "Feature description — natural language description of the feature to specify (required)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Spec file written to SPEC_FILE path inside the numbered feature branch directory",
+        "Quality checklist at FEATURE_DIR/checklists/requirements.md",
+        "Execution status, branch name, and spec file path"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not produce implementation plans, run clarification sessions on existing specs, or apply any code changes. For post-spec clarification, use spec-clarification.",
+      "name": "spec-feature-draft",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-tasks-draft",
+      "type": "file",
+      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (plan.md, spec.md, data-model.md, contracts/), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
+      "path": "ai/plugins/spec-flow/skills/spec-tasks-draft.md",
+      "version": 1.0,
+      "tags": [
+        "specification",
+        "tasks",
+        "planning",
+        "decomposition"
+      ],
+      "inputs": [
+        "Feature context or arguments from the user or orchestrator (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "tasks.md written to FEATURE_DIR with all tasks in strict checklist format",
+        "Generation report: task count, parallel opportunities, MVP scope, format validation"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not implement tasks, evaluate spec correctness, or modify any design artifact. For spec review, use spec-devils-advocate. For spec drafting, use spec-feature-draft.",
+      "name": "spec-tasks-draft",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-testability-draft",
+      "type": "file",
+      "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at FEATURE_DIR/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; use implementation skills for test execution.",
+      "path": "ai/plugins/spec-flow/skills/spec-testability-draft.md",
+      "version": 1.0,
+      "tags": [
+        "quality",
+        "specification",
+        "analysis",
+        "reporting"
+      ],
+      "inputs": [
+        "FEATURE_DIR: path to the feature directory containing spec.md (required)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "FEATURE_DIR/test-expert/testability-assessment.md — structured Testability Assessment Report",
+        "Execution status: ok, blocked, or fail"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not generate test code, test plans, or implementation artifacts. Does not modify spec.md or any upstream artifact. Read-only analysis only.",
+      "name": "spec-testability-draft",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-tdd-draft",
+      "type": "file",
+      "description": "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at FEATURE_DIR/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md.",
+      "path": "ai/plugins/spec-flow/skills/spec-tdd-draft.md",
+      "version": 1.0,
+      "tags": [
+        "specification",
+        "tdd",
+        "testing",
+        "reporting"
+      ],
+      "inputs": [
+        "FEATURE_DIR: path to the feature directory containing test-expert/testability-assessment.md and spec.md (required)",
+        "Additional arguments or context (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "FEATURE_DIR/tdd-designer/report.md — TDD implementation design report",
+        "One-line execution summary"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not modify upstream artifacts, run tests, or produce any implementation. Produces a report only.",
+      "name": "spec-tdd-draft",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-technical-draft",
+      "type": "file",
+      "description": "Executes the implementation planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, and quickstart.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities and typed API contracts. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work.",
+      "path": "ai/plugins/spec-flow/skills/spec-technical-draft.md",
+      "version": 1.0,
+      "tags": [
+        "specification",
+        "planning",
+        "requirements",
+        "feature"
+      ],
+      "inputs": [
+        "User arguments — optional guidance or overrides for the planning workflow (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "research.md — resolved technical unknowns with decisions and rationale (SPECS_DIR)",
+        "data-model.md — entities, fields, relationships, and validation rules (SPECS_DIR)",
+        "contracts/ — OpenAPI or GraphQL schema files per user action (SPECS_DIR/contracts/)",
+        "quickstart.md — developer onboarding guide for the feature (SPECS_DIR)",
+        "Execution status report: ok, blocked, or fail"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not author or modify the feature spec, run tests, or execute implementation work.",
+      "name": "spec-technical-draft",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-clarification",
+      "type": "file",
+      "description": "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers and writing to disk only after explicit user approval. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes.",
+      "path": "ai/plugins/spec-flow/skills/spec-clarification.md",
+      "version": 2.0,
+      "tags": [
+        "specification",
+        "clarification",
+        "requirements",
+        "quality"
+      ],
+      "inputs": [
+        "spec_path: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)",
+        "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Execution status: ok, blocked, or fail",
+        "Updated spec file at the resolved FEATURE_SPEC path with all clarifications encoded in a single batch write",
+        "Completion report: passes completed, questions asked, sections touched, coverage summary table, suggested next command"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not create new spec files, produce implementation plans, or make code changes. For spec drafting use spec-feature-draft; for adversarial review use spec-devils-advocate.",
+      "name": "spec-clarification",
+      "recommended-tier": "standard-agent"
+    }
+  ]
+}

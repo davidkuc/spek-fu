@@ -1,0 +1,49 @@
+{
+  "name": "templates-index.json",
+  "description": "Index of ai/plugins/spec-flow/templates — scaffolding templates",
+  "path": "ai/plugins/spec-flow/templates/",
+  "children": [
+    {
+      "name": "devils-advocate-template.md",
+      "type": "file",
+      "description": "Devils Advocate Report scaffold covering Executive Warning, Critical Failure Points table, Assumption Collapse Risks, Architectural Fragility Map, Requirement Ambiguities, Spec-Only Limitations, Worst-Case Scenario Analysis, and ranked failure causes",
+      "path": "ai/plugins/spec-flow/templates/devils-advocate-template.md"
+    },
+    {
+      "name": "plan-template.md",
+      "type": "file",
+      "description": "Implementation plan scaffold covering technical summary, constitution check, project structure, and complexity tracking",
+      "path": "ai/plugins/spec-flow/templates/plan-template.md"
+    },
+    {
+      "name": "quickstart-template.md",
+      "type": "file",
+      "description": "Developer onboarding guide scaffold covering pre-implementation checklist, key algorithm, pipeline flow, key files, and pitfalls",
+      "path": "ai/plugins/spec-flow/templates/quickstart-template.md"
+    },
+    {
+      "name": "spec-template.md",
+      "type": "file",
+      "description": "Feature specification scaffold covering overview, glossary, technology stack, architecture, core flows, components, integrations, and implementation requirements",
+      "path": "ai/plugins/spec-flow/templates/spec-template.md"
+    },
+    {
+      "name": "tasks-template.md",
+      "type": "file",
+      "description": "Task list scaffold with format rules, phased structure (Setup, Foundational, User Stories, Polish), and dependency/execution order guidance",
+      "path": "ai/plugins/spec-flow/templates/tasks-template.md"
+    },
+    {
+      "name": "testability-template.md",
+      "type": "file",
+      "description": "Testability Assessment Report scaffold covering Executive Summary, Requirement-Level Testability, Non-Functional Verifiability, Architectural Testability, Structural Risk Findings, Testing Strategy Projection, untestable items, required changes, cost of inaction, and Final Verdict",
+      "path": "ai/plugins/spec-flow/templates/testability-template.md"
+    },
+    {
+      "name": "tdd-report-template.md",
+      "type": "file",
+      "description": "TDD Implementation Design Report scaffold covering Test Inventory Summary, Formalized TDD Test Specifications, Coverage Mapping, Ambiguities and Design Holes, Architectural Risk Signals, Incremental TDD Implementation Plan, and Final Verdict",
+      "path": "ai/plugins/spec-flow/templates/tdd-report-template.md"
+    }
+  ]
+}

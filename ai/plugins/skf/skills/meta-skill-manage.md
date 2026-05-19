@@ -12,6 +12,7 @@ tags:
 inputs:
   - "Operation to perform: create, evaluate, or refine (required)"
   - "Skill description — required for create (optional)"
+  - "Plugin assignment — optional for create, checked against existing plugins (optional)"
   - "Group assignment — optional for create (optional)"
   - "Skill draft file path or content — required for evaluate and refine (optional)"
   - "Evaluation report path or content — required for refine (optional)"
@@ -64,14 +65,14 @@ Load `ai/plugins/skf/knowledge/skill-design-guide.md` at the start of any operat
 ## Preflight
 
 - Resolve `operation` before loading any files or taking actions.
-- **create** state: file absent → proceed from Step 1; file has content → resume at the Step 7 review loop; user confirms no changes needed → report "Skill already exists" and stop.
+- **create** state: file absent → proceed from Step 1; file has content → resume at the Step 8 review loop; user confirms no changes needed → report "Skill already exists" and stop.
 - **refine** state: zero violations in report → skip to Step 4; no report provided → stop and request one.
 
 ## Done conditions
 
-- **create**: approved skill file exists at target path, `skill-groups.md` updated, documentation sync triggered.
+- **create**: approved skill file exists at target path in selected plugin, skill-groups.md updated in selected plugin, documentation sync triggered.
 - **evaluate**: full scored report returned, no files modified.
-- **refine**: corrected draft approved, written, re-evaluated to zero violations (or blocked items reported after retry limit).
+- **refine**: corrected draft approved, written to selected plugin, re-evaluated to zero violations (or blocked items reported after retry limit).
 
 ## Operation: create
 
@@ -79,31 +80,35 @@ Load `ai/plugins/skf/knowledge/skill-design-guide.md` at the start of any operat
 
 If `skill description` not provided, ask via `vscode_askQuestions` using the `skill_description` payload below.
 
-### Step 2 — Assign group
+### Step 2 — Select plugin
 
-Read `ai/plugins/skf/knowledge/skill-groups.md`. Show available groups. If `group` not provided, ask via `vscode_askQuestions` using the `skill_group` payload.
+Read `ai/plugins/plugins-index.json` to enumerate available plugins. If `plugin` not provided, ask via `vscode_askQuestions` using the `skill_plugin` payload. Store the selected plugin name for use in subsequent steps and final write path.
 
-### Step 3 — Gather requirements
+### Step 3 — Assign group
+
+Read `ai/plugins/{selected-plugin}/knowledge/skill-groups.md`. Show available groups. If `group` not provided, ask via `vscode_askQuestions` using the `skill_group` payload.
+
+### Step 4 — Gather requirements
 
 Collect in a single `vscode_askQuestions` call using the `skill_requirements` payload. Resolve: skill name, trigger phrases, output type, external dependencies, failure modes.
 
-### Step 4 — Assign tags
+### Step 5 — Assign tags
 
-Read `ai/plugins/skf/knowledge/skill-tags.md`. Recommend 3–4 tags (primary category tag first). Ask via `vscode_askQuestions` using the `skill_tags` payload. Validate all selected tags are canonical — reject and re-ask if any are not.
+Read `ai/plugins/{selected-plugin}/knowledge/skill-tags.md`. Recommend 3–4 tags (primary category tag first). Ask via `vscode_askQuestions` using the `skill_tags` payload. Validate all selected tags are canonical — reject and re-ask if any are not.
 
-### Step 4.5 — Determine GitHub prompt exposure
+### Step 5.5 — Determine GitHub prompt exposure
 
-Ask via `vscode_askQuestions` using the `skill_prompt_exposure` payload. If user selects "Yes — expose as GitHub prompt", note this for Step 8. Skills exposed as prompts will be added to the `.github/prompts/` generation workflow.
+Ask via `vscode_askQuestions` using the `skill_prompt_exposure` payload. If user selects "Yes — expose as GitHub prompt", note this for Step 9. Skills exposed as prompts will be added to the `.github/prompts/` generation workflow.
 
-### Step 5 — Draft skill file
+### Step 6 — Draft skill file
 
-Read `ai/plugins/skf/templates/skill-template.md` as the scaffold. Consult `ai/plugins/skf/knowledge/skill-design-guide.md` for 8-section authoring requirements, required frontmatter fields (§4), and the 8-section quick reference table (§2). Produce a complete skill file — all 8 sections populated, no placeholders.
+Read `ai/plugins/{selected-plugin}/templates/skill-template.md` as the scaffold. Consult `ai/plugins/{selected-plugin}/knowledge/skill-design-guide.md` for 8-section authoring requirements, required frontmatter fields (§4), and the 8-section quick reference table (§2). Produce a complete skill file — all 8 sections populated, no placeholders.
 
-### Step 6 — Evaluate draft
+### Step 7 — Evaluate draft
 
 Run `evaluate` internally on the draft. If ❌ errors exist, run `refine` internally before presenting.
 
-### Step 7 — Review loop (bounded, max 5 iterations)
+### Step 8 — Review loop (bounded, max 5 iterations)
 
 **Exit condition**: user approves or explicitly cancels.
 
@@ -111,17 +116,17 @@ Present draft and evaluation table. Ask via `vscode_askQuestions` using the `ski
 
 > **If loop stalls after 5 iterations**: stop, report state, ask how to proceed.
 
-### Step 8 — Write and confirm
+### Step 9 — Write and confirm
 
-⛔ **STOP — Approval gate required (Step 7 must return "Approve").**
+⛔ **STOP — Approval gate required (Step 8 must return "Approve").**
 
-1. Write `ai/plugins/skf/skills/{skill-name}.md` with approved content.
-2. Update `ai/plugins/skf/knowledge/skill-groups.md`: add skill to group section, increment skill count.
+1. Write `ai/plugins/{selected-plugin}/skills/{skill-name}.md` with approved content.
+2. Update `ai/plugins/{selected-plugin}/knowledge/skill-groups.md`: add skill to group section, increment skill count.
 3. If `skill_prompt_exposure` = "Yes — expose as GitHub prompt":
-   - Generate `.github/prompts/{skill-name}.prompt.md` with YAML frontmatter (name, description, anti-scope) and body directing users to consult `ai/plugins/skf/skills/{skill-name}.md`.
+   - Generate `.github/prompts/{skill-name}.prompt.md` with YAML frontmatter (name, description, anti-scope) and body directing users to consult `ai/plugins/{selected-plugin}/skills/{skill-name}.md`.
    - Document that `ai/scripts/python/generate-prompt-files.py` will be updated to include this skill in automated prompt generation (coordinate with `/gov-update` for index sync).
    - Update `ai/scripts/python/generate-prompt-files.py` to include new skill github prompt in its flow
-4. Confirm: "Skill `{skill-name}` created at `ai/plugins/skf/skills/{skill-name}.md`." Include prompt exposure status in confirmation. Signal documentation sync to orchestrator.
+4. Confirm: "Skill `{skill-name}` created at `ai/plugins/{selected-plugin}/skills/{skill-name}.md`." Include prompt exposure status in confirmation. Signal documentation sync to orchestrator.
 
 ---
 
@@ -182,6 +187,20 @@ Copy these verbatim when calling `vscode_askQuestions`. Replace `{placeholder}` 
   "header": "skill_description",
   "question": "Describe what this skill does — its purpose, inputs, outputs, and main operations.",
   "allowFreeformInput": true
+}
+```
+
+### `skill_plugin`
+
+```json
+{
+  "header": "skill_plugin",
+  "question": "Which plugin should this skill be added to?",
+  "options": [
+    { "label": "skf — Spek-Fu framework plugin" },
+    { "label": "spec-flow — Spec-Flow plugin" }
+  ],
+  "allowFreeformInput": false
 }
 ```
 

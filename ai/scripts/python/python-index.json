@@ -68,6 +68,12 @@
       "type": "file",
       "description": "",
       "path": "ai/scripts/python/scripts-index.json"
+    },
+    {
+      "name": "create-new-feature",
+      "type": "file",
+      "description": "",
+      "path": "ai/scripts/python/create-new-feature.py"
     }
   ]
 }
