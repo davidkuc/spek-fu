@@ -2,7 +2,7 @@
 id: "spec-tasks-draft"
 recommended-tier: "standard-agent"
 version: 1.0
-description: "Generates a dependency-ordered tasks.md from feature design artifacts (plan.md, spec.md, data-model.md, contracts/), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files."
+description: "Generates a dependency-ordered tasks.md from feature design artifacts (spec.md, research.md, data-model.md, contracts/, quickstart.md), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files."
 anti-scope: "Does not implement tasks, evaluate spec correctness, or modify any design artifact. For spec review, use spec-devils-advocate. For spec drafting, use spec-feature-draft."
 tags:
   - "specification"
@@ -18,12 +18,12 @@ outputs:
 dispatch-variant: "full"
 ---
 
-> **Interactive skill** This skill calls `vscode_askQuestions` as a fallback when the prerequisites script fails; it cannot interact with the user when dispatched as a stateless subagent.
+> **Interactive skill** This skill calls `vscode_askQuestions` as a fallback when Branch Detection returns no match; it cannot interact with the user when dispatched as a stateless subagent.
 
 # Skill: spec-tasks-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
-Generates an actionable, dependency-ordered `tasks.md` for a feature by reading available design artifacts — `plan.md`, `spec.md`, `data-model.md`, contracts, and research — and applying the task-generation rules from the project constitution. The skill organises tasks into phases by user story, marks parallelisable items with `[P]`, assigns `[USN]` story labels, and produces a **Generation Report** covering task counts, parallel opportunities, and the suggested MVP scope.
+Generates an actionable, dependency-ordered `tasks.md` for a feature by reading available design artifacts — `spec.md`, `research.md`, `data-model.md`, `contracts/`, and `quickstart.md` — and applying the task-generation rules from the project constitution. The skill organises tasks into phases by user story, marks parallelisable items with `[P]`, assigns `[USN]` story labels, and produces a **Generation Report** covering task counts, parallel opportunities, and the suggested MVP scope.
 
 **Scope boundary**: This skill reads design artifacts and writes `tasks.md` only. It does NOT implement tasks, evaluate spec correctness, or modify any design artifact. For spec review, use **spec-devils-advocate**; for spec drafting, use **spec-feature-draft**.
 
@@ -31,9 +31,9 @@ Generates an actionable, dependency-ordered `tasks.md` for a feature by reading 
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER invent task details absent from design artifacts — place `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty instead — WHY: invented scope silently corrupts the task plan and misleads implementors.
-2. NEVER read design files before resolving `feature-dir` — ALWAYS run the prerequisites script first — WHY: paths are environment-specific and hard-coded paths silently break in other workspaces.
-3. NEVER generate tasks without both `plan.md` and `spec.md` present — stop with `blocked` status if either is absent — WHY: these are the authoritative sources of tech stack and user story scope; tasks generated without them are unreliable.
-4. NEVER omit test tasks without an explicit TDD waiver stated in the spec and documented in the plan — WHY: TDD is a constitution principle and silent omission breaks the testing contract.
+2. NEVER read design files before resolving `feature-dir` — ALWAYS run Branch Detection first — WHY: paths are environment-specific and hard-coded paths silently break in other workspaces.
+3. NEVER generate tasks without `spec.md` and at least one of `research.md` or `data-model.md` present — stop with `blocked` status if that minimum artifact set is absent — WHY: user story scope comes from the spec, and the downstream design context must come from actual technical outputs rather than invented planning details.
+4. NEVER omit test tasks without an explicit TDD waiver stated in the spec and reflected in the technical artifacts — WHY: TDD is a constitution principle and silent omission breaks the testing contract.
 5. NEVER write a task outside the strict checklist format (`- [ ] TNNN [P?] [USN?] Description with file path`) — every task MUST carry a checkbox, sequential ID, optional markers, and a file path — WHY: non-compliant tasks cannot be executed or tracked by downstream agents.
 6. NEVER implement tasks, modify design artifacts, or evaluate spec quality — this skill generates the task plan only — WHY: scope overreach corrupts the separation between planning and implementation roles.
 </constraints>
@@ -68,7 +68,7 @@ If `env` is `host`: no additional action required.
 ## Done conditions
 
 - **ok**: `tasks.md` exists in `feature-dir`, all tasks comply with the checklist format, and the **Generation Report** has been shown.
-- **blocked**: `plan.md` or `spec.md` is absent — report the missing file and stop.
+- **blocked**: `spec.md` is absent, or both `research.md` and `data-model.md` are absent — report the missing artifact(s) and stop.
 - **blocked (clarification)**: ambiguous user stories cannot be resolved — `[NEEDS CLARIFICATION]` markers placed and the report lists the unresolved points.
 
 ## Step 1 — Resolve paths
@@ -83,9 +83,9 @@ Resolve `feature-dir` and `available-docs`:
 
 Using `feature-dir` and `available-docs` from Step 1, load documents in this order.
 
-**Required** (stop with `blocked` if either is absent):
-- `plan.md` — extract: tech stack, libraries, project structure
-- `spec.md` — extract: user stories with priorities (P1, P2, P3...)
+**Required**:
+- `spec.md` — extract: user stories with priorities (P1, P2, P3...) — stop with `blocked` if absent
+- At least one of `research.md` or `data-model.md` — extract: technical decisions, entities, relationships, and project structure cues — stop with `blocked` if both are absent
 
 **Optional** (load only if listed in `available-docs`):
 - `data-model.md` — extract: entities and relationships
@@ -95,13 +95,13 @@ Using `feature-dir` and `available-docs` from Step 1, load documents in this ord
 
 Use multi-pass `read_file` on each document: read from line 1 with a generous range; if the response fills the page, advance `startLine` and read again; repeat until the response is shorter than the page size.
 
-> **If plan.md or spec.md is absent**: set status to `blocked`, report which file is missing, and stop.
+> **If `spec.md` is absent, or both `research.md` and `data-model.md` are absent**: set status to `blocked`, report which artifact(s) are missing, and stop.
 
 ## Step 3 — Build the Task Plan
 
 Using the loaded artifacts, produce the **Task Plan**:
 
-1. From `plan.md`: identify tech stack, libraries, and project structure. Generate setup and foundational tasks.
+1. From `research.md` and `data-model.md`: identify tech stack signals, project structure, technical constraints, entities, and relationships. Generate setup and foundational tasks.
 2. From `spec.md`: extract every user story and its priority (P1, P2, P3...). Each user story becomes a dedicated phase.
 3. If `data-model.md` present: map each entity to the user story(ies) requiring it. Place entities serving multiple stories in the foundational phase.
 4. If `contracts/` present: map each endpoint to its user story. Add a contract test task marked `[P]` before each implementation task in the relevant story phase.
@@ -120,7 +120,7 @@ Using the loaded artifacts, produce the **Task Plan**:
 ## Step 4 — Generate tasks.md
 
 Load `ai/plugins/spec-flow/templates/tasks-template.md` as the document scaffold. Populate with:
-- Feature name from `plan.md`
+- Feature name from `spec.md`
 - All phases from the **Task Plan** (Step 3)
 - Every task in strict checklist format: `- [ ] TNNN [P?] [USN?] Description with file path`
 - Phase headers showing: story goal and independent test criterion
@@ -149,13 +149,13 @@ The skill is complete when `tasks.md` exists at `{feature-dir}/tasks.md`, all ta
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Load plan.md, spec.md, data-model.md, research.md, quickstart.md, and the tasks template. Use multi-pass reads for large files (advance `startLine` until the response is shorter than page size).
+- **read_file**: Load spec.md, data-model.md, research.md, quickstart.md, and the tasks template. Use multi-pass reads for large files (advance `startLine` until the response is shorter than page size).
 - **vscode_askQuestions**: Collect `feature-dir` from the user in Step 1.
 - **list_dir**: Enumerate files in `feature-dir` to determine `available-docs`.
 - **list_dir**: Enumerate the `contracts/` directory in Step 2 when present.
 - **create_file**: Write the generated `tasks.md` to `feature-dir` at the end of Step 4 when the file does not yet exist.
 - **replace_string_in_file**: Replace the full content of `tasks.md` in Step 4 if the file already exists.
-- **vscode_askQuestions**: Collect `feature-dir` from the user in Step 1 only when the prerequisites script fails.
+- **vscode_askQuestions**: Collect `feature-dir` from the user in Step 1 only when Branch Detection returns no match.
 - Do NOT use tools not listed here unless this skill explicitly escalates.
 </tools>
 
@@ -167,7 +167,7 @@ The skill is complete when `tasks.md` exists at `{feature-dir}/tasks.md`, all ta
 ```
 ## Task Generation Report
 
-Feature: <feature name from plan.md>
+Feature: <feature name from spec.md>
 Output: <absolute path to tasks.md>
 
 Tasks generated: <total count>
@@ -198,18 +198,18 @@ Placed inline at the exact point of uncertainty in tasks.md. Each marker contain
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: Feature directory contains plan.md (React + FastAPI, feature: User Authentication), spec.md (3 user stories: P1 Login, P2 Registration, P3 Password Reset), data-model.md (User, Session entities), contracts/auth.yaml.
-Expected behavior: Skill runs prerequisites script, resolves `feature-dir`, loads all four documents. Generates tasks.md with: Phase 1 Setup, Phase 2 Foundational (User + Session models), Phase 3 [US1] Login (contract test + endpoint + integration test tasks), Phase 4 [US2] Registration, Phase 5 [US3] Password Reset, Final Phase Polish. Reports ~35 tasks total, 12 parallel opportunities, MVP = US1 Login.
+Input: Feature directory contains spec.md (3 user stories: P1 Login, P2 Registration, P3 Password Reset), research.md (React + FastAPI, project structure), data-model.md (User, Session entities), contracts/auth.yaml.
+Expected behavior: Skill runs Branch Detection, resolves `feature-dir`, loads all four documents. Generates tasks.md with: Phase 1 Setup, Phase 2 Foundational (User + Session models), Phase 3 [US1] Login (contract test + endpoint + integration test tasks), Phase 4 [US2] Registration, Phase 5 [US3] Password Reset, Final Phase Polish. Reports ~35 tasks total, 12 parallel opportunities, MVP = US1 Login.
 </example>
 
 <example>
-Input: Feature directory contains only plan.md and spec.md with 2 user stories. No data-model.md or contracts directory present.
-Expected behavior: Skill loads only plan.md and spec.md. Generates tasks.md with four phases: Setup, Foundational, US1 phase, US2 phase, and Polish. Optional artifact sections are omitted. No contract test tasks generated. Generation Report notes no contracts or data model were present.
+Input: Feature directory contains spec.md and research.md with 2 user stories. No data-model.md or contracts directory present.
+Expected behavior: Skill loads spec.md and research.md. Generates tasks.md with four phases: Setup, Foundational, US1 phase, US2 phase, and Polish. Optional artifact sections are omitted. No contract test tasks generated. Generation Report notes no contracts or data model were present.
 </example>
 
 <example type="counter">
 Input: User asks the skill to implement the generated tasks after tasks.md is written.
-Expected behavior: Skill generates tasks.md as requested and stops. Responds: "tasks.md has been generated at `{feature-dir}/tasks.md`. This skill produces the task plan only — it does not implement tasks. To begin implementation, consult the **impl-implement** skill."
+Expected behavior: Skill generates tasks.md as requested and stops. Responds: "tasks.md has been generated at `{feature-dir}/tasks.md`. This skill produces the task plan only — it does not implement tasks."
 </example>
 </examples>
 
@@ -219,8 +219,8 @@ Expected behavior: Skill generates tasks.md as requested and stops. Responds: "t
 ## Rules
 
 - **Never invent task details not present in design artifacts** — place `[NEEDS CLARIFICATION: <question>]` at every point of uncertainty instead.
-- **Never read design files before resolving `feature-dir`** — always run the prerequisites script first.
-- **Never generate tasks without both plan.md and spec.md** — stop with `blocked` status if either is absent.
+- **Never read design files before resolving `feature-dir`** — always run Branch Detection first.
+- **Never generate tasks without `spec.md` and at least one of `research.md` or `data-model.md`** — stop with `blocked` status if that minimum artifact set is absent.
 - **Never implement tasks, modify design artifacts, or evaluate spec quality** — this skill generates the task plan only.
 
 </reminders>

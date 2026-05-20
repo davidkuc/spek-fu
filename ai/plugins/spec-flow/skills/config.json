@@ -11,6 +11,9 @@
   "spec-devils-advocate": {
     "maxFindings": 50
   },
+  "spec-testability-draft": {
+    "maxFindings": 40
+  },
   "spec-implement": {
     "maxFixCycles": 3
   }

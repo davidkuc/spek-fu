@@ -19,6 +19,8 @@ outputs:
 dispatch-variant: "full"
 ---
 
+> **Interactive skill** This skill calls `vscode_askQuestions` via Branch Detection when `feature-dir` is absent; it cannot interact with the user when dispatched as a stateless subagent.
+
 # Skill: spec-tdd-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
@@ -197,6 +199,7 @@ The skill is complete when the TDD Designer Report exists on disk at the resolve
 - **read_file**: Load testability-assessment.md and spec.md. Use multi-pass reads until the response is shorter than the page size — never act on a single partial read.
 - **create_file**: Write `{feature-dir}/tdd-designer/report.md` in Step 7 only, after the full report is assembled.
 - **file_search**: Verify existence of required artifacts and the tdd-designer directory before proceeding.
+- **vscode_askQuestions**: Collect `feature-dir` via Branch Detection when it is not supplied.
 - Do NOT use tools not listed here unless the skill explicitly escalates to a sub-skill.
 </tools>
 

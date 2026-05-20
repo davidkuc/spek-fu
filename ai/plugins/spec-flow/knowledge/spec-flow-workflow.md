@@ -1,6 +1,6 @@
 # Spec-Flow Workflow Chain
 
-The spec-flow plugin implements a seven-step feature specification pipeline. Each step produces an artifact consumed by the next. Steps marked **optional** may be skipped when the team determines the risk level is acceptable.
+The spec-flow plugin implements an eight-step feature specification pipeline. Each step produces an artifact consumed by the next.
 
 ---
 
@@ -38,7 +38,7 @@ spec-implement
 
 ### 2. spec-clarification
 - **Purpose**: Interactively resolve ambiguities in the spec through a structured multi-pass Q&A loop.
-- **Input**: `spec_path` — path to the spec.md to clarify (prompted via `vscode_askQuestions` if absent).
+- **Input**: `SPEC_FILE` — path to the spec.md to clarify (prompted via `vscode_askQuestions` if absent).
 - **Output**: Amended `spec.md` with a populated `## Clarifications` section.
 - **Status**: Required — unresolved ambiguities propagate into every downstream artifact.
 
@@ -74,7 +74,7 @@ spec-implement
 ### 6. spec-technical-draft
 - **Purpose**: Produce the technical design document — architecture decisions, component breakdown, integration contracts, and data models.
 - **Input**: `FEATURE_DIR` containing the upstream spec, devils-advocate, and TDD artifacts.
-- **Output**: `FEATURE_DIR/technical-design.md` (or equivalent per skill configuration).
+- **Output**: `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md`.
 - **Status**: Required — tasks cannot be accurately decomposed without a technical design.
 
 ---
@@ -90,7 +90,7 @@ spec-implement
 
 ### 8. spec-implement
 - **Purpose**: Execute the implementation plan by processing all tasks in `tasks.md` phase by phase, with checklist gate verification, TDD sequencing, and progress tracking.
-- **Input**: `FEATURE_DIR` containing `tasks.md` and optional design artifacts (`plan.md`, `data-model.md`, `contracts/`, `research.md`, `quickstart.md`).
+- **Input**: `FEATURE_DIR` containing `tasks.md` and optional design artifacts (`research.md`, `data-model.md`, `contracts/`, `quickstart.md`, `test-expert/testability-assessment.md`, `tdd-designer/report.md`).
 - **Output**: Implemented codebase changes; each completed task marked `[X]` in `FEATURE_DIR/tasks.md`.
 - **Status**: Required — final execution step; produces the working implementation.
 
@@ -105,6 +105,6 @@ spec-implement
 | 3 | spec-devils-advocate | `FEATURE_DIR/devils-advocate/devils-advocate-report.md` |
 | 4 | spec-testability-draft | `FEATURE_DIR/test-expert/testability-assessment.md` |
 | 5 | spec-tdd-draft | `FEATURE_DIR/tdd-designer/report.md` |
-| 6 | spec-technical-draft | `FEATURE_DIR/technical-design.md` |
+| 6 | spec-technical-draft | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` |
 | 7 | spec-tasks-draft | `FEATURE_DIR/tasks.md` |
 | 8 | spec-implement | Implemented codebase; `FEATURE_DIR/tasks.md` (all tasks `[X]`) |

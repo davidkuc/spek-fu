@@ -32,7 +32,7 @@ Generates a feature specification from a natural language feature description. T
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER begin writing the spec before the git branch and `spec-file` path have been confirmed from the script output — WHY: the script determines the canonical branch name and spec path; writing before this produces orphaned content.
 2. NEVER run the create-new-feature script more than once per feature invocation — WHY: duplicate runs create duplicate branches and corrupt the numbering sequence.
-3. ALWAYS cap `[NEEDS CLARIFICATION]` markers at `maxNeedsClariMarkers` (from config, default 3) — WHY: more than the configured limit signals an underspecified input, not a spec authoring problem; make informed guesses for lower-priority gaps.
+3. ALWAYS cap `[NEEDS CLARIFICATION]` markers at `maxNeedsClariMarkers` (from config, default 10) — WHY: more than the configured limit signals an underspecified input, not a spec authoring problem; make informed guesses for lower-priority gaps.
 4. NEVER include implementation details (languages, frameworks, APIs, database names) in the spec body — WHY: specs describe user value and business needs; implementation details belong in technical planning artifacts.
 5. When the feature description is empty, stop and request it via `vscode_askQuestions` before proceeding — WHY: no meaningful spec can be generated from an empty description.
 </constraints>
@@ -56,9 +56,9 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `config_path` from inputs, defaulting to `ai/plugins/spec-flow/skills/config.json` if absent. Read the config file and extract `spec-feature-draft.maxNeedsClariMarkers` (default: `3`). Apply this value wherever this skill references `maxNeedsClariMarkers`.
+- Resolve `config_path` from inputs, defaulting to `ai/plugins/spec-flow/skills/config.json` if absent. Read the config file and extract `spec-feature-draft.maxNeedsClariMarkers` (default: `10`). Apply this value wherever this skill references `maxNeedsClariMarkers`.
 
-> **If the config file cannot be read or the `spec-feature-draft` key is absent**: apply the default value of `3` and proceed.
+> **If the config file cannot be read or the `spec-feature-draft` key is absent**: apply the default value of `10` and proceed.
 
 - Confirm the feature description is non-empty. If empty, ask via `vscode_askQuestions`:
   ```json
@@ -93,7 +93,7 @@ git ls-remote --heads origin | grep -E "refs/heads/[0-9]+-<short-name>$"
 git branch | grep -E "^[* ]*[0-9]+-<short-name>$"
 ```
 
-Also check for directories matching `specs/[0-9]+-<short-name>`. Extract all numbers found across remote branches, local branches, and spec directories. Use (highest number found) + 1 as the new feature number. If no entries exist for this short name, use 1.
+Also check for directories matching `features/[0-9]+-<short-name>`. Extract all numbers found across remote branches, local branches, and feature directories. Use (highest number found) + 1 as the new feature number. If no entries exist for this short name, use 1.
 
 > **If git is unavailable**: stop, report `fail`, and ask the user to resolve git access before retrying.
 
@@ -115,9 +115,9 @@ Read the JSON output from the terminal. Extract:
 
 ## Step 4 — Load spec template
 
-Read `ai/plugins/spec-flow/templates/spec-template.md` using successive `read_file` calls until the response is shorter than the page size (multi-pass). Identify all required sections and their order.
+Read `ai/plugins/spec-flow/templates/spec-feature-template.md` using successive `read_file` calls until the response is shorter than the page size (multi-pass). Identify all required sections and their order.
 
-> **If the template file cannot be read**: stop, report `fail` with the path `ai/plugins/spec-flow/templates/spec-template.md`, and ask the user to verify the file exists.
+> **If the template file cannot be read**: stop, report `fail` with the path `ai/plugins/spec-flow/templates/spec-feature-template.md`, and ask the user to verify the file exists.
 
 ## Step 5 — Generate specification content
 
@@ -163,7 +163,7 @@ The skill is complete when `spec-file` exists on disk with all required sections
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **run_in_terminal**: Run git commands (Step 2) and the create-new-feature script (Step 3) — run one command and read full output before proceeding to the next.
-- **read_file**: Load config file (Preflight) and `ai/plugins/spec-flow/templates/spec-template.md` (Step 4) using multi-pass reads; also read existing spec files when resuming.
+- **read_file**: Load config file (Preflight) and `ai/plugins/spec-flow/templates/spec-feature-template.md` (Step 4) using multi-pass reads; also read existing spec files when resuming.
 - **create_file**: Write `spec-file` (Step 5) — only after `branch-name` and `spec-file` are confirmed from script output.
 - **replace_string_in_file**: Replace `[NEEDS CLARIFICATION]` markers (Step 6) after user responses are received.
 - **vscode_askQuestions**: Collect feature description if absent (Preflight) and present clarification questions (Step 6).
@@ -187,12 +187,12 @@ Clarifications:     N resolved | 0 remaining
 <examples>
 <example>
 Input: Feature description: "Add the ability for users to export their transaction history as a CSV file."
-Expected behavior: Skill reads config (`maxNeedsClariMarkers: 3`), generates short name `export-transaction-csv`, checks remote and local branches and spec directories for existing entries — finds none — assigns number 1, runs create-new-feature script once, reads spec template, writes a complete spec with functional requirements (export trigger, column selection, file format), technology-agnostic success criteria ("Users can download a complete transaction history file within 5 seconds"), user scenarios, and documented assumptions. Reports: branch `1-export-transaction-csv`, spec at `specs/1-export-transaction-csv/spec.md`, 0 clarifications.
+Expected behavior: Skill reads config (`maxNeedsClariMarkers: 10`), generates short name `export-transaction-csv`, checks remote and local branches and spec directories for existing entries — finds none — assigns number 1, runs create-new-feature script once, reads spec template, writes a complete spec with functional requirements (export trigger, column selection, file format), technology-agnostic success criteria ("Users can download a complete transaction history file within 5 seconds"), user scenarios, and documented assumptions. Reports: branch `1-export-transaction-csv`, spec at `features/001-export-transaction-csv/spec.md`, 0 clarifications.
 </example>
 
 <example>
 Input: Feature description: "Users should be able to collaborate on documents in real time with other team members."
-Expected behavior: Skill reads config (`maxNeedsClariMarkers: 3`), generates short name `realtime-doc-collaboration`, determines next number from branch/directory scan, runs script, writes spec. Identifies 2 critical ambiguities (conflict resolution strategy, presence/cursor visibility) and adds `[NEEDS CLARIFICATION]` markers. Presents 2 clarification questions to the user in one `vscode_askQuestions` call. After user responds, replaces both markers in the spec and reports completion with 2 clarifications resolved.
+Expected behavior: Skill reads config (`maxNeedsClariMarkers: 10`), generates short name `realtime-doc-collaboration`, determines next number from branch/directory scan, runs script, writes spec. Identifies 2 critical ambiguities (conflict resolution strategy, presence/cursor visibility) and adds `[NEEDS CLARIFICATION]` markers. Presents 2 clarification questions to the user in one `vscode_askQuestions` call. After user responds, replaces both markers in the spec and reports completion with 2 clarifications resolved.
 </example>
 
 <example type="counter">

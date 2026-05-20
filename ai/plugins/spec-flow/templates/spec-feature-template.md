@@ -46,46 +46,6 @@ Example:
 
 ---
 
-### Technology
-<!--
-TECH STACK — only what you are actually using.
-Do not describe why, only what and which version.
-Skip the obvious (e.g. "a computer").
-
-Example:
-  - Runtime: Node.js 20.x
-  - Language: TypeScript
-  - Framework: NestJS
-  - Database: PostgreSQL 16
--->
-
-- **Runtime/Framework**: [name and version]
-- **Language**: [programming language]
-- **[Library/Dependency]**: [name and version]
-- **[Database/Storage]**: [name and version if applicable]
-
----
-
-### Architecture
-<!--
-TECHNICAL AND ORGANIZATIONAL PRINCIPLES of the project.
-Describes code structure, design patterns, layer separation.
-Keep it short — this is not technical documentation, it is guidelines for the developer.
-
-Example:
-  - Layered architecture: API → Service → Repository → Database
-  - Configuration via environment variables and config files
-  - Separation: Controllers (HTTP), Services (business logic), Repositories (data access)
-  - Authentication via JWT tokens
--->
-
-- [Code organization principle]
-- [How configuration is managed]
-- [Layer separation or architectural pattern]
-- [Integration & communication patterns if applicable]
-
----
-
 ### Description
 <!--
 ONE–TWO SENTENCES describing the feature from the user's perspective.
@@ -138,20 +98,6 @@ Components to include (example list — adjust to the project):
 
 #### [Component A — e.g. Authentication Service]
 
-##### Configuration
-<!--
-All configurable parameters of this component.
-Format: - [Parameter name]: [n]
-
-Example:
-  - Token expiration: [3600] seconds
-  - Max login attempts: [5]
-  - Session timeout: [1800] seconds
--->
-
-- [Parameter]: [n]
-- [Parameter]: [n]
-
 ##### Behavior
 <!--
 Component behavior and logic.
@@ -172,10 +118,6 @@ Example:
 
 #### [Component B — e.g. User Service]
 
-##### Configuration
-
-- [Parameter]: [n]
-
 ##### Behavior
 
 - [Rule 1]
@@ -184,11 +126,6 @@ Example:
 ---
 
 #### [Component C — e.g. Authorization Service]
-
-##### Configuration
-
-- [Parameter]: [n]
-- [Parameter]: [n]
 
 ##### Behavior
 

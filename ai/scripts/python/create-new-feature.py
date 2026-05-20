@@ -124,9 +124,9 @@ def main() -> int:
     # Output results
     if args.output_json:
         output = {
-            "BRANCH_NAME": branch_name,
-            "SPEC_FILE": str(spec_file),
-            "FEATURE_DIR": str(feature_dir),
+            "branch-name": branch_name,
+            "spec-file": str(spec_file),
+            "feature-dir": str(feature_dir),
         }
         print(json.dumps(output))
     else:

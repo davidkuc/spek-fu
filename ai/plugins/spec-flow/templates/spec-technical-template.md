@@ -3,7 +3,7 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Note**: This template is filled in by the `technical-draft` skill. See `ai/plugins/spec-flow/templates/spec-technical-template.md` for the execution workflow.
 
 ## Summary
 
@@ -31,7 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates are determined from `.specify/memory/constitution.md`.
+[Gates are determined from `constitution/constitution.md`.
 At minimum, include applicable checks from:
 - AI Work Principles (always)
 - Software Development Principles (when defined)
@@ -45,12 +45,11 @@ If a gate is violated, document the violation and justification in this section.
 
 ```text
 specs/[###-feature]/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── research.md          # Phase 0 output (technical-draft skill)
+├── data-model.md        # Phase 1 output (technical-draft skill)
+├── quickstart.md        # Phase 1 output (technical-draft skill)
+├── contracts/           # Phase 1 output (technical-draft skill)
+└── tasks.md             # Phase 2 output (tasks skill - NOT created by technical-draft skill)
 ```
 
 ### Source Code (repository root)

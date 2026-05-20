@@ -2,7 +2,7 @@
 id: "spec-technical-draft"
 recommended-tier: "standard-agent"
 version: 1.0
-description: "Executes the implementation planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, and quickstart.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities and typed API contracts. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work."
+description: "Executes the technical planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, and quickstart.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities and typed API contracts. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work."
 anti-scope: "Does not author or modify the feature spec, run tests, or execute implementation work."
 tags:
   - "specification"
@@ -10,13 +10,14 @@ tags:
   - "requirements"
   - "feature"
 inputs:
+  - "feature-dir: path to the feature directory containing spec.md (optional)"
   - "User arguments — optional guidance or overrides for the planning workflow (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "research.md — resolved technical unknowns with decisions and rationale ({specs-dir})"
-  - "data-model.md — entities, fields, relationships, and validation rules ({specs-dir})"
-  - "contracts/ — OpenAPI or GraphQL schema files per user action ({specs-dir}/contracts/)"
-  - "quickstart.md — developer onboarding guide for the feature ({specs-dir})"
+  - "research.md — resolved technical unknowns with decisions and rationale ({feature-dir})"
+  - "data-model.md — entities, fields, relationships, and validation rules ({feature-dir})"
+  - "contracts/ — OpenAPI or GraphQL schema files per user action ({feature-dir}/contracts/)"
+  - "quickstart.md — developer onboarding guide for the feature ({feature-dir})"
   - "Execution status report: ok, blocked, or fail"
 dispatch-variant: "full"
 ---
@@ -24,16 +25,16 @@ dispatch-variant: "full"
 # Skill: spec-technical-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
-Executes the implementation planning workflow for a validated feature spec, producing a phased set of technical design artifacts: resolved technical research, a data model, typed API contracts, and a quickstart guide. The workflow runs in two phases — Phase 0 resolves all ambiguities in the technical context via targeted research before any design work begins; Phase 1 generates the design artifacts from confirmed decisions. The skill stops and reports after Phase 1 is complete.
+Executes the technical planning workflow for a validated feature spec, producing a phased set of technical design artifacts: resolved technical research, a data model, typed API contracts, and a quickstart guide. The workflow runs in two phases — Phase 0 resolves all ambiguities in the technical context via targeted research before any design work begins; Phase 1 generates the design artifacts from confirmed decisions. The skill stops and reports after Phase 1 is complete.
 
-**Scope boundary**: This skill translates an existing, validated feature spec into a technical plan. It does NOT author or modify the feature spec itself, run tests, or execute implementation work. For test design, consult the TDD designer upstream pipeline before re-running this skill.
+**Scope boundary**: This skill translates an existing, validated feature spec into technical planning artifacts only. It does NOT author or modify the feature spec itself, run tests, or execute implementation work.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER proceed from Phase 0 to Phase 1 if any `[NEEDS CLARIFICATION: <question>]` markers remain unresolved — WHY: unresolved ambiguities cascade directly into contracts and data models, producing expensive downstream rework.
 2. NEVER invent or assume technical details to fill a `[NEEDS CLARIFICATION]` marker — WHY: fabricated decisions produce false confidence in research.md and corrupt every artifact derived from it.
-3. ALWAYS treat the TDD designer report as authoritative for test scope and shape — WHY: the test contract is locked upstream and must not be contradicted by planning decisions.
+3. ALWAYS treat `{feature-dir}/tdd-designer/report.md` as authoritative for test scope and shape when it exists — WHY: the test contract is locked upstream and must not be contradicted by planning decisions.
 4. ALWAYS ERROR on constitution gate violations and stop — do not silently continue past a failed gate — WHY: violations propagate to all downstream implementation work.
 5. ALWAYS use the exact literal marker `[NEEDS CLARIFICATION: <specific question>]` — no abbreviations or alternative formats — WHY: consistent syntax enables automated detection and resolution tracking.
 </constraints>
@@ -53,8 +54,8 @@ If `env` is `host`: no additional action required.
 
 ## Branch Detection
 
-> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`specs-dir` alias variant**.
-> Apply it when `specs-dir` is not supplied as input.
+> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **core procedure**.
+> Apply it when `feature-dir` is not supplied as input.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -66,53 +67,67 @@ If `env` is `host`: no additional action required.
 - Declare the detected run state before proceeding.
 
 ## Done conditions
-- **Phase 0 complete**: `{specs-dir}/research.md` exists with zero unresolved `[NEEDS CLARIFICATION]` markers.
-- **Phase 1 complete**: `{specs-dir}/data-model.md`, at least one file in `{specs-dir}/contracts/`, and `{specs-dir}/quickstart.md` exist; `impl-plan` updated; agent context updated; Constitution Check passes.
+- **Phase 0 complete**: `{feature-dir}/research.md` exists with zero unresolved `[NEEDS CLARIFICATION]` markers.
+- **Phase 1 complete**: `{feature-dir}/data-model.md`, at least one file in `{feature-dir}/contracts/`, and `{feature-dir}/quickstart.md` exist; constitution gate categories pass.
 - **Blocked**: any `[NEEDS CLARIFICATION]` markers remain unresolved, or constitution gate violations are found — report blockers and stop.
 
-## Step 1 — Environment setup
+## Step 1 — Resolve paths
 
 Resolve required paths:
-- Resolve `specs-dir` via **Branch Detection** first: apply the `specs-dir` alias variant from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `specs-dir`. If the user declines, stop and report `blocked`.
-- Call `vscode_askQuestions` with header `impl_plan` to collect `impl-plan` (absolute path to implementation plan file if it exists).
+- Resolve `feature-dir` via **Branch Detection** first: apply the core procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `feature-dir`. If the user declines, stop and report `blocked`.
 
 Derive:
-- `spec` = `{specs-dir}/spec.md`
-- `tdd-designer-report` = `{specs-dir}/tdd-designer/report.md`
+- `spec` = `{feature-dir}/spec.md`
+- `testability-report` = `{feature-dir}/test-expert/testability-assessment.md`
+- `tdd-designer-report` = `{feature-dir}/tdd-designer/report.md`
 
 Use absolute paths for all subsequent file operations.
 
-> **If `spec` does not exist at `{specs-dir}/spec.md`**: stop and report the missing path — do not continue with a non-existent spec.
+> **If `spec` does not exist at `{feature-dir}/spec.md`**: stop and report the missing path — do not continue with a non-existent spec.
 
 ## Step 2 — Load context
 
 Read the following files using multi-pass `read_file` calls (advance `startLine` and repeat until the response is shorter than the page size):
 1. `spec` — the feature spec
-2. `tdd-designer-report` (only if it exists on disk)
-3. `constitution/constitution.md` — the spek-fu constitution
-4. `impl-plan` — the plan template (already copied)
+2. `testability-report` — load only if it exists on disk
+3. `tdd-designer-report` — load only if it exists on disk
+4. `constitution/constitution.md`
+5. `constitution/ai-behavior.md`
+6. `constitution/coding-standards.md`
+7. `constitution/testing-guidelines.md`
+8. `constitution/governance.md`
+9. `constitution/project-constraints.md`
+10. `ai/plugins/spec-flow/templates/quickstart-template.md`
 
-> **If `tdd-designer-report` does not exist**: note its absence and present the following proposal to the user before continuing: "The TDD designer report is missing. For best results, run the upstream pipeline in order before re-running this skill: `/speckit.devils-advocate` → `/speckit.test-expert` → `/speckit.tdd-designer`. The skill will continue, but test scope will be treated as undefined."
+> **If `tdd-designer-report` does not exist**: note its absence and continue with test scope treated as undefined.
+> **If `testability-report` does not exist**: note its absence and continue with structural testing guidance treated as incomplete.
 
-## Step 3 — Technical Context and Constitution Check
+## Step 3 — Technical context and constitution gate evaluation
 
-Fill the **Technical Context** section of `impl-plan`:
-- For each unknown or ambiguous technical detail: insert `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty.
+Build the technical context from the loaded spec and any available testability artifacts:
+- For each unknown or ambiguous technical detail: insert `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty in `research.md`.
 - Do NOT invent values for unknown fields.
-- If `tdd-designer-report` exists, incorporate its testing contract and risk notes into the Technical Context; treat it as authoritative for test scope.
+- If `tdd-designer-report` exists, incorporate its testing contract and risk notes into the technical context; treat it as authoritative for test scope.
+- If `testability-report` exists, incorporate its structural testing risks into the technical context and later design artifacts.
 
-Fill the **Constitution Check** section of `impl-plan` by evaluating each constitution gate against the spec:
-- If any gate is violated: stop with ERROR, report the specific violations, and do not proceed.
+Evaluate the planned work against the constitution gate categories below using the actual project files:
+- `constitution/ai-behavior.md`
+- `constitution/coding-standards.md`
+- `constitution/testing-guidelines.md`
+- `constitution/governance.md`
+- `constitution/project-constraints.md`
+
+If any gate is violated: stop with ERROR, report the specific violations, and do not proceed.
 
 ## Step 4 — Phase 0: Research
 
-**Prerequisites**: Technical Context filled; constitution check passes.
+**Prerequisites**: Constitution gate categories pass.
 
-**Skip condition**: If `{specs-dir}/research.md` already exists with zero `[NEEDS CLARIFICATION]` markers, skip this step and proceed to Step 5.
+**Skip condition**: If `{feature-dir}/research.md` already exists with zero `[NEEDS CLARIFICATION]` markers, skip this step and proceed to Step 5.
 
-1. **Extract research tasks**: For each `[NEEDS CLARIFICATION]` marker in the Technical Context → one research task. For each dependency → one best-practices research task. For each integration point → one patterns research task.
+1. **Extract research tasks**: For each `[NEEDS CLARIFICATION]` marker in the technical context → one research task. For each dependency → one best-practices research task. For each integration point → one patterns research task.
 2. **Dispatch research agents**: Launch one subagent per research task (or batch closely related tasks). Each task prompt: `Research {unknown} for {feature context}` or `Find best practices for {tech} in {domain}`.
-3. **Consolidate findings** into `{specs-dir}/research.md` using this format per decision:
+3. **Consolidate findings** into `{feature-dir}/research.md` using this format per decision:
 
 ```
 ## [Decision topic]
@@ -125,13 +140,13 @@ Fill the **Constitution Check** section of `impl-plan` by evaluating each consti
 
 > **If any `[NEEDS CLARIFICATION]` markers remain in `research.md` after consolidation**: stop, present the unresolved markers to the user, and do not proceed to Phase 1.
 
-**Output**: `{specs-dir}/research.md` with all `[NEEDS CLARIFICATION]` markers resolved.
+**Output**: `{feature-dir}/research.md` with all `[NEEDS CLARIFICATION]` markers resolved.
 
-## Step 5 — Phase 1: Data Model
+## Step 5 — Phase 1: Data model
 
-**Prerequisites**: `{specs-dir}/research.md` complete with zero unresolved markers.
+**Prerequisites**: `{feature-dir}/research.md` complete with zero unresolved markers.
 
-Extract entities from the feature spec and `research.md`. Write `{specs-dir}/data-model.md` containing:
+Extract entities from the feature spec and `research.md`. Write `{feature-dir}/data-model.md` containing:
 - Entity name, fields, and field types
 - Relationships between entities
 - Validation rules derived from requirements
@@ -139,31 +154,31 @@ Extract entities from the feature spec and `research.md`. Write `{specs-dir}/dat
 
 > **If an entity's field types or relationships cannot be determined from the spec and research**: insert `[NEEDS CLARIFICATION: <question>]` in `data-model.md` at the ambiguous point, stop, and do not proceed to contracts.
 
-## Step 6 — Phase 1: API Contracts
+## Step 6 — Phase 1: API contracts
 
-**Prerequisites**: `{specs-dir}/data-model.md` complete with zero unresolved markers.
+**Prerequisites**: `{feature-dir}/data-model.md` complete with zero unresolved markers.
 
-For each user action in the feature spec → define one endpoint. Use standard REST or GraphQL patterns as appropriate. Write schema files to `{specs-dir}/contracts/` (OpenAPI YAML or GraphQL SDL).
+For each user action in the feature spec → define one endpoint. Use standard REST or GraphQL patterns as appropriate. Write schema files to `{feature-dir}/contracts/` (OpenAPI YAML or GraphQL SDL).
 
 ## Step 7 — Phase 1: Quickstart
 
-1. Write `{specs-dir}/quickstart.md` — a developer onboarding guide covering setup steps, key endpoints, and example requests for the feature based on template `ai/plugins/spec-flow/templates/quickstart-template.md`.
-2. Re-evaluate the **Constitution Check** section of `impl-plan` using the completed design artifacts. If new violations are found: ERROR, report them, and do not mark the skill complete.
+1. Use `ai/plugins/spec-flow/templates/quickstart-template.md` as the scaffold.
+2. Write `{feature-dir}/quickstart.md` — a developer onboarding guide covering setup steps, key endpoints, example requests, and manual verification instructions for the feature.
+3. Re-evaluate the constitution gate categories using the completed design artifacts. If new violations are found: ERROR, report them, and do not mark the skill complete.
 
 ## Step 8 — Report
 
-Present the completion report (see `<output_format>`). Include **BRANCH** name, `impl-plan` path, and list of all generated or updated artifacts.
+Present the completion report (see `<output_format>`). Include **BRANCH** name, `feature-dir`, constitution gate categories checked, and the list of all generated or updated artifacts.
 
-The skill is complete when `{specs-dir}/research.md`, `{specs-dir}/data-model.md`, at least one `{specs-dir}/contracts/` file, and `{specs-dir}/quickstart.md` exist on disk, and the Constitution Check passes.
+The skill is complete when `{feature-dir}/research.md`, `{feature-dir}/data-model.md`, at least one `{feature-dir}/contracts/` file, and `{feature-dir}/quickstart.md` exist on disk, and the constitution gate categories pass.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Load `spec`, `tdd-designer-report`, constitution.md, `impl-plan`, and research.md. Use multi-pass reads — advance `startLine` and repeat until the response is shorter than the page size.
-- **vscode_askQuestions**: Collect `specs-dir` and `impl-plan` from the user in Step 1.
-- **create_file**: Write `research.md`, `data-model.md`, contract schema files, and `quickstart.md` to `specs-dir`. Only after prerequisites in each phase step are confirmed.
-- **replace_string_in_file**: Update `impl-plan` sections (Technical Context, Constitution Check) in place. Do not recreate `impl-plan` from scratch.
+- **read_file**: Load `spec`, `testability-report`, `tdd-designer-report`, constitution files, `quickstart-template.md`, and `research.md`. Use multi-pass reads — advance `startLine` and repeat until the response is shorter than the page size.
+- **vscode_askQuestions**: Collect `feature-dir` from the user in Step 1 when Branch Detection cannot resolve automatically.
+- **create_file**: Write `research.md`, `data-model.md`, contract schema files, and `quickstart.md` to `feature-dir`. Only after prerequisites in each phase step are confirmed.
 - **runSubagent**: Dispatch research agents in Phase 0 (Step 4). Batch closely related tasks into one subagent call.
 - Do NOT use tools not listed here unless explicitly escalating.
 </tools>
@@ -175,12 +190,18 @@ The skill is complete when `{specs-dir}/research.md`, `{specs-dir}/data-model.md
 
 ```
 Branch: <branch-name>
-impl-plan: <absolute-path>
+feature-dir: <absolute-path>
 Artifacts:
-  - {specs-dir}/research.md        [created | updated | skipped]
-  - {specs-dir}/data-model.md      [created | updated | skipped]
-  - {specs-dir}/contracts/<file>   [created | updated | skipped]
-  - {specs-dir}/quickstart.md      [created | updated | skipped]
+  - {feature-dir}/research.md        [created | updated | skipped]
+  - {feature-dir}/data-model.md      [created | updated | skipped]
+  - {feature-dir}/contracts/<file>   [created | updated | skipped]
+  - {feature-dir}/quickstart.md      [created | updated | skipped]
+Constitution gate categories checked:
+  - ai-behavior.md
+  - coding-standards.md
+  - testing-guidelines.md
+  - governance.md
+  - project-constraints.md
 Constitution Check: PASS | FAIL
 Gate violations: <list or "none">
 ```
@@ -201,18 +222,18 @@ Next action: <what the user must resolve before re-running>
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: Feature spec exists at `{specs-dir}/spec.md`; TDD designer report exists; no prior planning artifacts on disk.
-Expected behavior: Runs setup script and loads all context files. Fills Technical Context in `impl-plan` with two NEEDS CLARIFICATION markers for unknown integration patterns. Constitution check passes. Dispatches two research agents; consolidates findings into research.md with all markers resolved. Generates data-model.md (four entities), writes contracts/create-item.yaml and contracts/list-items.yaml, writes quickstart.md. Runs agent context update. Re-evaluates constitution check (passes). Reports completion with artifact list and branch name.
+Input: Feature spec exists at `{feature-dir}/spec.md`; `tdd-designer/report.md` exists; no prior planning artifacts on disk.
+Expected behavior: Resolves `feature-dir`, loads the spec, optional testability artifacts, constitution files, and quickstart template. Constitution gate categories pass. Dispatches two research agents; consolidates findings into research.md with all markers resolved. Generates data-model.md (four entities), writes contracts/create-item.yaml and contracts/list-items.yaml, writes quickstart.md from the template scaffold, re-evaluates constitution gate categories (passes), and reports completion with artifact list and branch name.
 </example>
 
 <example>
-Input: Feature spec exists; no TDD designer report; `{specs-dir}/research.md` already exists with zero unresolved markers.
-Expected behavior: Proposes upstream pipeline to user (TDD report missing). Detects research.md is complete — skips Phase 0. Proceeds to Phase 1: generates data-model.md, contracts/, and quickstart.md. Reports completion.
+Input: Feature spec exists; no `tdd-designer/report.md`; `{feature-dir}/research.md` already exists with zero unresolved markers.
+Expected behavior: Notes the missing TDD artifact, treats test scope as undefined, and continues. Detects research.md is complete — skips Phase 0. Proceeds to Phase 1: generates data-model.md, contracts/, and quickstart.md. Reports completion.
 </example>
 
 <example type="counter">
-Input: Phase 0 produces research.md but two [NEEDS CLARIFICATION] markers remain because research agents returned conflicting options.
-Expected behavior: Skill detects unresolved markers. Reports: "BLOCKED — 2 [NEEDS CLARIFICATION] markers remain in research.md. Resolve these before re-running Phase 1." Lists the specific unresolved questions. Does not proceed to Phase 1.
+Input: Phase 0 produces research.md but two `[NEEDS CLARIFICATION]` markers remain because research agents returned conflicting options.
+Expected behavior: Skill detects unresolved markers. Reports: "BLOCKED — 2 `[NEEDS CLARIFICATION]` markers remain in research.md. Resolve these before re-running Phase 1." Lists the specific unresolved questions. Does not proceed to Phase 1.
 </example>
 </examples>
 

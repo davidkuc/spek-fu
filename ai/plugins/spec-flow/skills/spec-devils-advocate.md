@@ -133,9 +133,9 @@ Apply each pass independently. Cap total findings at `maxFindings` (from config,
 
 **Pass D — Requirement Weakness**: Vague terms (fast, scalable, secure, intuitive), unmeasurable acceptance criteria, conflicting requirements, overlapping responsibilities, undefined edge cases, missing non-functional enforcement, features without operational definition.
 
-**Pass G — Worst-Case Scenario Modeling**: Production failure on launch day, 10× user growth, malicious input, data corruption, partial service outage, third-party API outage, security breach, team departure mid-implementation.
+**Pass E — Worst-Case Scenario Modeling**: Production failure on launch day, 10× user growth, malicious input, data corruption, partial service outage, third-party API outage, security breach, team departure mid-implementation.
 
-**Pass H — Adversarial Perspective**: Adopt the persona of a malicious user, competitor, auditor, legal regulator, future maintainer, and burned-out engineer inheriting the system.
+**Pass F — Adversarial Perspective**: Adopt the persona of a malicious user, competitor, auditor, legal regulator, future maintainer, and burned-out engineer inheriting the system.
 
 ## Step 4 — Compose report
 
@@ -189,7 +189,7 @@ The skill is complete when the **Devils Advocate Report** exists at `output_path
 <examples>
 <example>
 Input: spec_path = "project/spec.md", output_dir = "project/devils-advocate/", user_focus = "focus on security risks" — no prior reports exist.
-Expected behavior: Reads spec.md in full using multi-pass reads. Builds risk models, biasing Pass C and Pass H toward security. Runs all detection passes. Composes Devils Advocate Report with Executive Warning, Critical Failure Points table, and ranked top-5 failure causes. Presents "project/devils-advocate/devils-advocate-report.md" for approval. On approval writes the report. Returns status: ok, output_path: "project/devils-advocate/devils-advocate-report.md", summary: "7 CRITICAL findings; top risk: no auth failure recovery path".
+Expected behavior: Reads spec.md in full using multi-pass reads. Builds risk models, biasing Pass C and Pass F toward security. Runs all detection passes. Composes Devils Advocate Report with Executive Warning, Critical Failure Points table, and ranked top-5 failure causes. Presents "project/devils-advocate/devils-advocate-report.md" for approval. On approval writes the report. Returns status: ok, output_path: "project/devils-advocate/devils-advocate-report.md", summary: "7 CRITICAL findings; top risk: no auth failure recovery path".
 </example>
 
 <example>

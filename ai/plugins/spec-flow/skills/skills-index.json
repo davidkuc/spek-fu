@@ -34,7 +34,7 @@
     {
       "id": "spec-feature-draft",
       "type": "file",
-      "description": "Generates a quality-validated feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
+      "description": "Generates a feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
       "path": "ai/plugins/spec-flow/skills/spec-feature-draft.md",
       "version": 1.0,
       "tags": [
@@ -44,11 +44,11 @@
       ],
       "inputs": [
         "Feature description — natural language description of the feature to specify (required)",
+        "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "Spec file written to SPEC_FILE path inside the numbered feature branch directory",
-        "Quality checklist at FEATURE_DIR/checklists/requirements.md",
+        "Spec file written to spec-file path inside the numbered feature branch directory",
         "Execution status, branch name, and spec file path"
       ],
       "dispatch-variant": "full",
@@ -59,7 +59,7 @@
     {
       "id": "spec-tasks-draft",
       "type": "file",
-      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (plan.md, spec.md, data-model.md, contracts/), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
+      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (spec.md, research.md, data-model.md, contracts/, quickstart.md), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
       "path": "ai/plugins/spec-flow/skills/spec-tasks-draft.md",
       "version": 1.0,
       "tags": [
@@ -149,10 +149,10 @@
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "research.md — resolved technical unknowns with decisions and rationale (SPECS_DIR)",
-        "data-model.md — entities, fields, relationships, and validation rules (SPECS_DIR)",
-        "contracts/ — OpenAPI or GraphQL schema files per user action (SPECS_DIR/contracts/)",
-        "quickstart.md — developer onboarding guide for the feature (SPECS_DIR)",
+        "research.md — resolved technical unknowns with decisions and rationale ({feature-dir})",
+        "data-model.md — entities, fields, relationships, and validation rules ({feature-dir})",
+        "contracts/ — OpenAPI or GraphQL schema files per user action ({feature-dir}/contracts/)",
+        "quickstart.md — developer onboarding guide for the feature ({feature-dir})",
         "Execution status report: ok, blocked, or fail"
       ],
       "dispatch-variant": "full",
@@ -165,7 +165,7 @@
       "type": "file",
       "description": "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers and writing to disk only after explicit user approval. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes.",
       "path": "ai/plugins/spec-flow/skills/spec-clarification.md",
-      "version": 2.0,
+      "version": 1.0,
       "tags": [
         "specification",
         "clarification",
@@ -173,13 +173,13 @@
         "quality"
       ],
       "inputs": [
-        "spec_path: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)",
+        "spec-file: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)",
         "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
         "Execution status: ok, blocked, or fail",
-        "Updated spec file at the resolved FEATURE_SPEC path with all clarifications encoded in a single batch write",
+        "Updated spec file at the resolved spec-file path with all clarifications encoded through sequential approved edits",
         "Completion report: passes completed, questions asked, sections touched, coverage summary table, suggested next command"
       ],
       "dispatch-variant": "full",

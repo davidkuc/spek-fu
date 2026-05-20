@@ -10,12 +10,12 @@ tags:
   - "requirements"
   - "quality"
 inputs:
-  - "spec_path: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)"
+  - "spec-file: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)"
   - "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Execution status: ok, blocked, or fail"
-  - "Updated spec file at the resolved `feature-spec` path with all clarifications encoded in a single batch write"
+  - "Updated spec file at the resolved `spec-file` path with all clarifications encoded through sequential approved edits"
   - "Completion report: passes completed, questions asked, sections touched, coverage summary table, suggested next command"
 dispatch-variant: "full"
 ---
@@ -34,7 +34,7 @@ Conducts a structured ambiguity and coverage scan on a feature specification fil
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER write to the spec file during the questioning loop — accumulate all answers in the **Answer Buffer** ONLY — WHY: deferred writes keep the approval gate meaningful; a partially written spec cannot be coherently reviewed before the user has seen all answers together.
 2. NEVER write to the spec file without explicit user approval at the Step 5 approval gate — ONLY write after the gate returns "Approve all" — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-3. NEVER write to the spec file without confirming `feature-spec` path from script output or explicit `spec_path` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
+3. NEVER write to the spec file without confirming the resolved `spec-file` path from Branch Detection or explicit `spec-file` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
 4. NEVER ask more questions per pass than `maxQuestionsPerLoop`, and never exceed `totalQuestionBudget` across all passes — WHY: exceeding the configured budget wastes user attention and signals that the spec is too underspecified for clarification alone.
 5. NEVER reveal future queued questions in advance — WHY: sequential questioning preserves unbiased, independent user responses.
 6. ALWAYS insert `[NEEDS CLARIFICATION: <specific question>]` into the spec for any unresolved high-impact ambiguity that exceeds the question budget — WHY: downstream rework risk must remain visible even when the quota is exhausted.
@@ -51,14 +51,14 @@ If `env` is `host`: no additional action required.
 ## Operational Anchors
 - Before producing any output, verify your output complies with all rules in `<constraints>` above.
 - Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
-- If `spec_path` is absent, apply the **Branch Detection** procedure before calling `vscode_askQuestions`.
+- If `spec-file` is absent, apply the **Branch Detection** procedure before calling `vscode_askQuestions`.
 - Detect run state before acting: if an **Answer Buffer** is already populated in context, offer to resume; otherwise start fresh. If a `## Clarifications` section already exists in the spec, count its existing bullets against `totalQuestionBudget` before starting the loop.
 - During each pass's scan, treat all entries in the **Answer Buffer** as if they were already incorporated into the spec — this determines which gaps remain open.
 
 ## Branch Detection
 
-> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`spec_path` resolution variant**.
-> Apply it when `spec_path` is not supplied: resolve `feature-dir` per the core procedure, then set `spec_path = {feature-dir}/spec.md`.
+> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`spec-file` resolution variant**.
+> Apply it when `spec-file` is not supplied: resolve `feature-dir` per the core procedure, then set `spec-file = {feature-dir}/spec.md`.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -66,14 +66,14 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `spec_path` and `config_path` from inputs. Apply default config path `ai/plugins/spec-flow/skills/config.json` if `config_path` is absent.
+- Resolve `spec-file` and `config_path` from inputs. Apply default config path `ai/plugins/spec-flow/skills/config.json` if `config_path` is absent.
 - Confirm run state: fresh start or resume from populated **Answer Buffer** in context.
 
 ## Done conditions
 
 - **Clarification complete**: spec file written to disk with all approved answers; completion report produced.
 - **No ambiguities found**: all taxonomy categories are Clear after the first scan; completion report produced with suggestion to proceed to planning.
-- **Blocked**: spec file path cannot be resolved; blocked with instruction to run spec creation skill or supply `spec_path` directly.
+- **Blocked**: spec file path cannot be resolved; blocked with instruction to run spec creation skill or supply `spec-file` directly.
 - **Cancelled at approval**: user declines at the approval gate; completion report produced with `output_path: null`; spec file unchanged.
 - **Early termination**: user signals stop during the loop; proceed to Step 5 with whatever is in the **Answer Buffer**.
 
@@ -84,7 +84,7 @@ Read the config file at the resolved `config_path` using `read_file`. Extract th
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `maxQuestionsPerLoop` | `5` | Maximum questions to ask in a single pass |
-| `maxLoops` | `3` | Maximum number of analysis-question passes |
+| `maxLoops` | `10` | Maximum number of analysis-question passes |
 | `questionMode` | `sequential` | Presentation mode: `sequential` or `batch` |
 | `totalQuestionBudget` | `10` | Cumulative question ceiling across all passes |
 
@@ -95,16 +95,16 @@ Validate `questionMode` is one of `sequential` or `batch`. If invalid, default t
 
 ## Step 2 — Resolve spec path
 
-If `spec_path` is provided, use it directly.
+If `spec-file` is provided, use it directly.
 
-If `spec_path` is absent, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec_path` resolution variant**): resolve `feature-dir`, then set `spec_path = {feature-dir}/spec.md`.
+If `spec-file` is absent, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec-file` resolution variant**): resolve `feature-dir`, then set `spec-file = {feature-dir}/spec.md`.
 
-> **If the user provides a path**: use it as `spec_path` and proceed.
+> **If the user provides a path**: use it as `spec-file` and proceed.
 > **If the user selects "Switch to a feature branch first" or declines**: stop, report `blocked`, and instruct the user to check out the feature branch and re-run.
 
 ## Step 3 — Load spec file
 
-Read the spec file at the resolved path using multi-pass `read_file` calls until the response is shorter than the page size.
+Read the spec file at the resolved `spec-file` path using multi-pass `read_file` calls until the response is shorter than the page size.
 
 Count any existing `## Clarifications` section bullets and subtract that count from `totalQuestionBudget`.
 
@@ -115,7 +115,7 @@ Initialize the **Answer Buffer**: an empty ordered list of `{ question, answer, 
 ## Step 4 — Multi-pass clarification loop
 
 **Exit condition**: no unresolved questions remain, `totalQuestionBudget` exhausted, `maxLoops` reached, or user signals stop.
-**Max passes**: `maxLoops` (from config, default 3).
+**Max passes**: `maxLoops` (from config, default 10).
 
 ### 4.1 — Ambiguity and coverage scan
 
@@ -195,7 +195,7 @@ Call `vscode_askQuestions` with the `approval_gate` payload (see Question Payloa
 
 ## Step 6 — Batch write to disk
 
-Apply all **Answer Buffer** entries to the spec in a single edit sequence using `replace_string_in_file`:
+Apply all **Answer Buffer** entries to the spec using `replace_string_in_file`, one approved change at a time:
 
 For each entry in order:
 
@@ -213,7 +213,7 @@ For each entry in order:
 
 For any unresolved high-impact categories that exceeded the question budget, insert `[NEEDS CLARIFICATION: <specific question>]` into the spec at the point of uncertainty before completing the write.
 
-After all entries are applied, write the fully updated spec to disk (atomic overwrite of `feature-spec`).
+After all entries are applied, confirm the sequential edits fully reflect the approved answers in `spec-file`.
 
 > **If the write fails**: report the error and stop. Do not report completion without confirming disk state.
 
@@ -257,8 +257,8 @@ The skill is complete when the spec file is written to disk and the completion r
 <tools>
 - **vscode_askQuestions**: All user input — one question at a time in sequential mode, all pass questions in one call in batch mode, and the approval gate at Step 5. Required; do not prompt via plain text.
 - **read_file**: Load the config file (Step 1, single read sufficient), load the spec file (Step 3, multi-pass until end of file confirmed), load `ai/plugins/skf/knowledge/devcontainer-guidelines.md` in devcontainer environments.
-- **replace_string_in_file**: Apply all **Answer Buffer** updates to `feature-spec` in Step 6 only, after the approval gate.
-- **run_in_terminal**: Run the prerequisites check script in Step 2 — only when `spec_path` is absent.
+- **replace_string_in_file**: Apply all **Answer Buffer** updates to `spec-file` in Step 6 only, after the approval gate.
+- **run_in_terminal**: Run Branch Detection in Step 2 (`git branch --show-current`) only when `spec-file` is absent.
 - Do NOT use tools not listed here unless the skill explicitly escalates.
 </tools>
 
@@ -302,17 +302,17 @@ Sections touched:   [list of section names]
 <examples>
 <example>
 Input: Run spec clarification on the current feature branch spec, default config.
-Expected behavior: Reads config from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key (max 5 questions/loop, 3 loops, sequential, budget 10). Runs prerequisites script to locate `feature-spec`. Loads spec. Pass 1: scans — finds Partial on Non-Functional and Missing on Edge Cases. Asks 2 questions sequentially, adds both to Answer Buffer. Pass 2: re-analyzes treating buffer answers as already applied — 1 remaining question on Completion Signals. Asks it, adds to buffer. Pass 3: re-analyzes — all categories Clear. Queue empty, exits loop. Presents 3-row approval table. User selects "Approve all". Writes all 3 answers to spec in one batch pass. Reports 2 passes completed, 3/10 questions asked, 3 sections touched.
+Expected behavior: Reads config from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key (max 5 questions/loop, 10 loops, sequential, budget 10). Runs Branch Detection to locate `spec-file`. Loads spec. Pass 1: scans — finds Partial on Non-Functional and Missing on Edge Cases. Asks 2 questions sequentially, adds both to Answer Buffer. Pass 2: re-analyzes treating buffer answers as already applied — 1 remaining question on Completion Signals. Asks it, adds to buffer. Queue clears after the second pass. Presents a 3-row approval table. User selects "Approve all". Applies all 3 answers through sequential approved edits. Reports 2 passes completed, 3/10 questions asked, 3 sections touched.
 </example>
 
 <example>
-Input: spec_path=specs/3-payment-gateway/spec.md, config has questionMode=batch, maxQuestionsPerLoop=4, maxLoops=2.
+Input: spec-file=features/003-payment-gateway/spec.md, config has questionMode=batch, maxQuestionsPerLoop=4, maxLoops=2.
 Expected behavior: Reads config, loads spec directly from supplied path. Pass 1: scans — finds 4 Partial/Missing categories. Presents all 4 questions in one batch call. User answers all 4. Buffer holds 4 entries. Pass 2: re-analyzes treating all 4 buffer answers as applied — all categories Clear. Queue empty, exits loop. Presents 4-row approval table. User selects "Approve all". Writes all 4 answers in one batch write. Reports 2 passes, 4/10 questions asked.
 </example>
 
 <example type="counter">
 Input: Clarify the spec and write each answer immediately as it is accepted.
-Expected behavior: Skill detects conflict with a core constraint. Responds: "spec-clarification v2.0 accumulates all answers in the Answer Buffer and writes only after explicit approval at the approval gate. I will run the multi-pass questioning loop now and present the full answer set for your review before writing. Shall I proceed?"
+Expected behavior: Skill detects conflict with a core constraint. Responds: "spec-clarification v1.0 accumulates all answers in the Answer Buffer and writes only after explicit approval at the approval gate. I will run the multi-pass questioning loop now and present the full answer set for your review before writing. Shall I proceed?"
 </example>
 </examples>
 
@@ -323,7 +323,7 @@ Expected behavior: Skill detects conflict with a core constraint. Responds: "spe
 
 - **Never write to the spec file during the questioning loop** — WHY: the approval gate cannot review a partial, already-written state; all answers must be visible as a coherent set before any write occurs.
 - **Never write to the spec file without explicit user approval at the Step 5 approval gate** — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-- **Never write to the spec file before confirming `feature-spec` path** — WHY: writing to the wrong path corrupts unrelated feature specs and is difficult to reverse.
+- **Never write to the spec file before confirming `spec-file` path** — WHY: writing to the wrong path corrupts unrelated feature specs and is difficult to reverse.
 - **Never exceed `totalQuestionBudget` across all passes** — WHY: the budget is a deliberate contract with the user; silently overriding it erodes trust and degrades response quality.
 
 </reminders>

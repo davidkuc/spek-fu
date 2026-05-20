@@ -10,10 +10,10 @@
       "path": "ai/plugins/spec-flow/templates/devils-advocate-template.md"
     },
     {
-      "name": "plan-template.md",
+      "name": "spec-technical-template.md",
       "type": "file",
       "description": "Implementation plan scaffold covering technical summary, constitution check, project structure, and complexity tracking",
-      "path": "ai/plugins/spec-flow/templates/plan-template.md"
+      "path": "ai/plugins/spec-flow/templates/spec-technical-template.md"
     },
     {
       "name": "quickstart-template.md",
@@ -22,10 +22,10 @@
       "path": "ai/plugins/spec-flow/templates/quickstart-template.md"
     },
     {
-      "name": "spec-template.md",
+      "name": "spec-feature-template.md",
       "type": "file",
       "description": "Feature specification scaffold covering overview, glossary, technology stack, architecture, core flows, components, integrations, and implementation requirements",
-      "path": "ai/plugins/spec-flow/templates/spec-template.md"
+      "path": "ai/plugins/spec-flow/templates/spec-feature-template.md"
     },
     {
       "name": "tasks-template.md",

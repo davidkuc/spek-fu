@@ -5,16 +5,16 @@ description: "Task list template for feature implementation"
 
 # Tasks: [FEATURE NAME]
 
-**Input**: Design documents from `/specs/[###-feature-name]/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Input**: Design documents from `FEATURE_DIR/`
+**Prerequisites**: spec.md (required), research.md or data-model.md (at least one required), quickstart.md, contracts/
 
 **Tests**: The examples below include test tasks. Tests are REQUIRED by the constitution unless the
-feature spec explicitly waives them with rationale (and the plan documents the waiver in the
+feature spec explicitly waives them with rationale (and the technical artifacts document the waiver in the
 Constitution Check).
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-## Format: `[ID] [P?] [Story] Description`
+## Format: `- [ ] [ID] [P?] [Story] Description (file-path)`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
@@ -25,15 +25,15 @@ Constitution Check).
 - **Single project**: `src/`, `tests/` at repository root
 - **Web app**: `backend/src/`, `frontend/src/`
 - **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- Paths shown below assume single project - adjust based on the technical artifact structure
 
 <!-- 
   ============================================================================
   IMPORTANT: The tasks below are SAMPLE TASKS for illustration purposes only.
   
-  The /speckit.tasks command MUST replace these with actual tasks based on:
+  The tasks skill MUST replace these with actual tasks based on:
   - User stories from spec.md (with their priorities P1, P2, P3...)
-  - Feature requirements from plan.md
+  - Feature requirements from research.md and spec.md
   - Entities from data-model.md
   - Endpoints from contracts/
   
@@ -50,9 +50,9 @@ Constitution Check).
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T001 Create project structure per implementation plan (src/)
+- [ ] T002 Initialize [language] project with [framework] dependencies (package.json)
+- [ ] T003 [P] Configure linting and formatting tools (.eslintrc)
 
 ---
 
@@ -64,12 +64,12 @@ Constitution Check).
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Setup database schema and migrations framework (db/migrations/)
+- [ ] T005 [P] Implement authentication/authorization framework (src/auth/)
+- [ ] T006 [P] Setup API routing and middleware structure (src/api/)
+- [ ] T007 Create base models/entities that all stories depend on (src/models/)
+- [ ] T008 Configure error handling and logging infrastructure (src/lib/logging.py)
+- [ ] T009 Setup environment configuration management (src/config/)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -152,12 +152,12 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
-- [ ] TXXX Run quickstart.md validation
+- [ ] T029 [P] Documentation updates in docs/
+- [ ] T030 Code cleanup and refactoring (src/)
+- [ ] T031 Performance optimization across all stories (src/)
+- [ ] T032 [P] Additional unit tests (if requested) in tests/unit/
+- [ ] T033 Security hardening (src/security/)
+- [ ] T034 Run quickstart.md validation (quickstart.md)
 
 ---
 

@@ -28,10 +28,10 @@
       "path": "ai/plugins/skf/templates/wave-summary-template.md"
     },
     {
-      "name": "orchestration-plan-template.md",
+      "name": "orchestration-spec-technical-template.md",
       "type": "file",
       "description": "Orchestration plan scaffold for orch-orchestration-plan output — wave assignments, decisions, reasoning, and gaps",
-      "path": "ai/plugins/skf/templates/orchestration-plan-template.md"
+      "path": "ai/plugins/skf/templates/orchestration-spec-technical-template.md"
     },
     {
       "name": "orchestration-summary-template.md",

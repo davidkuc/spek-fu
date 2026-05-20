@@ -228,7 +228,7 @@ The `--name` slug must be lowercase alphanumeric with hyphens (e.g. `dotnet`, `d
 
 ## � Spec-Flow Plugin
 
-**Spec-Flow** is a built-in plugin that implements a **seven-step feature specification pipeline**, transforming raw ideas into implementation-ready task lists through structured, adversarial review and test-driven design.
+**Spec-Flow** is a built-in plugin that implements an **eight-step feature specification pipeline**, transforming raw ideas into implementation-ready task lists through structured, adversarial review and test-driven design.
 
 ### Workflow Chain
 
@@ -248,19 +248,22 @@ spec-tdd-draft
 spec-technical-draft
       ↓
 spec-tasks-draft
+   ↓
+spec-implement
 ```
 
-### Seven Steps
+### Eight Steps
 
 | # | Step | Purpose | Output Artifact | Required |
 |----|------|---------|-----------------|----------|
 | 1 | **spec-feature-draft** | Generate initial feature spec from raw idea | `FEATURE_DIR/spec.md` | ✅ Required |
 | 2 | **spec-clarification** | Resolve ambiguities through structured Q&A | `FEATURE_DIR/spec.md` (amended) | ✅ Required |
 | 3 | **spec-devils-advocate** | Red-team spec to surface failure modes | `FEATURE_DIR/devils-advocate/devils-advocate-report.md` | 🔶 Strongly recommended |
-| 4 | **spec-testability-draft** | Evaluate from test-engineering perspective | `FEATURE_DIR/test-expert/testability-assessment.md` | 🔶 Strongly recommended - depends on devils advocate|
-| 5 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | 🔶 Strongly recommended - depends on testability draft |
-| 6 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/technical-design.md` | ✅ Required |
+| 4 | **spec-testability-draft** | Evaluate from test-engineering perspective | `FEATURE_DIR/test-expert/testability-assessment.md` | ✅ Required |
+| 5 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
+| 6 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
 | 7 | **spec-tasks-draft** | Decompose design into phased, ordered task list | `FEATURE_DIR/tasks.md` | ✅ Required |
+| 8 | **spec-implement** | Execute the task plan phase by phase | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
 
 ### Invocation Pattern
 
@@ -273,10 +276,9 @@ The spec-flow pipeline is best invoked manually using prompt slash commands like
 - **Incremental clarity**: Step 2 (clarification) prevents ambiguities from cascading into every downstream artifact.
 - **Phased decomposition**: Step 7 produces implementation waves with explicit dependencies and verification criteria.
 
-### When to Skip Steps
+### Required Execution
 
-- **Step 3 (devils-advocate)** may be skipped if risk analysis determines the feature is low-complexity with well-understood requirements.
-- **All other steps are required** — skipping any introduces uncompensated risk into specification quality and implementation accuracy.
+All eight steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy.
 
 ### Example: Generating a Feature Spec
 
@@ -305,14 +307,18 @@ For an **API Rate Limiting** feature, you would work through the pipeline manual
    
 6. /spec-technical-draft
    Input: FEATURE_DIR with upstream artifacts
-   Output: FEATURE_DIR/technical-design.md
+   Output: FEATURE_DIR/research.md, FEATURE_DIR/data-model.md, FEATURE_DIR/contracts/, FEATURE_DIR/quickstart.md
    
 7. /spec-tasks-draft
-   Input: FEATURE_DIR with technical design
+   Input: FEATURE_DIR with research.md, data-model.md, contracts/, quickstart.md, and spec.md
    Output: FEATURE_DIR/tasks.md
+
+8. /spec-implement
+   Input: FEATURE_DIR with tasks.md and optional upstream design artifacts
+   Output: implementation changes in the feature branch and completed tasks marked in FEATURE_DIR/tasks.md
 ```
 
-Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is ready for implementation.
+Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is then executed by `spec-implement`.
 
 
 

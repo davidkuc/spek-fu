@@ -18,6 +18,8 @@ outputs:
 dispatch-variant: "full"
 ---
 
+> **Interactive skill** This skill calls `vscode_askQuestions` via Branch Detection when `feature-dir` is absent; it cannot interact with the user when dispatched as a stateless subagent.
+
 # Skill: spec-testability-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
@@ -172,6 +174,8 @@ Create directory `{feature-dir}/test-expert/` if not present.
 
 Write the report to the resolved `output_filename` (either base or timestamped).
 
+Read `ai/plugins/spec-flow/skills/config.json` and use `config["spec-testability-draft"].maxFindings` to cap the findings reported in Section 5 of the template, defaulting to `40` if the key is absent.
+
 Read `ai/plugins/spec-flow/templates/testability-template.md` via `read_file` and use it as the report scaffold. The report must follow that template exactly. Do NOT write the full report body to chat — only state completion.
 
 ---
@@ -190,6 +194,7 @@ The skill is complete when `{feature-dir}/test-expert/<output_filename>` exists 
 - **read_file**: Load spec.md and the devils-advocate report in Step 2. Use multi-pass reads for large files — advance startLine until the response is shorter than the page size.
 - **file_search**: Locate `feature-dir` and verify path existence before loading in Step 1.
 - **create_file**: Write the final Testability Assessment Report in Step 4 only. Create the `test-expert/` directory as needed.
+- **vscode_askQuestions**: Collect `feature-dir` via Branch Detection when it is not supplied.
 - Do NOT use tools not listed here unless the skill explicitly escalates to a sub-skill.
 - Do NOT use any write tool on spec.md, the devils-advocate report, or any artifact outside `{feature-dir}/test-expert/`.
 </tools>

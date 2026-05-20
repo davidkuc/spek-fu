@@ -13,7 +13,7 @@
     {
       "name": "spec-flow",
       "type": "folder",
-      "description": "",
+      "description": "Eight-step feature specification pipeline: feature draft -> clarification -> devils-advocate -> testability -> TDD -> technical design -> task breakdown -> implementation.",
       "path": "ai/plugins/spec-flow/",
       "index": "ai/plugins/spec-flow/spec-flow-index.json"
     }

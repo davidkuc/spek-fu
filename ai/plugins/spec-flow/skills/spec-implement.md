@@ -69,6 +69,7 @@ If `env` is `host`: no additional action required.
 
 - Resolve user context or arguments from the invocation before acting.
 - Environment Preflight must complete before Step 1 when `env` is `devcontainer`.
+- Read `ai/plugins/spec-flow/skills/config.json`; extract `config["spec-implement"].maxFixCycles` and default to `3` if absent.
 
 ## Done conditions
 
@@ -120,7 +121,9 @@ Using `feature-dir` and `available-docs` from Step 1, load documents:
 - `tasks.md` — extract: all tasks, phases, dependencies, parallel `[P]` markers, completed `[X]` tasks
 
 **Optional** (load only if listed in `available-docs`):
-- `plan.md` — extract: tech stack, libraries, architecture, project structure, ignore file requirements
+- `spec.md` — extract: feature context and any explicit implementation constraints
+- `test-expert/testability-assessment.md` — extract: structural testing risks and validation expectations
+- `tdd-designer/report.md` — extract: test sequencing and coverage expectations
 - `data-model.md` — extract: entities and relationships
 - `contracts/` — enumerate with `list_dir`, then load each contract file — extract: API specifications and test requirements
 - `research.md` — extract: technical decisions and constraints
@@ -132,11 +135,11 @@ Identify the first incomplete phase (the phase containing the first task not mar
 
 ## Step 4 — Project setup verification
 
-Verify and create ignore files based on the tech stack detected from `plan.md` (if available):
+Verify and create ignore files based on the technical context detected from `research.md` (if available):
 
 **Detection logic** (run from workspace root):
 - Check if `git rev-parse --git-dir 2>/dev/null` succeeds → verify or create `.gitignore`
-- Check if `Dockerfile*` exists or Docker is referenced in `plan.md` → verify or create `.dockerignore`
+- Check if `Dockerfile*` exists or Docker is referenced in `research.md` → verify or create `.dockerignore`
 - Check if `.eslintrc*` exists → verify or create `.eslintignore`
 - Check if `eslint.config.*` exists → ensure the config's `ignores` entries cover required patterns
 - Check if `.prettierrc*` exists → verify or create `.prettierignore`
@@ -144,7 +147,7 @@ Verify and create ignore files based on the tech stack detected from `plan.md` (
 **If an ignore file already exists**: read it, verify it contains essential patterns for the detected tech stack, append only missing critical patterns.
 **If an ignore file is missing**: create it with the full standard pattern set for the detected technology (see technology patterns in the tech-stack reference below).
 
-**Technology ignore patterns** (applied per tech stack detected in `plan.md`):
+**Technology ignore patterns** (applied per tech stack detected in `research.md`):
 - **Node.js/TypeScript**: `node_modules/`, `dist/`, `build/`, `*.log`, `.env*`
 - **Python**: `__pycache__/`, `*.pyc`, `.venv/`, `venv/`, `dist/`, `*.egg-info/`
 - **Java**: `target/`, `*.class`, `*.jar`, `.gradle/`, `build/`
@@ -153,7 +156,7 @@ Verify and create ignore files based on the tech stack detected from `plan.md` (
 - **Rust**: `target/`, `debug/`, `release/`, `*.rs.bk`, `*.rlib`
 - **Universal** (always included): `.DS_Store`, `Thumbs.db`, `*.tmp`, `*.swp`, `.vscode/`, `.idea/`
 
-> **If `plan.md` is absent**: skip technology-specific ignore file creation; only apply universal patterns to `.gitignore` if a git repo is detected.
+> **If `research.md` is absent**: skip technology-specific ignore file creation; only apply universal patterns to `.gitignore` if a git repo is detected.
 
 > **Project setup (Step 4) runs only when the targeted scope is the first phase or includes phase 1 (Setup).** Skip for mid-plan phases.
 
@@ -193,7 +196,7 @@ Execute only the tasks within the resolved scope from Step 5:
    - Update `tasks.md`: replace `- [ ]` with `- [X]` for the completed task ID.
    - Report the task ID and one-line completion note.
 6. If a non-parallel task fails:
-   - Attempt up to `config["spec-implement"].maxFixCycles` fix cycles (fix the error, re-run, verify). *(default: 3 — see `ai/plugins/spec-flow/skills/config.json`)*
+  - Attempt up to `config["spec-implement"].maxFixCycles` fix cycles (fix the error, re-run, verify). *(default: 3 — loaded during Preflight from `ai/plugins/spec-flow/skills/config.json`)*
    - If still failing after `maxFixCycles` cycles: report status `blocked (task failure)` with the failing task ID, error details, and stop.
 7. For parallel `[P]` tasks that fail: report the failure but continue with other tasks in the phase; include the failure in the phase summary.
 
@@ -250,7 +253,7 @@ Overall: ✓ PASS — proceeding to implementation  |  ✗ FAIL — awaiting use
 ```
 ## Implementation Summary
 
-Feature: <feature name from plan.md or tasks.md>
+Feature: <feature name from spec.md or tasks.md>
 feature-dir: <resolved path>
 Scope executed: <phase name(s) or task range>
 
@@ -286,7 +289,7 @@ Blocker (if any): <task ID, error summary, or "None">
 <examples>
 <example>
 Input: No arguments; current git branch is `003-payment-flow`; `feature-dir` resolves to `features/003-payment-flow/`; all checklists pass; tasks.md has 3 phases (Setup 3 tasks, User Story 1 5 tasks, Polish 4 tasks), 0 already completed.
-Expected behavior: Step 1 resolves `feature-dir` via branch detection. Step 2 displays checklist table (all ✓ PASS) and proceeds. Step 3 loads tasks.md, plan.md, contracts/. Step 4 runs project setup (first phase). Step 5 resolves scope: no explicit scope input → default = Phase 1 (Setup, 3 tasks); displays scope confirmation. Step 6 executes Setup phase only, marks T001–T003 as [X], runs build/test. Step 7 returns Implementation Summary: 3/12 tasks completed this run; remaining phases: User Story 1 (5 tasks), Polish (4 tasks). Status: ok.
+Expected behavior: Step 1 resolves `feature-dir` via branch detection. Step 2 displays checklist table (all ✓ PASS) and proceeds. Step 3 loads tasks.md, research.md, testability-assessment.md, tdd-designer/report.md, and contracts/. Step 4 runs project setup (first phase). Step 5 resolves scope: no explicit scope input → default = Phase 1 (Setup, 3 tasks); displays scope confirmation. Step 6 executes Setup phase only, marks T001–T003 as [X], runs build/test. Step 7 returns Implementation Summary: 3/12 tasks completed this run; remaining phases: User Story 1 (5 tasks), Polish (4 tasks). Status: ok.
 </example>
 
 <example>
@@ -308,7 +311,7 @@ Expected behavior: The word "everything" is treated as equivalent to "all". Step
 - **Never execute beyond the resolved scope without explicit user instruction** — default is the next single incomplete phase; "all" must be stated explicitly.
 - **Never bypass the checklist gate without explicit user confirmation** — incomplete checklists signal unmet pre-implementation requirements.
 - **Always mark completed tasks [X] in tasks.md immediately** — downstream resume and orchestration depend on accurate checklist state.
-- **Never modify design artifacts (spec.md, plan.md, data-model.md, contracts/)** — this skill executes the task plan; design changes require spec-flow upstream skills.
+- **Never modify design artifacts (spec.md, research.md, data-model.md, contracts/, quickstart.md)** — this skill executes the task plan; design changes require upstream specification work.
 - **Always show the scope confirmation before executing** — the user must see which phase(s) will run and which will be deferred.
 
 ## Question Payloads

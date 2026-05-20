@@ -44,7 +44,7 @@ Identify: missing dependency injection, concrete-bound abstractions, global stat
 
 Severity: `CRITICAL` (not testable) | `HIGH` (brittle/flaky risk) | `MEDIUM` (expensive) | `LOW` (improvement opportunity)
 
-Limit to 40 findings. Summarize overflow.
+Limit to `maxFindings` findings from config (default 40). Summarize overflow.
 
 ---
 
