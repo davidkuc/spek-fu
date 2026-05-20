@@ -2,7 +2,7 @@
 id: "spec-tdd-draft"
 recommended-tier: "standard-agent"
 version: 1.0
-description: "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at FEATURE_DIR/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md."
+description: "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at {feature-dir}/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md."
 anti-scope: "Does not modify upstream artifacts, run tests, or produce any implementation. Produces a report only."
 tags:
   - "specification"
@@ -10,11 +10,11 @@ tags:
   - "testing"
   - "reporting"
 inputs:
-  - "FEATURE_DIR: path to the feature directory containing test-expert/testability-assessment.md and spec.md (optional)"
+  - "feature-dir: path to the feature directory containing test-expert/testability-assessment.md and spec.md (optional)"
   - "Additional arguments or context (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "FEATURE_DIR/tdd-designer/report.md — TDD implementation design report"
+  - "{feature-dir}/tdd-designer/report.md — TDD implementation design report"
   - "One-line execution summary"
 dispatch-variant: "full"
 ---
@@ -53,7 +53,7 @@ If `env` is `host`: no additional action required.
 ## Branch Detection
 
 > See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **core procedure**.
-> Apply it when `FEATURE_DIR` is not supplied as input.
+> Apply it when `feature-dir` is not supplied as input.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -61,22 +61,24 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `FEATURE_DIR`: if not provided as input, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (core procedure). If the user provides a path, use it. If the user declines, stop and report `blocked`.
-- Confirm both required artifacts exist: `FEATURE_DIR/test-expert/testability-assessment.md` and `FEATURE_DIR/spec.md`.
+- Resolve `feature-dir`: if not provided as input, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (core procedure). If the user provides a path, use it. If the user declines, stop and report `blocked`.
+- Confirm both required artifacts exist: `{feature-dir}/test-expert/testability-assessment.md` and `{feature-dir}/spec.md`.
 - If either is missing, stop and report: "Required artifact missing: `<path>`. This skill requires both testability-assessment.md and spec.md. Ensure the test-expert workflow has completed first."
-- If `FEATURE_DIR/tdd-designer/report.md` already exists, it will be overwritten — this is a report-type output; do not preserve prior content.
+- Check whether prior reports exist using `file_search` to find any `report*.md` files in the `{feature-dir}/tdd-designer/` directory.
+  - No prior reports → use base filename `report.md`.
+  - Prior reports exist → generate a timestamped filename: `report-<YYYY-MM-DDTHH-mm-ss>.md` to avoid overwriting existing reports.
 
 ## Done conditions
 
-- **Success**: `FEATURE_DIR/tdd-designer/report.md` exists with all 7 sections populated and a Final Verdict selected.
+- **Success**: `{feature-dir}/tdd-designer/<output_filename>` (base or timestamped) exists with all 7 sections populated and a Final Verdict selected.
 - **Blocked**: at least one `[NEEDS CLARIFICATION]` marker is present; report is written with explicit markers in place of guesses.
 - **Fail**: required artifact missing; report NOT written; error shown.
 
 ## Step 1 — Initialize Context
 
-1. Read `FEATURE_DIR/test-expert/testability-assessment.md` using multi-pass `read_file` calls — advance `startLine` and repeat until the response is shorter than the page size.
-2. Read `FEATURE_DIR/spec.md` using the same multi-pass pattern.
-3. Create the directory `FEATURE_DIR/tdd-designer/` if it does not already exist.
+1. Read `{feature-dir}/test-expert/testability-assessment.md` using multi-pass `read_file` calls — advance `startLine` and repeat until the response is shorter than the page size.
+2. Read `{feature-dir}/spec.md` using the same multi-pass pattern.
+3. Create the directory `{feature-dir}/tdd-designer/` if it does not already exist.
 
 > **If testability-assessment.md is absent**: stop. Report the exact missing path and instruct the user to run the test-expert workflow first.
 
@@ -184,16 +186,16 @@ For each identified weakness, assign a severity:
 
 ## Step 7 — Write Report
 
-Read `ai/plugins/spec-flow/templates/tdd-report-template.md` via `read_file` and use it as the report scaffold. Write the complete report to `FEATURE_DIR/tdd-designer/report.md` following that template.
+Read `ai/plugins/spec-flow/templates/tdd-report-template.md` via `read_file` and use it as the report scaffold. Write the complete report to the resolved `output_filename` (either base or timestamped) following that template.
 
-The skill is complete when `FEATURE_DIR/tdd-designer/report.md` exists on disk and contains all 7 sections with a populated Final Verdict.
+The skill is complete when the TDD Designer Report exists on disk at the resolved filename and contains all 7 sections with a populated Final Verdict.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **read_file**: Load testability-assessment.md and spec.md. Use multi-pass reads until the response is shorter than the page size — never act on a single partial read.
-- **create_file**: Write `FEATURE_DIR/tdd-designer/report.md` in Step 7 only, after the full report is assembled.
+- **create_file**: Write `{feature-dir}/tdd-designer/report.md` in Step 7 only, after the full report is assembled.
 - **file_search**: Verify existence of required artifacts and the tdd-designer directory before proceeding.
 - Do NOT use tools not listed here unless the skill explicitly escalates to a sub-skill.
 </tools>
@@ -201,30 +203,24 @@ The skill is complete when `FEATURE_DIR/tdd-designer/report.md` exists on disk a
 <!-- SECTION 6: Output format -->
 <output_format>
 
-**Standard Field Table**:
-
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `blocked` \| `fail` |
-| skill_id | `spec-tdd-draft` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | `FEATURE_DIR/tdd-designer/report.md` or `null` |
-| summary | one-line summary of what was done |
-
-**Report Template**: Report follows the template at `ai/plugins/spec-flow/templates/tdd-report-template.md` (written to `FEATURE_DIR/tdd-designer/report.md`).
+**Report Template**: Report follows the template at `ai/plugins/spec-flow/templates/tdd-report-template.md` (written to the resolved output_path).
 
 </output_format>
 
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: FEATURE_DIR = `features/user-login` containing `test-expert/testability-assessment.md` (10 test cases) and `spec.md`.
+Input: `feature-dir` = `features/user-login` containing `test-expert/testability-assessment.md` (10 test cases) and `spec.md`. No prior TDD report exists.
 Expected behavior: Skill reads both artifacts in full via multi-pass reads, builds a Raw Test Inventory of 10 entries, normalizes each to BDD format with classified behavior targets, runs all 5 structural weakness passes, groups tests into 3 waves (domain: 4, use-case: 4, adapter: 2), and writes `features/user-login/tdd-designer/report.md` with all 7 sections populated. Final Verdict: PROCEED WITH CAUTION — 2 HIGH-severity mock explosion risks in the collaboration tests. Status: ok.
 </example>
 
 <example>
-Input: FEATURE_DIR = `features/payment` where testability-assessment.md contains a test asserting "response must be fast" without a numeric threshold.
+Input: `feature-dir` = `features/user-login`, and a prior `features/user-login/tdd-designer/report.md` already exists.
+Expected behavior: Skill detects the prior report, generates a timestamped filename (`report-2026-05-20T14-35-22.md`), writes the new analysis to the timestamped file, preserving the existing version.
+</example>
+
+<example>
+Input: `feature-dir` = `features/payment` where testability-assessment.md contains a test asserting "response must be fast" without a numeric threshold.
 Expected behavior: Skill normalizes the test to BDD format, marks the Then assertion as `[NEEDS CLARIFICATION: define measurable response time threshold in milliseconds]`, flags it in Section 4 as MEDIUM severity under the Ambiguity Pass, writes the report with markers in place. Final Verdict: PROCEED WITH CAUTION. Status: blocked.
 </example>
 

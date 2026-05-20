@@ -15,7 +15,7 @@ inputs:
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Execution status: ok, blocked, or fail"
-  - "Updated spec file at the resolved FEATURE_SPEC path with all clarifications encoded in a single batch write"
+  - "Updated spec file at the resolved `feature-spec` path with all clarifications encoded in a single batch write"
   - "Completion report: passes completed, questions asked, sections touched, coverage summary table, suggested next command"
 dispatch-variant: "full"
 ---
@@ -34,7 +34,7 @@ Conducts a structured ambiguity and coverage scan on a feature specification fil
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER write to the spec file during the questioning loop — accumulate all answers in the **Answer Buffer** ONLY — WHY: deferred writes keep the approval gate meaningful; a partially written spec cannot be coherently reviewed before the user has seen all answers together.
 2. NEVER write to the spec file without explicit user approval at the Step 5 approval gate — ONLY write after the gate returns "Approve all" — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-3. NEVER write to the spec file without confirming FEATURE_SPEC path from script output or explicit `spec_path` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
+3. NEVER write to the spec file without confirming `feature-spec` path from script output or explicit `spec_path` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
 4. NEVER ask more questions per pass than `maxQuestionsPerLoop`, and never exceed `totalQuestionBudget` across all passes — WHY: exceeding the configured budget wastes user attention and signals that the spec is too underspecified for clarification alone.
 5. NEVER reveal future queued questions in advance — WHY: sequential questioning preserves unbiased, independent user responses.
 6. ALWAYS insert `[NEEDS CLARIFICATION: <specific question>]` into the spec for any unresolved high-impact ambiguity that exceeds the question budget — WHY: downstream rework risk must remain visible even when the quota is exhausted.
@@ -58,7 +58,7 @@ If `env` is `host`: no additional action required.
 ## Branch Detection
 
 > See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`spec_path` resolution variant**.
-> Apply it when `spec_path` is not supplied: resolve `FEATURE_DIR` per the core procedure, then set `spec_path = FEATURE_DIR/spec.md`.
+> Apply it when `spec_path` is not supplied: resolve `feature-dir` per the core procedure, then set `spec_path = {feature-dir}/spec.md`.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -97,7 +97,7 @@ Validate `questionMode` is one of `sequential` or `batch`. If invalid, default t
 
 If `spec_path` is provided, use it directly.
 
-If `spec_path` is absent, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec_path` resolution variant**): resolve `FEATURE_DIR`, then set `spec_path = FEATURE_DIR/spec.md`.
+If `spec_path` is absent, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec_path` resolution variant**): resolve `feature-dir`, then set `spec_path = {feature-dir}/spec.md`.
 
 > **If the user provides a path**: use it as `spec_path` and proceed.
 > **If the user selects "Switch to a feature branch first" or declines**: stop, report `blocked`, and instruct the user to check out the feature branch and re-run.
@@ -213,7 +213,7 @@ For each entry in order:
 
 For any unresolved high-impact categories that exceeded the question budget, insert `[NEEDS CLARIFICATION: <specific question>]` into the spec at the point of uncertainty before completing the write.
 
-After all entries are applied, write the fully updated spec to disk (atomic overwrite of FEATURE_SPEC).
+After all entries are applied, write the fully updated spec to disk (atomic overwrite of `feature-spec`).
 
 > **If the write fails**: report the error and stop. Do not report completion without confirming disk state.
 
@@ -257,24 +257,13 @@ The skill is complete when the spec file is written to disk and the completion r
 <tools>
 - **vscode_askQuestions**: All user input — one question at a time in sequential mode, all pass questions in one call in batch mode, and the approval gate at Step 5. Required; do not prompt via plain text.
 - **read_file**: Load the config file (Step 1, single read sufficient), load the spec file (Step 3, multi-pass until end of file confirmed), load `ai/plugins/skf/knowledge/devcontainer-guidelines.md` in devcontainer environments.
-- **replace_string_in_file**: Apply all **Answer Buffer** updates to FEATURE_SPEC in Step 6 only, after the approval gate.
+- **replace_string_in_file**: Apply all **Answer Buffer** updates to `feature-spec` in Step 6 only, after the approval gate.
 - **run_in_terminal**: Run the prerequisites check script in Step 2 — only when `spec_path` is absent.
 - Do NOT use tools not listed here unless the skill explicitly escalates.
 </tools>
 
 <!-- SECTION 6: Output format -->
 <output_format>
-
-**Standard Field Table**:
-
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `blocked` \| `fail` |
-| skill_id | `spec-clarification` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | path to updated spec file or `null` |
-| summary | one-line summary of what was done |
 
 **Completion Report**:
 
@@ -313,7 +302,7 @@ Sections touched:   [list of section names]
 <examples>
 <example>
 Input: Run spec clarification on the current feature branch spec, default config.
-Expected behavior: Reads config from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key (max 5 questions/loop, 3 loops, sequential, budget 10). Runs prerequisites script to locate FEATURE_SPEC. Loads spec. Pass 1: scans — finds Partial on Non-Functional and Missing on Edge Cases. Asks 2 questions sequentially, adds both to Answer Buffer. Pass 2: re-analyzes treating buffer answers as already applied — 1 remaining question on Completion Signals. Asks it, adds to buffer. Pass 3: re-analyzes — all categories Clear. Queue empty, exits loop. Presents 3-row approval table. User selects "Approve all". Writes all 3 answers to spec in one batch pass. Reports 2 passes completed, 3/10 questions asked, 3 sections touched.
+Expected behavior: Reads config from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key (max 5 questions/loop, 3 loops, sequential, budget 10). Runs prerequisites script to locate `feature-spec`. Loads spec. Pass 1: scans — finds Partial on Non-Functional and Missing on Edge Cases. Asks 2 questions sequentially, adds both to Answer Buffer. Pass 2: re-analyzes treating buffer answers as already applied — 1 remaining question on Completion Signals. Asks it, adds to buffer. Pass 3: re-analyzes — all categories Clear. Queue empty, exits loop. Presents 3-row approval table. User selects "Approve all". Writes all 3 answers to spec in one batch pass. Reports 2 passes completed, 3/10 questions asked, 3 sections touched.
 </example>
 
 <example>
@@ -334,7 +323,7 @@ Expected behavior: Skill detects conflict with a core constraint. Responds: "spe
 
 - **Never write to the spec file during the questioning loop** — WHY: the approval gate cannot review a partial, already-written state; all answers must be visible as a coherent set before any write occurs.
 - **Never write to the spec file without explicit user approval at the Step 5 approval gate** — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-- **Never write to the spec file before confirming FEATURE_SPEC path** — WHY: writing to the wrong path corrupts unrelated feature specs and is difficult to reverse.
+- **Never write to the spec file before confirming `feature-spec` path** — WHY: writing to the wrong path corrupts unrelated feature specs and is difficult to reverse.
 - **Never exceed `totalQuestionBudget` across all passes** — WHY: the budget is a deliberate contract with the user; silently overriding it erodes trust and degrades response quality.
 
 </reminders>

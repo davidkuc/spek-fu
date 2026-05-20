@@ -14,18 +14,18 @@ Non-Functional Tests: X
 
 ### TDD-001 – Given_..._When_..._Then_...
 
-Given:
+**Given**:
 ...
 
-When:
+**When**:
 ...
 
-Then:
+**Then**:
 ...
 
-Classification: Domain / Use Case / Adapter / Integration
-Red-Phase Integrity: Strong / Weak (reason)
-Risks: ...
+**Classification**: Domain / Use Case / Adapter / Integration
+**Red-Phase Integrity**: Strong / Weak (reason)
+**Risks**: ...
 
 ---
 

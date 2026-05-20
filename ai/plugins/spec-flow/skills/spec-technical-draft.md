@@ -13,10 +13,10 @@ inputs:
   - "User arguments — optional guidance or overrides for the planning workflow (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "research.md — resolved technical unknowns with decisions and rationale (SPECS_DIR)"
-  - "data-model.md — entities, fields, relationships, and validation rules (SPECS_DIR)"
-  - "contracts/ — OpenAPI or GraphQL schema files per user action (SPECS_DIR/contracts/)"
-  - "quickstart.md — developer onboarding guide for the feature (SPECS_DIR)"
+  - "research.md — resolved technical unknowns with decisions and rationale ({specs-dir})"
+  - "data-model.md — entities, fields, relationships, and validation rules ({specs-dir})"
+  - "contracts/ — OpenAPI or GraphQL schema files per user action ({specs-dir}/contracts/)"
+  - "quickstart.md — developer onboarding guide for the feature ({specs-dir})"
   - "Execution status report: ok, blocked, or fail"
 dispatch-variant: "full"
 ---
@@ -53,8 +53,8 @@ If `env` is `host`: no additional action required.
 
 ## Branch Detection
 
-> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`SPECS_DIR` alias variant**.
-> Apply it when `SPECS_DIR` is not supplied as input.
+> See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`specs-dir` alias variant**.
+> Apply it when `specs-dir` is not supplied as input.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -66,53 +66,53 @@ If `env` is `host`: no additional action required.
 - Declare the detected run state before proceeding.
 
 ## Done conditions
-- **Phase 0 complete**: `SPECS_DIR/research.md` exists with zero unresolved `[NEEDS CLARIFICATION]` markers.
-- **Phase 1 complete**: `SPECS_DIR/data-model.md`, at least one file in `SPECS_DIR/contracts/`, and `SPECS_DIR/quickstart.md` exist; **IMPL_PLAN** updated; agent context updated; Constitution Check passes.
+- **Phase 0 complete**: `{specs-dir}/research.md` exists with zero unresolved `[NEEDS CLARIFICATION]` markers.
+- **Phase 1 complete**: `{specs-dir}/data-model.md`, at least one file in `{specs-dir}/contracts/`, and `{specs-dir}/quickstart.md` exist; `impl-plan` updated; agent context updated; Constitution Check passes.
 - **Blocked**: any `[NEEDS CLARIFICATION]` markers remain unresolved, or constitution gate violations are found — report blockers and stop.
 
 ## Step 1 — Environment setup
 
 Resolve required paths:
-- Resolve **SPECS_DIR** via **Branch Detection** first: apply the `SPECS_DIR` alias variant from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `SPECS_DIR`. If the user declines, stop and report `blocked`.
-- Call `vscode_askQuestions` with header `impl_plan` to collect **IMPL_PLAN** (absolute path to implementation plan file if it exists).
+- Resolve `specs-dir` via **Branch Detection** first: apply the `specs-dir` alias variant from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `specs-dir`. If the user declines, stop and report `blocked`.
+- Call `vscode_askQuestions` with header `impl_plan` to collect `impl-plan` (absolute path to implementation plan file if it exists).
 
 Derive:
-- `SPEC` = `SPECS_DIR/spec.md`
-- `TDD_DESIGNER_REPORT` = `SPECS_DIR/tdd-designer/report.md`
+- `spec` = `{specs-dir}/spec.md`
+- `tdd-designer-report` = `{specs-dir}/tdd-designer/report.md`
 
 Use absolute paths for all subsequent file operations.
 
-> **If `SPEC` does not exist at `SPECS_DIR/spec.md`**: stop and report the missing path — do not continue with a non-existent spec.
+> **If `spec` does not exist at `{specs-dir}/spec.md`**: stop and report the missing path — do not continue with a non-existent spec.
 
 ## Step 2 — Load context
 
 Read the following files using multi-pass `read_file` calls (advance `startLine` and repeat until the response is shorter than the page size):
-1. `SPEC` — the feature spec
-2. `TDD_DESIGNER_REPORT` (only if it exists on disk)
+1. `spec` — the feature spec
+2. `tdd-designer-report` (only if it exists on disk)
 3. `constitution/constitution.md` — the spek-fu constitution
-4. **IMPL_PLAN** — the plan template (already copied)
+4. `impl-plan` — the plan template (already copied)
 
-> **If `TDD_DESIGNER_REPORT` does not exist**: note its absence and present the following proposal to the user before continuing: "The TDD designer report is missing. For best results, run the upstream pipeline in order before re-running this skill: `/speckit.devils-advocate` → `/speckit.test-expert` → `/speckit.tdd-designer`. The skill will continue, but test scope will be treated as undefined."
+> **If `tdd-designer-report` does not exist**: note its absence and present the following proposal to the user before continuing: "The TDD designer report is missing. For best results, run the upstream pipeline in order before re-running this skill: `/speckit.devils-advocate` → `/speckit.test-expert` → `/speckit.tdd-designer`. The skill will continue, but test scope will be treated as undefined."
 
 ## Step 3 — Technical Context and Constitution Check
 
-Fill the **Technical Context** section of **IMPL_PLAN**:
+Fill the **Technical Context** section of `impl-plan`:
 - For each unknown or ambiguous technical detail: insert `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty.
 - Do NOT invent values for unknown fields.
-- If `TDD_DESIGNER_REPORT` exists, incorporate its testing contract and risk notes into the Technical Context; treat it as authoritative for test scope.
+- If `tdd-designer-report` exists, incorporate its testing contract and risk notes into the Technical Context; treat it as authoritative for test scope.
 
-Fill the **Constitution Check** section of **IMPL_PLAN** by evaluating each constitution gate against the spec:
+Fill the **Constitution Check** section of `impl-plan` by evaluating each constitution gate against the spec:
 - If any gate is violated: stop with ERROR, report the specific violations, and do not proceed.
 
 ## Step 4 — Phase 0: Research
 
 **Prerequisites**: Technical Context filled; constitution check passes.
 
-**Skip condition**: If `SPECS_DIR/research.md` already exists with zero `[NEEDS CLARIFICATION]` markers, skip this step and proceed to Step 5.
+**Skip condition**: If `{specs-dir}/research.md` already exists with zero `[NEEDS CLARIFICATION]` markers, skip this step and proceed to Step 5.
 
 1. **Extract research tasks**: For each `[NEEDS CLARIFICATION]` marker in the Technical Context → one research task. For each dependency → one best-practices research task. For each integration point → one patterns research task.
 2. **Dispatch research agents**: Launch one subagent per research task (or batch closely related tasks). Each task prompt: `Research {unknown} for {feature context}` or `Find best practices for {tech} in {domain}`.
-3. **Consolidate findings** into `SPECS_DIR/research.md` using this format per decision:
+3. **Consolidate findings** into `{specs-dir}/research.md` using this format per decision:
 
 ```
 ## [Decision topic]
@@ -125,13 +125,13 @@ Fill the **Constitution Check** section of **IMPL_PLAN** by evaluating each cons
 
 > **If any `[NEEDS CLARIFICATION]` markers remain in `research.md` after consolidation**: stop, present the unresolved markers to the user, and do not proceed to Phase 1.
 
-**Output**: `SPECS_DIR/research.md` with all `[NEEDS CLARIFICATION]` markers resolved.
+**Output**: `{specs-dir}/research.md` with all `[NEEDS CLARIFICATION]` markers resolved.
 
 ## Step 5 — Phase 1: Data Model
 
-**Prerequisites**: `SPECS_DIR/research.md` complete with zero unresolved markers.
+**Prerequisites**: `{specs-dir}/research.md` complete with zero unresolved markers.
 
-Extract entities from the feature spec and `research.md`. Write `SPECS_DIR/data-model.md` containing:
+Extract entities from the feature spec and `research.md`. Write `{specs-dir}/data-model.md` containing:
 - Entity name, fields, and field types
 - Relationships between entities
 - Validation rules derived from requirements
@@ -141,29 +141,29 @@ Extract entities from the feature spec and `research.md`. Write `SPECS_DIR/data-
 
 ## Step 6 — Phase 1: API Contracts
 
-**Prerequisites**: `SPECS_DIR/data-model.md` complete with zero unresolved markers.
+**Prerequisites**: `{specs-dir}/data-model.md` complete with zero unresolved markers.
 
-For each user action in the feature spec → define one endpoint. Use standard REST or GraphQL patterns as appropriate. Write schema files to `SPECS_DIR/contracts/` (OpenAPI YAML or GraphQL SDL).
+For each user action in the feature spec → define one endpoint. Use standard REST or GraphQL patterns as appropriate. Write schema files to `{specs-dir}/contracts/` (OpenAPI YAML or GraphQL SDL).
 
 ## Step 7 — Phase 1: Quickstart
 
-1. Write `SPECS_DIR/quickstart.md` — a developer onboarding guide covering setup steps, key endpoints, and example requests for the feature based on template `ai/plugins/spec-flow/templates/quickstart-template.md`.
-2. Re-evaluate the **Constitution Check** section of **IMPL_PLAN** using the completed design artifacts. If new violations are found: ERROR, report them, and do not mark the skill complete.
+1. Write `{specs-dir}/quickstart.md` — a developer onboarding guide covering setup steps, key endpoints, and example requests for the feature based on template `ai/plugins/spec-flow/templates/quickstart-template.md`.
+2. Re-evaluate the **Constitution Check** section of `impl-plan` using the completed design artifacts. If new violations are found: ERROR, report them, and do not mark the skill complete.
 
 ## Step 8 — Report
 
-Present the completion report (see `<output_format>`). Include **BRANCH** name, **IMPL_PLAN** path, and list of all generated or updated artifacts.
+Present the completion report (see `<output_format>`). Include **BRANCH** name, `impl-plan` path, and list of all generated or updated artifacts.
 
-The skill is complete when `SPECS_DIR/research.md`, `SPECS_DIR/data-model.md`, at least one `SPECS_DIR/contracts/` file, and `SPECS_DIR/quickstart.md` exist on disk, and the Constitution Check passes.
+The skill is complete when `{specs-dir}/research.md`, `{specs-dir}/data-model.md`, at least one `{specs-dir}/contracts/` file, and `{specs-dir}/quickstart.md` exist on disk, and the Constitution Check passes.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Load SPEC, TDD_DESIGNER_REPORT, constitution.md, IMPL_PLAN, and research.md. Use multi-pass reads — advance `startLine` and repeat until the response is shorter than the page size.
-- **vscode_askQuestions**: Collect SPECS_DIR and IMPL_PLAN from the user in Step 1.
-- **create_file**: Write `research.md`, `data-model.md`, contract schema files, and `quickstart.md` to SPECS_DIR. Only after prerequisites in each phase step are confirmed.
-- **replace_string_in_file**: Update **IMPL_PLAN** sections (Technical Context, Constitution Check) in place. Do not recreate **IMPL_PLAN** from scratch.
+- **read_file**: Load `spec`, `tdd-designer-report`, constitution.md, `impl-plan`, and research.md. Use multi-pass reads — advance `startLine` and repeat until the response is shorter than the page size.
+- **vscode_askQuestions**: Collect `specs-dir` and `impl-plan` from the user in Step 1.
+- **create_file**: Write `research.md`, `data-model.md`, contract schema files, and `quickstart.md` to `specs-dir`. Only after prerequisites in each phase step are confirmed.
+- **replace_string_in_file**: Update `impl-plan` sections (Technical Context, Constitution Check) in place. Do not recreate `impl-plan` from scratch.
 - **runSubagent**: Dispatch research agents in Phase 0 (Step 4). Batch closely related tasks into one subagent call.
 - Do NOT use tools not listed here unless explicitly escalating.
 </tools>
@@ -171,25 +171,16 @@ The skill is complete when `SPECS_DIR/research.md`, `SPECS_DIR/data-model.md`, a
 <!-- SECTION 6: Output format -->
 <output_format>
 
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `blocked` \| `fail` |
-| skill_id | `spec-technical-draft` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | `SPECS_DIR` or `null` |
-| summary | one-line summary of phase completed |
-
 **Completion report**:
 
 ```
 Branch: <branch-name>
-IMPL_PLAN: <absolute-path>
+impl-plan: <absolute-path>
 Artifacts:
-  - SPECS_DIR/research.md        [created | updated | skipped]
-  - SPECS_DIR/data-model.md      [created | updated | skipped]
-  - SPECS_DIR/contracts/<file>   [created | updated | skipped]
-  - SPECS_DIR/quickstart.md      [created | updated | skipped]
+  - {specs-dir}/research.md        [created | updated | skipped]
+  - {specs-dir}/data-model.md      [created | updated | skipped]
+  - {specs-dir}/contracts/<file>   [created | updated | skipped]
+  - {specs-dir}/quickstart.md      [created | updated | skipped]
 Constitution Check: PASS | FAIL
 Gate violations: <list or "none">
 ```
@@ -210,12 +201,12 @@ Next action: <what the user must resolve before re-running>
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: Feature spec exists at SPECS_DIR/spec.md; TDD designer report exists; no prior planning artifacts on disk.
-Expected behavior: Runs setup script and loads all context files. Fills Technical Context in IMPL_PLAN with two NEEDS CLARIFICATION markers for unknown integration patterns. Constitution check passes. Dispatches two research agents; consolidates findings into research.md with all markers resolved. Generates data-model.md (four entities), writes contracts/create-item.yaml and contracts/list-items.yaml, writes quickstart.md. Runs agent context update. Re-evaluates constitution check (passes). Reports completion with artifact list and branch name.
+Input: Feature spec exists at `{specs-dir}/spec.md`; TDD designer report exists; no prior planning artifacts on disk.
+Expected behavior: Runs setup script and loads all context files. Fills Technical Context in `impl-plan` with two NEEDS CLARIFICATION markers for unknown integration patterns. Constitution check passes. Dispatches two research agents; consolidates findings into research.md with all markers resolved. Generates data-model.md (four entities), writes contracts/create-item.yaml and contracts/list-items.yaml, writes quickstart.md. Runs agent context update. Re-evaluates constitution check (passes). Reports completion with artifact list and branch name.
 </example>
 
 <example>
-Input: Feature spec exists; no TDD designer report; SPECS_DIR/research.md already exists with zero unresolved markers.
+Input: Feature spec exists; no TDD designer report; `{specs-dir}/research.md` already exists with zero unresolved markers.
 Expected behavior: Proposes upstream pipeline to user (TDD report missing). Detects research.md is complete — skips Phase 0. Proceeds to Phase 1: generates data-model.md, contracts/, and quickstart.md. Reports completion.
 </example>
 

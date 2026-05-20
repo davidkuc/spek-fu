@@ -20,19 +20,19 @@ outputs:
 dispatch-variant: "full"
 ---
 
-> **Interactive skill** This skill calls `vscode_askQuestions` as a fallback when FEATURE_DIR cannot be resolved and when the execution scope is ambiguous; it cannot interact with the user when dispatched as a stateless subagent.
+> **Interactive skill** This skill calls `vscode_askQuestions` as a fallback when `feature-dir` cannot be resolved and when the execution scope is ambiguous; it cannot interact with the user when dispatched as a stateless subagent.
 
 # Skill: spec-implement
 
 <!-- SECTION 1: Identity (primacy position) -->
-Executes a **targeted phase** from `tasks.md` in `FEATURE_DIR` — defaulting to the next single incomplete phase unless the user explicitly requests a different scope. The skill verifies checklist gates before starting, loads the full implementation context (plan, data model, contracts, research), manages project setup (ignore files on the first phase), executes only the in-scope tasks in dependency order, marks each completed task as `[X]` in `tasks.md`, and produces a structured **Implementation Summary** including remaining phases.
+Executes a **targeted phase** from `tasks.md` in `feature-dir` — defaulting to the next single incomplete phase unless the user explicitly requests a different scope. The skill verifies checklist gates before starting, loads the full implementation context (plan, data model, contracts, research), manages project setup (ignore files on the first phase), executes only the in-scope tasks in dependency order, marks each completed task as `[X]` in `tasks.md`, and produces a structured **Implementation Summary** including remaining phases.
 
 **Scope boundary**: This skill executes the task plan in `tasks.md` only. It does NOT generate tasks, draft or modify spec files, or make design decisions beyond what `tasks.md` specifies. For task plan generation, use **spec-tasks-draft**. For single-task execution without orchestration, use **impl-implement**.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. NEVER begin implementing tasks before resolving FEATURE_DIR and confirming `tasks.md` exists — WHY: all paths are environment-specific and hard-coded paths silently break in other workspaces.
+1. NEVER begin implementing tasks before resolving `feature-dir` and confirming `tasks.md` exists — WHY: all paths are environment-specific and hard-coded paths silently break in other workspaces.
 2. NEVER execute more than the targeted phase(s) unless the user explicitly uses the word "all" or specifies multiple phases — default to the next single incomplete phase — WHY: phase-at-a-time execution keeps changes reviewable and prevents runaway implementation beyond what the user intended.
 3. NEVER proceed past the checklist gate if any checklist file has incomplete items, unless the user explicitly confirms — WHY: incomplete checklists indicate pre-implementation gates have not been satisfied, risking untested or unreviewed implementation.
 4. NEVER invent task details absent from `tasks.md` or the loaded design artifacts — place `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty — WHY: invented scope silently corrupts the implementation and breaks plan traceability.
@@ -59,7 +59,7 @@ If `env` is `host`: no additional action required.
 ## Branch Detection
 
 > See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **core procedure**.
-> Apply it when `FEATURE_DIR` is not supplied as input.
+> Apply it when `feature-dir` is not supplied as input.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -81,16 +81,16 @@ If `env` is `host`: no additional action required.
 
 ## Step 1 — Resolve paths
 
-Resolve FEATURE_DIR and AVAILABLE_DOCS:
-- Resolve **FEATURE_DIR** via **Branch Detection** first: apply the core procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `FEATURE_DIR`.
-- Use `list_dir` on FEATURE_DIR to obtain AVAILABLE_DOCS (list all files and subdirectories).
+Resolve `feature-dir` and `available-docs`:
+- Resolve `feature-dir` via **Branch Detection** first: apply the core procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `feature-dir`.
+- Use `list_dir` on `feature-dir` to obtain `available-docs` (list all files and subdirectories).
 
-> **If FEATURE_DIR cannot be resolved**: stop with status `blocked` and report the blocker.
-> **If `tasks.md` is absent from AVAILABLE_DOCS**: stop with status `blocked` and suggest running `spec-tasks-draft` first.
+> **If `feature-dir` cannot be resolved**: stop with status `blocked` and report the blocker.
+> **If `tasks.md` is absent from `available-docs`**: stop with status `blocked` and suggest running `spec-tasks-draft` first.
 
 ## Step 2 — Checklist gate
 
-If `FEATURE_DIR/checklists/` exists in AVAILABLE_DOCS:
+If `{feature-dir}/checklists/` exists in `available-docs`:
 1. Use `list_dir` to enumerate all checklist files in `checklists/`.
 2. For each checklist file, read it and count:
    - **Total items**: all lines matching `- [ ]` or `- [X]` or `- [x]`
@@ -114,12 +114,12 @@ If `checklists/` does not exist: skip to Step 3.
 
 ## Step 3 — Load implementation context
 
-Using FEATURE_DIR and AVAILABLE_DOCS from Step 1, load documents:
+Using `feature-dir` and `available-docs` from Step 1, load documents:
 
 **Required** (stop with `blocked` if absent):
 - `tasks.md` — extract: all tasks, phases, dependencies, parallel `[P]` markers, completed `[X]` tasks
 
-**Optional** (load only if listed in AVAILABLE_DOCS):
+**Optional** (load only if listed in `available-docs`):
 - `plan.md` — extract: tech stack, libraries, architecture, project structure, ignore file requirements
 - `data-model.md` — extract: entities and relationships
 - `contracts/` — enumerate with `list_dir`, then load each contract file — extract: API specifications and test requirements
@@ -223,28 +223,17 @@ The skill is complete when all tasks in the **resolved scope** are marked `[X]` 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **read_file**: Steps 2, 3, 4, and 5 — read checklist files, design artifacts, and `tasks.md`. Use multi-pass reads for large files.
-- **list_dir**: Steps 1, 2, and 3 — enumerate FEATURE_DIR, `checklists/`, and `contracts/` directories.
+- **list_dir**: Steps 1, 2, and 3 — enumerate `feature-dir`, `checklists/`, and `contracts/` directories.
 - **run_in_terminal**: Steps 4 and 6 — run git detection, build commands, and test commands from workspace root.
 - **file_search / grep_search**: Step 4 — locate ignore files and build manifests.
 - **create_file**: Step 4 and Step 6 — create ignore files and new implementation files required by tasks.
 - **replace_string_in_file**: Steps 4 and 6 — patch existing ignore files with missing patterns; mark tasks `[X]` in `tasks.md`; apply implementation changes to existing files.
-- **vscode_askQuestions**: Step 2 (checklist gate), Step 5 (scope ambiguity), and Step 1 fallback (FEATURE_DIR resolution when Branch Detection cannot resolve automatically).
+- **vscode_askQuestions**: Step 2 (checklist gate), Step 5 (scope ambiguity), and Step 1 fallback (`feature-dir` resolution when Branch Detection cannot resolve automatically).
 - Do NOT use tools not listed here unless this skill explicitly escalates to a sub-skill.
 </tools>
 
 <!-- SECTION 6: Output format -->
 <output_format>
-
-**Standard Field Table**:
-
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `ok (partial)` \| `blocked` \| `fail` |
-| skill_id | `spec-implement` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | `<FEATURE_DIR>/tasks.md` or `null` |
-| summary | one-line summary of what was done |
 
 **Checklist Gate Table** (Step 2, shown always):
 
@@ -262,7 +251,7 @@ Overall: ✓ PASS — proceeding to implementation  |  ✗ FAIL — awaiting use
 ## Implementation Summary
 
 Feature: <feature name from plan.md or tasks.md>
-FEATURE_DIR: <resolved path>
+feature-dir: <resolved path>
 Scope executed: <phase name(s) or task range>
 
 Phases in scope:
@@ -296,13 +285,13 @@ Blocker (if any): <task ID, error summary, or "None">
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: No arguments; current git branch is `003-payment-flow`; FEATURE_DIR resolves to `features/003-payment-flow/`; all checklists pass; tasks.md has 3 phases (Setup 3 tasks, User Story 1 5 tasks, Polish 4 tasks), 0 already completed.
-Expected behavior: Step 1 resolves FEATURE_DIR via branch detection. Step 2 displays checklist table (all ✓ PASS) and proceeds. Step 3 loads tasks.md, plan.md, contracts/. Step 4 runs project setup (first phase). Step 5 resolves scope: no explicit scope input → default = Phase 1 (Setup, 3 tasks); displays scope confirmation. Step 6 executes Setup phase only, marks T001–T003 as [X], runs build/test. Step 7 returns Implementation Summary: 3/12 tasks completed this run; remaining phases: User Story 1 (5 tasks), Polish (4 tasks). Status: ok.
+Input: No arguments; current git branch is `003-payment-flow`; `feature-dir` resolves to `features/003-payment-flow/`; all checklists pass; tasks.md has 3 phases (Setup 3 tasks, User Story 1 5 tasks, Polish 4 tasks), 0 already completed.
+Expected behavior: Step 1 resolves `feature-dir` via branch detection. Step 2 displays checklist table (all ✓ PASS) and proceeds. Step 3 loads tasks.md, plan.md, contracts/. Step 4 runs project setup (first phase). Step 5 resolves scope: no explicit scope input → default = Phase 1 (Setup, 3 tasks); displays scope confirmation. Step 6 executes Setup phase only, marks T001–T003 as [X], runs build/test. Step 7 returns Implementation Summary: 3/12 tasks completed this run; remaining phases: User Story 1 (5 tasks), Polish (4 tasks). Status: ok.
 </example>
 
 <example>
 Input: `FEATURE_DIR=features/007-notifications/`; scope="all remaining"; some tasks in tasks.md already marked `[X]` (Phase 1 fully done); checklist `security.md` has 3 incomplete items.
-Expected behavior: Step 1 uses the provided FEATURE_DIR path directly. Step 2 detects security.md has 3 incomplete items, displays the checklist gate table with ✗ FAIL, and calls `vscode_askQuestions`. If user confirms yes, Step 3 loads context. Step 4 skips project setup (Phase 1 already complete). Step 5 resolves scope: "all remaining" → all phases not fully marked [X]. Step 6 executes all remaining phases sequentially, skipping already-complete tasks within each phase.
+Expected behavior: Step 1 uses the provided `feature-dir` path directly. Step 2 detects security.md has 3 incomplete items, displays the checklist gate table with ✗ FAIL, and calls `vscode_askQuestions`. If user confirms yes, Step 3 loads context. Step 4 skips project setup (Phase 1 already complete). Step 5 resolves scope: "all remaining" → all phases not fully marked [X]. Step 6 executes all remaining phases sequentially, skipping already-complete tasks within each phase.
 </example>
 
 <example type="counter">

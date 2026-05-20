@@ -113,8 +113,8 @@ def main() -> int:
     features_dir.mkdir(exist_ok=True)
     logger.info(f"Ensured /features directory exists: {features_dir}")
     
-    # Create feature-specific folder
-    feature_dir = features_dir / args.feature_name.lower()
+    # Create feature-specific folder (same name as the branch for consistency)
+    feature_dir = features_dir / branch_name
     feature_dir.mkdir(exist_ok=True)
     logger.info(f"Created feature directory: {feature_dir}")
     

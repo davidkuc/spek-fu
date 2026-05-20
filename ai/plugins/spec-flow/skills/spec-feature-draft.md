@@ -13,7 +13,7 @@ inputs:
   - "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "Spec file written to SPEC_FILE path inside the numbered feature branch directory"
+  - "Spec file written to `spec-file` path inside the numbered feature branch directory"
   - "Execution status, branch name, and spec file path"
 dispatch-variant: "full"
 ---
@@ -30,7 +30,7 @@ Generates a feature specification from a natural language feature description. T
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. NEVER begin writing the spec before the git branch and SPEC_FILE path have been confirmed from the script output — WHY: the script determines the canonical branch name and spec path; writing before this produces orphaned content.
+1. NEVER begin writing the spec before the git branch and `spec-file` path have been confirmed from the script output — WHY: the script determines the canonical branch name and spec path; writing before this produces orphaned content.
 2. NEVER run the create-new-feature script more than once per feature invocation — WHY: duplicate runs create duplicate branches and corrupt the numbering sequence.
 3. ALWAYS cap `[NEEDS CLARIFICATION]` markers at `maxNeedsClariMarkers` (from config, default 3) — WHY: more than the configured limit signals an underspecified input, not a spec authoring problem; make informed guesses for lower-priority gaps.
 4. NEVER include implementation details (languages, frameworks, APIs, database names) in the spec body — WHY: specs describe user value and business needs; implementation details belong in technical planning artifacts.
@@ -72,7 +72,7 @@ If `env` is `host`: no additional action required.
 
 ## Done conditions
 
-- **Success**: SPEC_FILE exists on disk with all required sections populated and no `[NEEDS CLARIFICATION]` markers remain.
+- **Success**: `spec-file` exists on disk with all required sections populated and no `[NEEDS CLARIFICATION]` markers remain.
 - **Blocked**: Clarification questions have been asked and the skill is awaiting user responses.
 - **Fail**: Script execution failed, git is unavailable, or the spec template cannot be read.
 
@@ -106,12 +106,12 @@ python ai/scripts/python/create-new-feature.py --feature-number <N> --feature-na
 ```
 
 Read the JSON output from the terminal. Extract:
-- **BRANCH_NAME**: the created branch name
-- **SPEC_FILE**: the canonical path to write the spec
-- **FEATURE_DIR**: the feature directory root
+- `branch-name`: the created branch name
+- `spec-file`: the canonical path to write the spec
+- `feature-dir`: the feature directory root
 
 > **If the script fails or exits with a non-zero code**: stop, report `fail` with the error text, and do not proceed.
-> **If BRANCH_NAME or SPEC_FILE are absent from the output**: stop, report `fail`, and display the raw terminal output for diagnosis.
+> **If `branch-name` or `spec-file` are absent from the output**: stop, report `fail`, and display the raw terminal output for diagnosis.
 
 ## Step 4 — Load spec template
 
@@ -130,7 +130,7 @@ Parse the feature description and extract actors, actions, data, constraints, an
 
 **Success criteria** must be measurable (specific metrics), technology-agnostic (no frameworks or tools), user-focused (business/user outcomes), and verifiable without implementation details.
 
-Write the specification to SPEC_FILE using the template structure. Preserve all section headings and order. Do NOT embed checklists inside the spec body.
+Write the specification to `spec-file` using the template structure. Preserve all section headings and order. Do NOT embed checklists inside the spec body.
 
 ## Step 6 — Resolve clarifications (if any)
 
@@ -150,13 +150,13 @@ If `[NEEDS CLARIFICATION]` markers remain in the spec:
      "allowFreeformInput": true
    }
    ```
-3. After receiving responses, replace each `[NEEDS CLARIFICATION: ...]` marker in **SPEC_FILE** with the user's chosen answer.
+3. After receiving responses, replace each `[NEEDS CLARIFICATION: ...]` marker in `spec-file` with the user's chosen answer.
 
 ## Step 7 — Report completion
 
 Report using the output format defined in `<output_format>`.
 
-The skill is complete when **SPEC_FILE** exists on disk with all required sections populated and no `[NEEDS CLARIFICATION]` markers remain.
+The skill is complete when `spec-file` exists on disk with all required sections populated and no `[NEEDS CLARIFICATION]` markers remain.
 
 </workflow>
 
@@ -164,7 +164,7 @@ The skill is complete when **SPEC_FILE** exists on disk with all required sectio
 <tools>
 - **run_in_terminal**: Run git commands (Step 2) and the create-new-feature script (Step 3) — run one command and read full output before proceeding to the next.
 - **read_file**: Load config file (Preflight) and `ai/plugins/spec-flow/templates/spec-template.md` (Step 4) using multi-pass reads; also read existing spec files when resuming.
-- **create_file**: Write **SPEC_FILE** (Step 5) — only after **BRANCH_NAME** and **SPEC_FILE** are confirmed from script output.
+- **create_file**: Write `spec-file` (Step 5) — only after `branch-name` and `spec-file` are confirmed from script output.
 - **replace_string_in_file**: Replace `[NEEDS CLARIFICATION]` markers (Step 6) after user responses are received.
 - **vscode_askQuestions**: Collect feature description if absent (Preflight) and present clarification questions (Step 6).
 - Do NOT use tools not listed here unless the skill explicitly escalates.
@@ -173,22 +173,11 @@ The skill is complete when **SPEC_FILE** exists on disk with all required sectio
 <!-- SECTION 6: Output format -->
 <output_format>
 
-**Standard Field Table**:
-
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `blocked` \| `fail` |
-| skill_id | `spec-feature-draft` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | path to SPEC_FILE or `null` |
-| summary | one-line summary |
-
 **Completion Report**:
 
 ```
-Branch:             <BRANCH_NAME>
-Spec file:          <SPEC_FILE>
+Branch:             <branch-name>
+Spec file:          <spec-file>
 Clarifications:     N resolved | 0 remaining
 ```
 

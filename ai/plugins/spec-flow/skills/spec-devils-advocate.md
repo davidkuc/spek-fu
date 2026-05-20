@@ -59,7 +59,7 @@ If `env` is `host`: no additional action required.
 ## Branch Detection
 
 > See `ai/plugins/spec-flow/knowledge/branch-detection.md` — **`spec_path` resolution variant**.
-> Apply it when `spec_path` is not supplied: resolve `FEATURE_DIR` per the core procedure, then set `spec_path = FEATURE_DIR/spec.md`.
+> Apply it when `spec_path` is not supplied: resolve `feature-dir` per the core procedure, then set `spec_path = {feature-dir}/spec.md`.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -87,14 +87,14 @@ Read `ai/plugins/spec-flow/skills/config.json` using `read_file`. Extract the `s
 
 Confirm `spec_path` is provided and the file exists.
 
-> **If `spec_path` is absent**: Apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec_path` resolution variant**): resolve `FEATURE_DIR`, then set `spec_path = FEATURE_DIR/spec.md`. If the user provides a path, use it. If the user declines, stop and report `status: blocked`.
+> **If `spec_path` is absent**: Apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (**`spec_path` resolution variant**): resolve `feature-dir`, then set `spec_path = {feature-dir}/spec.md`. If the user provides a path, use it. If the user declines, stop and report `status: blocked`.
 
 > **If the spec file does not exist at the given path**: Stop. Report `status: fail`, `output_path: null`, `summary: "spec file not found at <path>"`.
 
-Derive `output_dir` as `<spec_parent_dir>/devils-advocate/` if not provided. Use `file_search` to check whether a prior report exists at the target output path.
+Derive `output_dir` as `<spec_parent_dir>/devils-advocate/` if not provided. Check whether prior reports exist using `file_search` to find any `devils-advocate-report*.md` files in the directory.
 
-- No prior report → proceed from Step 1.
-- Prior report exists → call `vscode_askQuestions` to confirm overwrite or timestamp the filename.
+- No prior reports → use base filename `devils-advocate-report.md`.
+- Prior reports exist → generate a timestamped filename: `devils-advocate-report-<YYYY-MM-DDTHH-mm-ss>.md` to avoid overwriting existing reports.
 
 ## Done conditions
 
@@ -145,6 +145,9 @@ Read `ai/plugins/spec-flow/templates/devils-advocate-template.md` via `read_file
 
 ⛔ **STOP — Approval gate required before writing.**
 
+If prior reports were detected and a timestamped filename was generated, include this note in the approval request:
+> "Existing report(s) detected. New report will be created as: `<timestamped_filename>`"
+
 Present the resolved `output_path` and request approval:
 
 ```json
@@ -159,7 +162,7 @@ Present the resolved `output_path` and request approval:
 }
 ```
 
-If approved: create `output_dir` if absent; write the report.
+If approved: create `output_dir` if absent; write the report to the timestamped (or base) filename.
 If declined: return report content only; report `status: blocked`.
 
 The skill is complete when the **Devils Advocate Report** exists at `output_path` (or the user has declined the write) and the final status has been reported.
@@ -169,25 +172,14 @@ The skill is complete when the **Devils Advocate Report** exists at `output_path
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **read_file**: Load the spec file at `spec_path`. Use multi-pass reads for large files.
-- **file_search**: Check whether a prior report exists at the target output path during Preflight.
-- **vscode_askQuestions**: Resolve missing `spec_path`, confirm overwrite of prior report, and gate the report write at Step 5.
+- **file_search**: Check whether prior reports exist at the target output path during Preflight to determine the filename (base or timestamped).
+- **vscode_askQuestions**: Resolve missing `spec_path` and gate the report write at Step 5.
 - **create_file**: Write the approved report to disk at Step 5 only — never before approval.
 - Do NOT use tools not listed here unless the skill explicitly escalates.
 </tools>
 
 <!-- SECTION 6: Output format -->
 <output_format>
-
-**Standard Field Table**:
-
-| Field | Value |
-|-------|-------|
-| status | `ok` \| `blocked` \| `fail` |
-| skill_id | `spec-devils-advocate` |
-| wave | `N` |
-| step | `N.M` |
-| output_path | path to report or `null` |
-| summary | one-line summary of top risk finding |
 
 **Devils Advocate Report**: Report follows the template at `ai/plugins/spec-flow/templates/devils-advocate-template.md`.
 
@@ -196,13 +188,18 @@ The skill is complete when the **Devils Advocate Report** exists at `output_path
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: spec_path = "project/spec.md", output_dir = "project/devils-advocate/", user_focus = "focus on security risks"
+Input: spec_path = "project/spec.md", output_dir = "project/devils-advocate/", user_focus = "focus on security risks" — no prior reports exist.
 Expected behavior: Reads spec.md in full using multi-pass reads. Builds risk models, biasing Pass C and Pass H toward security. Runs all detection passes. Composes Devils Advocate Report with Executive Warning, Critical Failure Points table, and ranked top-5 failure causes. Presents "project/devils-advocate/devils-advocate-report.md" for approval. On approval writes the report. Returns status: ok, output_path: "project/devils-advocate/devils-advocate-report.md", summary: "7 CRITICAL findings; top risk: no auth failure recovery path".
 </example>
 
 <example>
+Input: spec_path = "project/spec.md", output_dir = "project/devils-advocate/" — a prior "devils-advocate-report.md" already exists.
+Expected behavior: Detects prior report, generates timestamped filename ("devils-advocate-report-2026-05-20T14-30-15.md"). Reads spec.md, runs all detection passes, composes report, presents new timestamped path for approval. On approval writes to the timestamped file, preserving the existing version.
+</example>
+
+<example>
 Input: spec_path = "project/spec.md" — no output_dir or user_focus provided
-Expected behavior: Derives output_dir as "project/devils-advocate/". Reads spec.md. Checks for prior report — finds none. Runs all detection passes without focus bias. Composes report, presents path for approval, writes on approval. Returns status: ok.
+Expected behavior: Derives output_dir as "project/devils-advocate/". Reads spec.md. Checks for prior reports — finds none. Runs all detection passes without focus bias. Composes report, presents path for approval, writes on approval. Returns status: ok.
 </example>
 
 <example type="counter">
