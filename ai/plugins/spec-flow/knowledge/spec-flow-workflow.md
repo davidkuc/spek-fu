@@ -20,6 +20,8 @@ spec-tdd-draft
 spec-technical-draft
       ↓
 spec-tasks-draft
+      ↓
+spec-implement
 ```
 
 ---
@@ -86,6 +88,14 @@ spec-tasks-draft
 
 ---
 
+### 8. spec-implement
+- **Purpose**: Execute the implementation plan by processing all tasks in `tasks.md` phase by phase, with checklist gate verification, TDD sequencing, and progress tracking.
+- **Input**: `FEATURE_DIR` containing `tasks.md` and optional design artifacts (`plan.md`, `data-model.md`, `contracts/`, `research.md`, `quickstart.md`).
+- **Output**: Implemented codebase changes; each completed task marked `[X]` in `FEATURE_DIR/tasks.md`.
+- **Status**: Required — final execution step; produces the working implementation.
+
+---
+
 ## Artifact Map
 
 | Step | Skill | Output Artifact |
@@ -97,3 +107,4 @@ spec-tasks-draft
 | 5 | spec-tdd-draft | `FEATURE_DIR/tdd-designer/report.md` |
 | 6 | spec-technical-draft | `FEATURE_DIR/technical-design.md` |
 | 7 | spec-tasks-draft | `FEATURE_DIR/tasks.md` |
+| 8 | spec-implement | Implemented codebase; `FEATURE_DIR/tasks.md` (all tasks `[X]`) |

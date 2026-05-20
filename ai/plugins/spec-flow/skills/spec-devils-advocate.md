@@ -53,7 +53,7 @@ If `env` is `host`: no additional action required.
 
 ## Operational Anchors
 - Treat every implicit assumption as a credible risk — flag it.
-- Apply each detection pass independently and exhaustively — cap findings at 50 high-signal items across all passes.
+- Apply each detection pass independently and exhaustively — cap findings at `maxFindings` (from config, default 50) high-signal items across all passes.
 - Do not propose solutions unless the caller explicitly requests remediation after the report is produced.
 
 ## Branch Detection
@@ -76,6 +76,14 @@ If `env` is `host`: no additional action required.
 **Source**: Provided by the calling agent, orchestrator, or user directly.
 
 ## Preflight
+
+Read `ai/plugins/spec-flow/skills/config.json` using `read_file`. Extract the `spec-devils-advocate` key and read the following field, applying the default for an absent value:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `maxFindings` | `50` | Maximum high-signal findings to surface across all detection passes |
+
+> **If the config file cannot be read or the `spec-devils-advocate` key is absent**: apply the default and proceed.
 
 Confirm `spec_path` is provided and the file exists.
 
@@ -115,7 +123,7 @@ These models are used internally to guide detection — they do not appear verba
 
 ## Step 3 — Run detection passes
 
-Apply each pass independently. Cap total findings at 50 high-signal items across all passes.
+Apply each pass independently. Cap total findings at `maxFindings` (from config, default 50) high-signal items across all passes.
 
 **Pass A — Hidden Assumptions**: Unstated dependencies, implicit infrastructure expectations, silent performance assumptions, assumed user behaviors, assumed third-party reliability, assumed scalability, assumed team capability.
 

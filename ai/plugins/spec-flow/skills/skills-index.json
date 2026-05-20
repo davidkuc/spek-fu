@@ -186,6 +186,32 @@
       "anti-scope": "Does not create new spec files, produce implementation plans, or make code changes. For spec drafting use spec-feature-draft; for adversarial review use spec-devils-advocate.",
       "name": "spec-clarification",
       "recommended-tier": "standard-agent"
+    },
+    {
+      "id": "spec-implement",
+      "type": "file",
+      "description": "Executes a targeted phase (or explicit set of phases) from tasks.md, with checklist gate verification and progress tracking. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, or making architectural changes outside the task plan.",
+      "path": "ai/plugins/spec-flow/skills/spec-implement.md",
+      "version": 1.0,
+      "tags": [
+        "implementation",
+        "specification",
+        "tasks",
+        "build"
+      ],
+      "inputs": [
+        "Feature context or arguments from the user or orchestrator (optional)",
+        "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
+      ],
+      "outputs": [
+        "Implemented codebase changes per tasks.md, with each completed task marked [X] in tasks.md",
+        "Execution status: ok, blocked, or fail",
+        "Implementation summary: phases completed, tasks executed, build and test results"
+      ],
+      "dispatch-variant": "full",
+      "anti-scope": "Does not generate tasks, draft specs, modify design artifacts, or make architectural decisions beyond what tasks.md specifies. For task generation, use spec-tasks-draft. For single-task execution without orchestration, use impl-implement.",
+      "name": "spec-implement",
+      "recommended-tier": "standard-agent"
     }
   ]
 }
