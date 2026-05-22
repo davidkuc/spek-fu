@@ -1,31 +1,18 @@
 # Devils Advocate Report
 
 ## Executive Warning
-[Blunt, pessimistic 2–4 sentence summary of how this project could realistically fail.]
+[Blunt, pessimistic 2–4 sentence summary of how this project could realistically fail. NO risk details here.]
 
 ---
 
-## Critical Failure Points
+## Risk Register
+[The single canonical list. Every risk appears exactly once.]
 
-| ID | Category | Severity | Spec Location | Failure Mode | Why It's Dangerous |
-|----|----------|----------|---------------|--------------|-------------------|
+| ID | Severity | Category | Spec Location | Failure Mode | Trigger Conditions |
+|----|----------|----------|---------------|--------------|--------------------|
 
 Severity: CATASTROPHIC | CRITICAL | HIGH | MEDIUM | LOW
-
----
-
-## Assumption Collapse Risks
-[Ranked list of assumptions that, if wrong, cause disproportionate damage.]
-
----
-
-## Architectural Fragility Map
-[Components, decisions, or integrations at risk of cascading failure.]
-
----
-
-## Requirement Ambiguities
-[Vague terms, unmeasurable criteria, conflicting or missing requirements.]
+Category: ASSUMPTION | ARCHITECTURE | REQUIREMENT | OPERATIONAL | SECURITY
 
 ---
 
@@ -34,14 +21,10 @@ Severity: CATASTROPHIC | CRITICAL | HIGH | MEDIUM | LOW
 
 ---
 
-## Worst-Case Scenario Analysis
-[Three to five simulations showing collapse paths under stress conditions.]
-
----
-
-## If This Project Fails, It Will Likely Be Because
-1. [Most probable failure cause]
-2. [Second]
-3. [Third]
-4. [Fourth]
-5. [Fifth]
+## Top 5 Failure Causes
+[Reference Risk Register IDs only. Do not restate risk details.]
+1. -> R-001
+2. -> R-002
+3. -> R-003
+4. -> R-004
+5. -> R-005

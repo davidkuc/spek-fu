@@ -11,8 +11,8 @@
 
 ## 2. Requirement-Level Testability
 
-| Requirement Key | Testable? | Why / Why Not | Required Change |
-| --------------- | --------- | ------------- | --------------- |
+| Requirement Key | Verifiability | Why / Why Not | Required Change |
+| --------------- | -------------- | ------------- | --------------- |
 
 ---
 
@@ -37,12 +37,15 @@ Identify: missing dependency injection, concrete-bound abstractions, global stat
 
 ---
 
-## 5. Structural Risk Findings
+## 5. Risk Findings
 
-| ID | Severity | Category | Location | Problem | Structural Fix |
-| -- | -------- | -------- | -------- | ------- | -------------- |
+| ID | Severity | Verifiability | Controllability | Isolation | Location | Problem | Required Change |
+| -- | -------- | ------------- | ---------------- | --------- | -------- | ------- | --------------- |
 
 Severity: `CRITICAL` (not testable) | `HIGH` (brittle/flaky risk) | `MEDIUM` (expensive) | `LOW` (improvement opportunity)
+Verifiability: `DIRECTLY TESTABLE` | `CONDITIONALLY TESTABLE` | `NON-TESTABLE` | `UNDEFINED`
+Controllability: `HIGH CONTROL` | `MEDIUM CONTROL` | `LOW CONTROL` | `ZERO CONTROL`
+Isolation: `HIGH ISOLATION` | `MEDIUM ISOLATION` | `LOW ISOLATION` | `ZERO ISOLATION`
 
 Limit to `maxFindings` findings from config (default 40). Summarize overflow.
 
@@ -56,22 +59,6 @@ State explicitly:
 - Integration boundaries
 - Contract testing necessity
 - E2E test scope
-
----
-
-## 7. What Is Currently Impossible to Test
-[Bullet list. No soft language.]
-
----
-
-## 8. What Must Change to Achieve High Testability
-
-Categorized:
-- Architectural Changes
-- Code Structure Changes
-- Requirement Rewrites
-- Instrumentation Additions
-- CI/CD Enhancements
 
 ---
 

@@ -34,4 +34,4 @@ version: 1.0
 | Implementation | `impl` | — | Code execution and direct problem solving — implement, build, test, verify, and report results | |
 | Meta/Framework | `meta` | — | Skill and agent lifecycle, framework maintenance, syncing, documentation upkeep, and knowledge management | |
 | Orchestration | `orch` | — | Orchestration-core skills required for framework routing, pattern selection, execution validation, verification, reporting, and cleanup | |
-| Specification | `spec` | 3 | Specification creation, review, adversarial analysis, and spec quality skills | `spec-testability-draft`, `spec-tdd-draft`, `spec-clarification` |
+| Specification | `spec` | —  | Specification creation, review, adversarial analysis, and spec quality skills | `spec-testability-draft`, `spec-tdd-draft`, `spec-clarification`, `spec-feature-analysis` |

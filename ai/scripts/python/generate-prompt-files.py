@@ -3,7 +3,9 @@
 generate-prompt-files.py
 
 Discovers all plugins under ai/plugins/, reads their skills-index.json files,
-and generates one .prompt.md file per skill entry in .github/prompts/.
+and generates one .prompt.md file per user-facing skill entry in .github/prompts/.
+User-facing skills are all skills EXCEPT those whose id starts with a prefix
+listed in EXCLUDED_PREFIXES (currently "orch-" and "impl-").
 
 Usage: python3 ai/scripts/python/generate-prompt-files.py
 Run from the workspace root: /workspaces/spek-fu/
@@ -17,6 +19,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
+
+# Skills whose id starts with any of these prefixes are internal-dispatch-only
+# and are NOT exposed as slash commands. All other skills are user-facing.
+EXCLUDED_PREFIXES = ("orch-", "impl-")
 
 
 def build_frontmatter(entry: dict) -> str:
@@ -100,18 +106,14 @@ def main() -> int:
         print("WARNING: No skills found in any plugin.")
         return 0
 
-    # Only gov-*, meta-*, and spec-* skills are user-facing slash commands.
-    # orch-* and impl-* are internal-dispatch-only skills and are not exposed as prompts.
+    # All skills are user-facing slash commands EXCEPT orch-* and impl-*.
+    # See EXCLUDED_PREFIXES at the top of this file.
     count = 0
     for entry in all_skills:
         skill_id = entry.get("id", "")
         if not skill_id:
             continue
-        if not (
-            skill_id.startswith("gov-")
-            or skill_id.startswith("meta-")
-            or skill_id.startswith("spec-")
-        ):
+        if any(skill_id.startswith(prefix) for prefix in EXCLUDED_PREFIXES):
             continue
         try:
             generate_prompt_file(entry, output_dir)

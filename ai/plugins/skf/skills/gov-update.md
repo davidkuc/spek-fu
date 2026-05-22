@@ -2,7 +2,7 @@
 id: "gov-update"
 recommended-tier: "fast-agent"
 version: 1.0
-description: "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes."
+description: "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py followed by sync-index-files.py --check. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes."
 anti-scope: "Does NOT perform analysis, modify source code, or touch iteration in-progress files."
 tags:
   - "governance"
@@ -17,7 +17,7 @@ inputs:
 outputs:
   - "Count of changes applied/skipped"
   - "Governance update summary"
-  - "Index sync script output"
+  - "Index sync and validation script output"
 dispatch-variant: "full"
 ---
 
@@ -25,7 +25,7 @@ dispatch-variant: "full"
 
 # Skill: gov-update
 
-Reads a list of changed files or an orchestration plan, reasons about which governance files need updating, proposes each change for approval, applies approved changes, and always finishes by running `sync-index-files.py`.
+Reads a list of changed files or an orchestration plan, reasons about which governance files need updating, proposes each change for approval, applies approved changes, and always finishes by running `sync-index-files.py` followed by `sync-index-files.py --check`.
 
 **Permitted write targets**: `constitution/`, `project/`, `ai/`, `.github/`. No writes outside these folders, ever.
 
@@ -51,7 +51,7 @@ Reads a list of changed files or an orchestration plan, reasons about which gove
 <workflow>
 
 ## Done condition
-All approved changes applied and `sync-index-files.py` has run successfully.
+All approved changes applied, `sync-index-files.py` has run successfully, and `sync-index-files.py --check` reports no drift.
 
 ---
 
@@ -106,7 +106,7 @@ Use `multiSelect: true` when there are more than 5 changes.
 
 For each approved change, apply it using `replace_string_in_file`, `create_file`, or `multi_replace_string_in_file`.
 
-## Step 5: Run index sync
+## Step 5: Run index sync and drift check
 
 Run from the workspace root:
 
@@ -114,7 +114,13 @@ Run from the workspace root:
 python3 ai/scripts/python/sync-index-files.py
 ```
 
-Capture and include the script output in the summary. If the script exits non-zero, report the error and flag `index-sync: failed` in the summary.
+Then immediately validate the synced result:
+
+```
+python3 ai/scripts/python/sync-index-files.py --check
+```
+
+Capture and include both script outputs in the summary. If either command exits non-zero, report the error, flag the failure in the summary, and stop — `/gov-update` must not complete successfully while index drift remains.
 
 Always also run `generate-prompt-files.py` to regenerate `.github/prompts/` for gov-* and meta-* skills only (idempotent — safe to run unconditionally):
 
@@ -148,8 +154,13 @@ Changes skipped:  {n}
 - {file}: {reason}
 
 ### Index Sync
+sync:
 {script stdout/stderr or error message}
 index-sync: {ok | failed}
+
+check:
+{script stdout/stderr or error message}
+index-check: {ok | failed}
 ```
 </output_format>
 
@@ -157,5 +168,5 @@ index-sync: {ok | failed}
 - NEVER write outside `constitution/`, `project/`, `ai/`, `.github/`.
 - NEVER skip the per-change approval gate.
 - NEVER sync indexes manually — always use `sync-index-files.py`.
-- ALWAYS run the sync script last, even if zero governance changes were applied.
+- ALWAYS run the sync script and the `--check` validation last, even if zero governance changes were applied.
 </reminders>

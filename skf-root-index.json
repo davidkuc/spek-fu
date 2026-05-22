@@ -10,12 +10,6 @@
       "path": "README.md"
     },
     {
-      "name": "context.md",
-      "type": "file",
-      "description": "Working context artifact for session management",
-      "path": "context.md"
-    },
-    {
       "name": "skf-config.json",
       "type": "file",
       "description": "Root environment mode for host vs devcontainer detection",
@@ -66,6 +60,30 @@
       "type": "file",
       "description": "",
       "path": "export.md"
+    },
+    {
+      "name": "features",
+      "type": "folder",
+      "description": "",
+      "path": "features/"
+    },
+    {
+      "name": "spec-flow-consolidated-plan.md",
+      "type": "file",
+      "description": "",
+      "path": "spec-flow-consolidated-plan.md"
+    },
+    {
+      "name": "spec-flow-remediation-report.md",
+      "type": "file",
+      "description": "",
+      "path": "spec-flow-remediation-report.md"
+    },
+    {
+      "name": "speckit.analyze.agent.md",
+      "type": "file",
+      "description": "",
+      "path": "speckit.analyze.agent.md"
     }
   ]
 }

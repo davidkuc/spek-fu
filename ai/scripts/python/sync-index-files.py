@@ -11,11 +11,13 @@ For each registered *-index.json, scans the corresponding folder and:
 
 Usage:
     python3 ai/scripts/python/sync-index-files.py
+    python3 ai/scripts/python/sync-index-files.py --check
     python3 ai/scripts/python/sync-index-files.py --dry-run
     python3 ai/scripts/python/sync-index-files.py --index constitution/constitution-index.json
     python3 ai/scripts/python/sync-index-files.py --verbose
 
 Options:
+    --check       Validate index drift without writing any files.
     --dry-run     Report changes without writing any files.
     --index PATH  Sync only the specified index file (path relative to repo root).
     --verbose     Print all processed entries, not just additions and removals.
@@ -428,7 +430,7 @@ def build_skills_entry(
         "outputs": _get("outputs", []),
         "dispatch-variant": _get("dispatch-variant", ""),
         "anti-scope": _get("anti-scope", ""),
-        "name": ex.get("name", skill_id),  # "name" mirrors "id" in existing entries
+        "name": skill_id,
         "recommended-tier": _get("recommended-tier", ""),
     }
 
@@ -518,6 +520,193 @@ BUILDERS: dict[str, Any] = {
     "prompts":  build_prompts_entry,
     "agents":   build_agents_entry,
 }
+
+SKILL_INDEX_FIELDS: tuple[str, ...] = (
+    "id",
+    "description",
+    "path",
+    "version",
+    "tags",
+    "inputs",
+    "outputs",
+    "dispatch-variant",
+    "anti-scope",
+    "name",
+    "recommended-tier",
+)
+
+
+def _format_issue_value(value: Any) -> str:
+    """Return a stable single-value representation for validation reports."""
+    return common.format_json_output(value)
+
+
+def _expected_skill_entry(folder: str, name: str, is_dir: bool) -> dict[str, Any]:
+    """Return the deterministic skill entry derived from disk + frontmatter."""
+    return build_skills_entry(folder, name, is_dir, None)
+
+
+def validate_index(spec: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate one index file against disk and source frontmatter."""
+    index_rel = spec["index_file"]
+    folder = spec["folder"]
+    excluded = spec["excluded"]
+    builder_name = spec["builder"]
+    index_path = REPO_ROOT / index_rel
+
+    current = common.load_json_file(index_path)
+    existing_children: list[dict[str, Any]] = current.get("children", [])
+    disk_items = scan_folder(folder, excluded, index_path.name)
+
+    disk_path_to_name: dict[str, str] = {
+        child_rel_path(folder, name, is_dir): name
+        for name, is_dir in disk_items.items()
+    }
+    disk_path_to_isdir: dict[str, bool] = {
+        child_rel_path(folder, name, is_dir): is_dir
+        for name, is_dir in disk_items.items()
+    }
+    disk_paths = set(disk_path_to_name)
+    indexed_paths = {entry.get("path", "") for entry in existing_children if "path" in entry}
+
+    issues: list[dict[str, Any]] = []
+
+    for entry in existing_children:
+        path = entry.get("path", "")
+        if not path:
+            continue
+
+        if path not in disk_paths:
+            issues.append({
+                "kind": "missing-source",
+                "index": index_rel,
+                "path": path,
+                "message": "Indexed path is missing on disk.",
+            })
+            continue
+
+        if builder_name != "skills" or entry.get("type") != "file":
+            continue
+
+        name = disk_path_to_name[path]
+        is_dir = disk_path_to_isdir[path]
+        expected = _expected_skill_entry(folder, name, is_dir)
+        field_diffs: list[dict[str, Any]] = []
+
+        for field in SKILL_INDEX_FIELDS:
+            actual_value = entry.get(field)
+            expected_value = expected.get(field)
+            if actual_value != expected_value:
+                field_diffs.append({
+                    "field": field,
+                    "index": actual_value,
+                    "source": expected_value,
+                })
+
+        if field_diffs:
+            issues.append({
+                "kind": "frontmatter-drift",
+                "index": index_rel,
+                "path": path,
+                "message": "Indexed skill metadata disagrees with source frontmatter.",
+                "diffs": field_diffs,
+            })
+
+    for orphan_path in sorted(disk_paths - indexed_paths):
+        issues.append({
+            "kind": "orphan-file",
+            "index": index_rel,
+            "path": orphan_path,
+            "message": "Filesystem entry has no index entry.",
+        })
+
+    return issues
+
+
+def validate_skill_id_collisions(catalog: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return all duplicate skill IDs found across skill indexes."""
+    locations_by_id: dict[str, list[dict[str, str]]] = {}
+
+    for spec in catalog:
+        if spec["builder"] != "skills":
+            continue
+
+        index_rel = spec["index_file"]
+        current = common.load_json_file(REPO_ROOT / index_rel)
+        for entry in current.get("children", []):
+            if entry.get("type") != "file":
+                continue
+            skill_id = entry.get("id")
+            path = entry.get("path")
+            if not skill_id or not path:
+                continue
+            locations_by_id.setdefault(skill_id, []).append({
+                "index": index_rel,
+                "path": path,
+            })
+
+    issues: list[dict[str, Any]] = []
+    for skill_id, locations in sorted(locations_by_id.items()):
+        if len(locations) < 2:
+            continue
+        issues.append({
+            "kind": "skill-id-collision",
+            "skill_id": skill_id,
+            "message": "Skill ID is duplicated across skill indexes.",
+            "locations": locations,
+        })
+    return issues
+
+
+def validate_catalog(catalog: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Validate all requested indexes and return accumulated issues."""
+    issues: list[dict[str, Any]] = []
+
+    for spec in catalog:
+        try:
+            issues.extend(validate_index(spec))
+        except FileNotFoundError as exc:
+            issues.append({
+                "kind": "missing-index",
+                "index": spec["index_file"],
+                "message": str(exc),
+            })
+        except Exception as exc:
+            issues.append({
+                "kind": "validation-error",
+                "index": spec["index_file"],
+                "message": str(exc),
+            })
+
+    issues.extend(validate_skill_id_collisions(catalog))
+    return issues
+
+
+def print_validation_report(issues: list[dict[str, Any]]) -> None:
+    """Print validation issues in a readable, diff-oriented format."""
+    if not issues:
+        print("\nValidation passed: no index drift detected.")
+        return
+
+    print("\nValidation failed:")
+    for issue in issues:
+        kind = issue["kind"]
+        if kind == "frontmatter-drift":
+            print(f"  [DRIFT] {issue['index']} :: {issue['path']}")
+            for diff in issue["diffs"]:
+                print(f"    field: {diff['field']}")
+                print(f"      index : {_format_issue_value(diff['index'])}")
+                print(f"      source: {_format_issue_value(diff['source'])}")
+        elif kind == "skill-id-collision":
+            print(f"  [COLLISION] skill id '{issue['skill_id']}'")
+            for location in issue["locations"]:
+                print(f"    - {location['index']} :: {location['path']}")
+        else:
+            label = issue.get("index", "<unknown-index>")
+            path = issue.get("path")
+            suffix = f" :: {path}" if path else ""
+            print(f"  [{kind.upper()}] {label}{suffix}")
+            print(f"    {issue['message']}")
 
 
 # ── Core sync ───────────────────────────────────────────────────────────────────
@@ -639,6 +828,11 @@ def main() -> int:
         epilog=__doc__,
     )
     parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Validate index drift without writing any files",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Report changes without writing any files",
@@ -670,26 +864,33 @@ def main() -> int:
     total_added = total_removed = total_unchanged = 0
     failures = 0
 
-    for spec in catalog:
-        label = spec["index_file"]
-        print(f"\nSyncing {label} ...")
-        ok, added, removed, unchanged = sync_index(spec, args.dry_run, args.verbose)
-        if not ok:
-            failures += 1
-            continue
-        total_added    += added
-        total_removed  += removed
-        total_unchanged += unchanged
-        action = "DRY" if args.dry_run else "DONE"
-        print(f"  [{action}] +{added} added  -{removed} removed  {unchanged} unchanged")
+    if not args.check:
+        for spec in catalog:
+            label = spec["index_file"]
+            print(f"\nSyncing {label} ...")
+            ok, added, removed, unchanged = sync_index(spec, args.dry_run, args.verbose)
+            if not ok:
+                failures += 1
+                continue
+            total_added += added
+            total_removed += removed
+            total_unchanged += unchanged
+            action = "DRY" if args.dry_run else "DONE"
+            print(f"  [{action}] +{added} added  -{removed} removed  {unchanged} unchanged")
 
-    mode_note = " (dry-run)" if args.dry_run else ""
-    print(
-        f"\nTotal{mode_note}: +{total_added} added  -{total_removed} removed  "
-        f"{total_unchanged} unchanged  across {len(catalog)} index(es)."
-    )
+        mode_note = " (dry-run)" if args.dry_run else ""
+        print(
+            f"\nTotal{mode_note}: +{total_added} added  -{total_removed} removed  "
+            f"{total_unchanged} unchanged  across {len(catalog)} index(es)."
+        )
+
+    issues = validate_catalog(catalog)
+    print_validation_report(issues)
+
     if failures:
         print(f"  {failures} index(es) failed.", file=sys.stderr)
+        return 1
+    if issues:
         return 1
     return 0
 

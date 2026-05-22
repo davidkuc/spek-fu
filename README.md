@@ -79,6 +79,7 @@ Two complementary databases feed the orchestration cycle:
 | **Direct commands** | `/` slash commands | Use when operation is already well-defined |
 | **Framework changes** | `/gov-update` | Run after adding/renaming/removing artifacts |
 | **Custom plugin** | `create-plugin.py` + `/gov-update` | Scaffold plugin, add skills, sync index |
+| **Plugin skills** | `/` slash commands | Every user-facing skill from any registered plugin is available as a slash command |
 
 See [Using Skills as Slash Commands](#using-skills-as-slash-commands) and [Creating a Custom Plugin](#creating-a-custom-plugin) for detailed guidance.
 
@@ -104,6 +105,8 @@ Syncs all `*-index.json` files with the actual filesystem state:
 - Extracts frontmatter data
 - Preserves existing descriptions
 
+Recommended pre-commit check: `python3 ai/scripts/python/sync-index-files.py --check`.
+
 Run after adding, renaming, or removing any indexed framework artifact.
 
 **Linux/macOS (bash):**
@@ -119,8 +122,9 @@ python ai/scripts/python/sync-index-files.py
 ---
 
 **`generate-prompt-files.py`**  
-Generates `.prompt.md` files (one per `gov-` or `meta-` skill) in `.github/prompts/`.  
-Run after creating or modifying a `gov-` or `meta-` skill.
+Generates `.prompt.md` files (one per user-facing skill across all registered plugins) in `.github/prompts/`.  
+User-facing skills are all skills except those starting with `orch-` or `impl-`.  
+Run after creating or modifying any user-facing skill, or after adding a new plugin.
 
 **Linux/macOS (bash):**
 ```bash
@@ -481,7 +485,7 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ├── .github/
 │   ├── copilot-instructions.md      # Bootstrap Copilot context — SSOT pointers only
 │   ├── agents/                      # Canonical agent definitions used by VS Code chat
-│   └── prompts/                     # Canonical slash commands (gov-* and meta-* only)
+│   └── prompts/                     # Canonical slash commands (all plugin skills except orch-* and impl-*)
 └── .vscode/
     └── settings.json                # VS Code configuration
 ```
@@ -502,8 +506,11 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 |-------|---------|----------|
 | **`meta-`** | Framework lifecycle & maintenance | ✅ Slash commands |
 | **`gov-`** | Governance changes w/ approval | ✅ Slash commands |
+| **`spec-`** | Feature specification pipeline | ✅ Slash commands |
 | **`orch-`** | Orchestration & cross-skill services | Internal only |
 | **`impl-`** | Code execution & implementation | Internal only |
+
+> Any skill not starting with `orch-` or `impl-` is automatically available as a slash command, regardless of plugin or prefix.
 
 
 ### Patterns
@@ -552,7 +559,7 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ### Commands
 
 **Commands** are VS Code slash commands (`.prompt.md` files) providing direct user-facing entry points:
-- Only `gov-` and `meta-` skills exposed
+- All skills exposed as slash commands except `orch-` and `impl-` (internal dispatch only)
 - Stored in `.github/prompts/`
 
 📌 **Authoritative inventory:** `.github/prompts/prompts-index.json`

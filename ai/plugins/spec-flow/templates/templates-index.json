@@ -10,10 +10,10 @@
       "path": "ai/plugins/spec-flow/templates/devils-advocate-template.md"
     },
     {
-      "name": "spec-technical-template.md",
+      "name": "spec-technical-plan-template.md",
       "type": "file",
       "description": "Implementation plan scaffold covering technical summary, constitution check, project structure, and complexity tracking",
-      "path": "ai/plugins/spec-flow/templates/spec-technical-template.md"
+      "path": "ai/plugins/spec-flow/templates/spec-technical-plan-template.md"
     },
     {
       "name": "quickstart-template.md",
@@ -44,6 +44,12 @@
       "type": "file",
       "description": "TDD Implementation Design Report scaffold covering Test Inventory Summary, Formalized TDD Test Specifications, Coverage Mapping, Ambiguities and Design Holes, Architectural Risk Signals, Incremental TDD Implementation Plan, and Final Verdict",
       "path": "ai/plugins/spec-flow/templates/tdd-report-template.md"
+    },
+    {
+      "name": "feature-analysis-template.md",
+      "type": "file",
+      "description": "Feature Analysis Report scaffold covering Readiness Verdict, Artifact Inventory, Staleness Signals, [NEEDS CLARIFICATION] Marker Counts, Tasks Summary, Consistency Findings, and Next Actions",
+      "path": "ai/plugins/spec-flow/templates/feature-analysis-template.md"
     }
   ]
 }

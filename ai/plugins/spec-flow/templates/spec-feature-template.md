@@ -61,6 +61,23 @@ Example:
 
 ---
 
+### Assumptions
+<!--
+INFORMED GUESSES made during spec authoring where the input was ambiguous or incomplete.
+Every choice made without explicit user input MUST be recorded here.
+Format: "[ASSUMPTION: <what was assumed and why>]"
+
+Examples:
+  [ASSUMPTION: users are already authenticated when reaching this feature — no login flow described in input]
+  [ASSUMPTION: file size limit set to 10 MB based on industry standard; no explicit limit provided]
+
+Leave blank only if the feature description contained zero ambiguities.
+-->
+
+- [ASSUMPTION: ...]
+
+---
+
 ### Core Flows
 <!--
 MAJOR WORKFLOWS and the breakdown of the feature at concept level.

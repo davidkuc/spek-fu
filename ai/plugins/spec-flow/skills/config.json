@@ -3,16 +3,16 @@
     "maxQuestionsPerLoop": 5,
     "maxLoops": 10,
     "questionMode": "sequential",
-    "totalQuestionBudget": 10
+    "totalQuestionBudget": 20
   },
   "spec-feature-draft": {
     "maxNeedsClariMarkers": 10
   },
   "spec-devils-advocate": {
-    "maxFindings": 50
+    "maxFindings": 100
   },
   "spec-testability-draft": {
-    "maxFindings": 40
+    "maxFindings": 100
   },
   "spec-implement": {
     "maxFixCycles": 3

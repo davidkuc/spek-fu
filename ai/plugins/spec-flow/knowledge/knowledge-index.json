@@ -6,13 +6,37 @@
     {
       "name": "branch-detection.md",
       "type": "file",
-      "description": "Canonical Branch Detection procedure shared by all spec-flow skills. Resolves the active feature directory from the current git branch, with notes for the spec_path and SPECS_DIR variants.",
+      "description": "Canonical Branch Detection procedure shared by all spec-flow skills. Resolves feature-dir or spec-file from the active git branch when no explicit path is supplied.",
       "path": "ai/plugins/spec-flow/knowledge/branch-detection.md"
+    },
+    {
+      "name": "paginated-read.md",
+      "type": "file",
+      "description": "Canonical multi-pass read_file procedure for spec-flow skills. Use when reading any artifact that may exceed a single tool response.",
+      "path": "ai/plugins/spec-flow/knowledge/paginated-read.md"
+    },
+    {
+      "name": "needs-clarification-protocol.md",
+      "type": "file",
+      "description": "Canonical [NEEDS CLARIFICATION] marker syntax, placement, and propagation rules for spec-flow skills.",
+      "path": "ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md"
+    },
+    {
+      "name": "tech-stack-patterns.md",
+      "type": "file",
+      "description": "Canonical ignore-pattern and build/test discovery reference for spec-flow implementation skills.",
+      "path": "ai/plugins/spec-flow/knowledge/tech-stack-patterns.md"
+    },
+    {
+      "name": "skill-meta-rules.md",
+      "type": "file",
+      "description": "Shared operational meta-rules for spec-flow skills: obey constraints, stay in scope, and avoid unrequested behavior.",
+      "path": "ai/plugins/spec-flow/knowledge/skill-meta-rules.md"
     },
     {
       "name": "spec-flow-workflow.md",
       "type": "file",
-      "description": "Documents the 7-step spec-flow workflow chain, purpose of each skill, input/output artifact per step, required vs optional status, and the full artifact map",
+      "description": "Documents the 8-step spec-flow workflow chain, purpose of each skill, input/output artifact per step, required vs optional status, and the full artifact map",
       "path": "ai/plugins/spec-flow/knowledge/spec-flow-workflow.md"
     }
   ]

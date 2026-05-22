@@ -5,7 +5,7 @@ description: "Task list template for feature implementation"
 
 # Tasks: [FEATURE NAME]
 
-**Input**: Design documents from `FEATURE_DIR/`
+**Input**: Design documents from `feature-dir/`
 **Prerequisites**: spec.md (required), research.md or data-model.md (at least one required), quickstart.md, contracts/
 
 **Tests**: The examples below include test tasks. Tests are REQUIRED by the constitution unless the
@@ -19,6 +19,11 @@ Constitution Check).
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
+- Runtime task states:
+  - `- [ ]` = not started
+  - `- [X]` = completed
+  - `- [!]` = blocked after bounded retries; do not retry automatically without explicit user direction
+- Optional `@ref:` hints may be appended when a task depends on a specific design-artifact fragment, for example: `@ref: data-model.md#User-entity`
 
 ## Path Conventions
 
@@ -85,13 +90,13 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py @ref: contracts/[contract-file]
+- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py @ref: spec.md#user-story-1
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
+- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py @ref: data-model.md#[entity1]
+- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py @ref: data-model.md#[entity2]
 - [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
 - [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
 - [ ] T016 [US1] Add validation and error handling
@@ -109,12 +114,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 2 (DEFAULT) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py @ref: contracts/[contract-file]
+- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py @ref: spec.md#user-story-2
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
+- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py @ref: data-model.md#[entity]
 - [ ] T021 [US2] Implement [Service] in src/services/[service].py
 - [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
 - [ ] T023 [US2] Integrate with User Story 1 components (if needed)
@@ -131,12 +136,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Tests for User Story 3 (DEFAULT) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py @ref: contracts/[contract-file]
+- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py @ref: spec.md#user-story-3
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
+- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py @ref: data-model.md#[entity]
 - [ ] T027 [US3] Implement [Service] in src/services/[service].py
 - [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
 
@@ -247,7 +252,15 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
+- `[!]` means blocked after bounded retries; downstream dependent tasks should be skipped until the blocker is resolved
+- `@ref:` points to the authoritative design-artifact fragment the implementation skill should lazy-load when executing the task
 - Verify tests fail before implementing
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+
+---
+
+## Discovered Subtasks
+
+<!-- Leave this section empty on initial generation. spec-implement appends D### items here when new follow-up work is discovered during implementation. -->

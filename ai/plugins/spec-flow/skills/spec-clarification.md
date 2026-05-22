@@ -2,7 +2,7 @@
 id: "spec-clarification"
 recommended-tier: "standard-agent"
 version: 1.0
-description: "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers and writing to disk only after explicit user approval. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes."
+description: "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers in an in-memory Answer Buffer and writing them to the spec file after the question loop completes. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes."
 anti-scope: "Does not create new spec files, produce implementation plans, or make code changes. For spec drafting use spec-feature-draft; for adversarial review use spec-devils-advocate."
 tags:
   - "specification"
@@ -11,11 +11,12 @@ tags:
   - "quality"
 inputs:
   - "spec-file: workspace-relative path to the spec.md file to clarify — resolved from feature branch if absent (optional)"
-  - "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
+  - "config-path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Execution status: ok, blocked, or fail"
   - "Updated spec file at the resolved `spec-file` path with all clarifications encoded through sequential approved edits"
+  - "Short chat summary: 2–4 sentence plain-prose recap of what was clarified and any outstanding gaps"
   - "Completion report: passes completed, questions asked, sections touched, coverage summary table, suggested next command"
 dispatch-variant: "full"
 ---
@@ -25,20 +26,19 @@ dispatch-variant: "full"
 # Skill: spec-clarification
 
 <!-- SECTION 1: Identity (primacy position) -->
-Conducts a structured ambiguity and coverage scan on a feature specification file, identifies critical gaps across a taxonomy of nine specification categories, and resolves them through a configurable multi-pass interactive questioning loop. All accepted answers are accumulated in an **Answer Buffer** during the loop; nothing is written to disk until the user explicitly approves the complete set at the approval gate. Multiple passes allow each round of accepted answers to inform the next ambiguity scan, progressively narrowing the set of unresolved questions. Runtime parameters (questions per loop, number of loops, presentation mode, total budget) are loaded from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key rather than supplied as inline inputs.
+Conducts a structured ambiguity and coverage scan on a feature specification file, identifies critical gaps across a taxonomy of ten specification categories, and resolves them through a configurable multi-pass interactive questioning loop. All accepted answers are accumulated in an in-memory **Answer Buffer** during the loop; the full set is written to the spec file after the question loop completes. Multiple passes allow each round of accepted answers to inform the next ambiguity scan, progressively narrowing the set of unresolved questions. Runtime parameters (questions per loop, number of loops, presentation mode, total budget) are loaded from `ai/plugins/spec-flow/skills/config.json` under the `spec-clarification` key rather than supplied as inline inputs.
 
 **Scope boundary**: This skill clarifies an existing feature spec only. It does NOT draft new spec files, produce implementation plans, or make code changes.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. NEVER write to the spec file during the questioning loop — accumulate all answers in the **Answer Buffer** ONLY — WHY: deferred writes keep the approval gate meaningful; a partially written spec cannot be coherently reviewed before the user has seen all answers together.
-2. NEVER write to the spec file without explicit user approval at the Step 5 approval gate — ONLY write after the gate returns "Approve all" — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-3. NEVER write to the spec file without confirming the resolved `spec-file` path from Branch Detection or explicit `spec-file` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
-4. NEVER ask more questions per pass than `maxQuestionsPerLoop`, and never exceed `totalQuestionBudget` across all passes — WHY: exceeding the configured budget wastes user attention and signals that the spec is too underspecified for clarification alone.
-5. NEVER reveal future queued questions in advance — WHY: sequential questioning preserves unbiased, independent user responses.
-6. ALWAYS insert `[NEEDS CLARIFICATION: <specific question>]` into the spec for any unresolved high-impact ambiguity that exceeds the question budget — WHY: downstream rework risk must remain visible even when the quota is exhausted.
-7. When `questionMode` is `sequential`, present EXACTLY ONE question at a time before processing its answer — WHY: batching in sequential mode produces rushed, lower-quality responses.
+1. NEVER write to the spec file during the questioning loop — accumulate all answers in the **Answer Buffer** ONLY — WHY: writing mid-loop produces an incoherent partial spec that cannot be reviewed as a whole before the session ends.
+2. NEVER write to the spec file without confirming the resolved `spec-file` path from Branch Detection or explicit `spec-file` input — confirm path FIRST — WHY: writing to the wrong path silently corrupts unrelated spec files.
+3. NEVER ask more questions per pass than `maxQuestionsPerLoop`, and never exceed `totalQuestionBudget` across all passes — WHY: exceeding the configured budget wastes user attention and signals that the spec is too underspecified for clarification alone.
+4. NEVER reveal future queued questions in advance — WHY: sequential questioning preserves unbiased, independent user responses.
+5. ALWAYS insert `[NEEDS CLARIFICATION: <specific question>]` into the spec for any unresolved high-impact ambiguity that exceeds the question budget — WHY: downstream rework risk must remain visible even when the quota is exhausted.
+6. When `questionMode` is `sequential`, present EXACTLY ONE question at a time before processing its answer — WHY: batching in sequential mode produces rushed, lower-quality responses.
 </constraints>
 
 <!-- SECTION 3: Behavioral anchors -->
@@ -48,11 +48,14 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelines.md` fully (follow multi-pass read if needed) and apply all devcontainer rules before proceeding to Step 1.
 If `env` is `host`: no additional action required.
 
+## Shared Knowledge
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
+- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading config, specs, or knowledge files.
+- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever creating, carrying, or resolving `[NEEDS CLARIFICATION]` markers.
+
 ## Operational Anchors
-- Before producing any output, verify your output complies with all rules in `<constraints>` above.
-- Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
 - If `spec-file` is absent, apply the **Branch Detection** procedure before calling `vscode_askQuestions`.
-- Detect run state before acting: if an **Answer Buffer** is already populated in context, offer to resume; otherwise start fresh. If a `## Clarifications` section already exists in the spec, count its existing bullets against `totalQuestionBudget` before starting the loop.
+- Detect run state before acting: if an **Answer Buffer** is already populated in context, offer to resume; otherwise start fresh. If a `## Clarifications` section already exists in the spec, do NOT decrement `totalQuestionBudget` based on its bullet count — each invocation receives the full budget.
 - During each pass's scan, treat all entries in the **Answer Buffer** as if they were already incorporated into the spec — this determines which gaps remain open.
 
 ## Branch Detection
@@ -66,20 +69,21 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `spec-file` and `config_path` from inputs. Apply default config path `ai/plugins/spec-flow/skills/config.json` if `config_path` is absent.
-- Confirm run state: fresh start or resume from populated **Answer Buffer** in context.
+- Resolve `spec-file` and `config-path` from inputs. Apply default config path `ai/plugins/spec-flow/skills/config.json` if `config-path` is absent.
+- Detect run state using the following two-branch check:
+  1. **No ambiguities**: if the spec exists and contains no empty taxonomy coverage gaps and no `[NEEDS CLARIFICATION]` markers, report `ok — no ambiguities found` and stop.
+  2. **Fresh start**: proceed through Steps 1–7.
 
 ## Done conditions
 
-- **Clarification complete**: spec file written to disk with all approved answers; completion report produced.
+- **Clarification complete**: spec file written to disk with all answers from the **Answer Buffer**; completion report produced.
 - **No ambiguities found**: all taxonomy categories are Clear after the first scan; completion report produced with suggestion to proceed to planning.
 - **Blocked**: spec file path cannot be resolved; blocked with instruction to run spec creation skill or supply `spec-file` directly.
-- **Cancelled at approval**: user declines at the approval gate; completion report produced with `output_path: null`; spec file unchanged.
 - **Early termination**: user signals stop during the loop; proceed to Step 5 with whatever is in the **Answer Buffer**.
 
 ## Step 1 — Load configuration
 
-Read the config file at the resolved `config_path` using `read_file`. Extract the `spec-clarification` key and read the following fields, applying defaults for any absent values:
+Read the config file at the resolved `config-path` using `read_file`. Extract the `spec-clarification` key and read the following fields, applying defaults for any absent values:
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
@@ -101,14 +105,15 @@ If `spec-file` is absent, apply the **Branch Detection** procedure from `ai/plug
 
 > **If the user provides a path**: use it as `spec-file` and proceed.
 > **If the user selects "Switch to a feature branch first" or declines**: stop, report `blocked`, and instruct the user to check out the feature branch and re-run.
+> **If `git branch --show-current` fails or returns empty** (not on a feature branch, git unavailable, or detached HEAD): stop, report `blocked — branch detection returned no match; check out the feature branch first and re-run`.
 
 ## Step 3 — Load spec file
 
-Read the spec file at the resolved `spec-file` path using multi-pass `read_file` calls until the response is shorter than the page size.
+Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load the spec file at the resolved `spec-file` path fully.
 
-Count any existing `## Clarifications` section bullets and subtract that count from `totalQuestionBudget`.
+Treat any existing `## Clarifications` section as a historical record only — do NOT decrement `totalQuestionBudget` based on its bullet count. Each invocation receives the full `totalQuestionBudget` configured in `config.json`.
 
-Initialize the **Answer Buffer**: an empty ordered list of `{ question, answer, category, target_section }` entries.
+Initialize the **Answer Buffer**: start with an empty in-memory ordered list of `{ question, answer, category, target_section }` entries.
 
 > **If the spec file cannot be read or does not exist**: stop, report `blocked`, and instruct the user to run **spec-feature-draft** to create it first.
 
@@ -132,6 +137,7 @@ Evaluate the spec against each taxonomy category below, treating all entries in 
 | Constraints & Tradeoffs | Technical constraints, explicit tradeoffs, rejected alternatives |
 | Completion Signals | Acceptance criteria testability, measurable Definition of Done indicators |
 | Misc / Placeholders | TODO markers, unresolved decisions, vague adjectives lacking quantification |
+| Documented Assumptions | Scan the `## Assumptions` section of the spec. For each `[ASSUMPTION: ...]` entry that has broader scope, design impact, or testability implications, promote it to a candidate question. Treat undocumented assumptions as **Missing** coverage. |
 
 Build or update the internal **Coverage Map** (do not output it unless no questions will be generated). For each **Partial** or **Missing** category, add a candidate question opportunity unless the clarification would not materially change implementation or validation strategy, or is better deferred to planning.
 
@@ -157,6 +163,8 @@ Behavior depends on `questionMode`:
 3. Add the accepted `{ question, answer, category, target_section }` entry to the **Answer Buffer**.
 4. Advance to the next question in the pass queue.
 
+> **If `vscode_askQuestions` returns without an answer** (dialog dismissed, non-interactive context, or user cancels): treat as early termination — proceed to Step 5 with whatever is already in the **Answer Buffer**.
+
 **Batch**: Present all pass-queue questions in a single `vscode_askQuestions` call. After receiving all answers, add each `{ question, answer, category, target_section }` entry to the **Answer Buffer** in order.
 
 Stop the round when:
@@ -173,11 +181,9 @@ After the questioning round:
 - If this was the last allowed pass (`maxLoops`) → exit loop, proceed to Step 5.
 - Otherwise → continue to the next pass (return to 4.1 with the updated **Answer Buffer**).
 
-## Step 5 — Approval gate
+## Step 5 — Write to disk
 
-⛔ **STOP — User approval required before writing to disk.**
-
-Present a numbered summary table of all entries in the **Answer Buffer**:
+Present a numbered summary table of all entries in the **Answer Buffer** in a single chat message:
 
 ```
 | # | Category | Question | Accepted Answer | Target Section |
@@ -185,17 +191,9 @@ Present a numbered summary table of all entries in the **Answer Buffer**:
 | 1 | ...      | ...      | ...             | ...            |
 ```
 
-Call `vscode_askQuestions` with the `approval_gate` payload (see Question Payloads below).
+> **If the Answer Buffer is empty**: skip to Step 6 and report no ambiguities found.
 
-- If **"Approve all — write to disk"**: proceed to Step 6.
-- If **"Revise an answer"**: ask which item number to revise, collect the replacement answer, update the **Answer Buffer** entry, re-present the table, and repeat this step.
-- If **"Cancel — discard"**: produce the completion report with `output_path: null` and stop without writing.
-
-> **If the Answer Buffer is empty**: skip to Step 7 and report no ambiguities found.
-
-## Step 6 — Batch write to disk
-
-Apply all **Answer Buffer** entries to the spec using `replace_string_in_file`, one approved change at a time:
+Apply all **Answer Buffer** entries to the spec using `replace_string_in_file`, one change at a time:
 
 For each entry in order:
 
@@ -211,13 +209,13 @@ For each entry in order:
 
 3. If any entry's clarification invalidates an earlier ambiguous statement, replace that statement rather than duplicating it. Leave no contradictory text.
 
-For any unresolved high-impact categories that exceeded the question budget, insert `[NEEDS CLARIFICATION: <specific question>]` into the spec at the point of uncertainty before completing the write.
+For any unresolved high-impact categories that exceeded the question budget, apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` and insert `[NEEDS CLARIFICATION: <specific question>]` into the spec at the point of uncertainty before completing the write.
 
-After all entries are applied, confirm the sequential edits fully reflect the approved answers in `spec-file`.
+After all entries are applied, confirm the sequential edits fully reflect the accepted answers in `spec-file`.
 
-> **If the write fails**: report the error and stop. Do not report completion without confirming disk state.
+> **If any `replace_string_in_file` call fails** during the batch write (string not found, permission error, or disk error): stop immediately, report `fail — write to <spec-file> failed at entry N: <error>`, list which entries were successfully applied and which were not, and do not report completion.
 
-## Step 7 — Final validation
+## Step 6 — Final validation
 
 After the write, validate the spec:
 
@@ -228,42 +226,29 @@ After the write, validate the spec:
 - Markdown structure valid; only allowed new headings are `## Clarifications` and `### Session YYYY-MM-DD`.
 - Terminology consistent across all updated sections.
 
-## Step 8 — Report completion
+## Step 7 — Report completion
 
 Produce the completion report as defined in `<output_format>`.
 
-The skill is complete when the spec file is written to disk and the completion report is shown to the user, or when the user has cancelled at the approval gate (spec unchanged, report produced).
-
-## Question Payloads
-
-### `approval_gate`
-
-```json
-{
-  "header": "approval_gate",
-  "question": "Review all collected answers in the table above. How would you like to proceed?",
-  "options": [
-    { "label": "Approve all — write to disk", "recommended": true, "description": "Write all accepted answers to the spec in one batch pass" },
-    { "label": "Revise an answer", "description": "Update one or more answers before writing" },
-    { "label": "Cancel — discard", "description": "Discard all collected answers; spec file unchanged" }
-  ],
-  "allowFreeformInput": false
-}
-```
+The skill is complete when the spec file is written to disk, the short chat summary is shown, and the completion report is shown to the user.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **vscode_askQuestions**: All user input — one question at a time in sequential mode, all pass questions in one call in batch mode, and the approval gate at Step 5. Required; do not prompt via plain text.
-- **read_file**: Load the config file (Step 1, single read sufficient), load the spec file (Step 3, multi-pass until end of file confirmed), load `ai/plugins/skf/knowledge/devcontainer-guidelines.md` in devcontainer environments.
-- **replace_string_in_file**: Apply all **Answer Buffer** updates to `spec-file` in Step 6 only, after the approval gate.
+- **vscode_askQuestions**: All user input — one question at a time in sequential mode, all pass questions in one call in batch mode. Required; do not prompt via plain text.
+- **read_file**: Load the config file (Step 1), the spec file (Step 3), and `ai/plugins/skf/knowledge/devcontainer-guidelines.md` in devcontainer environments. Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever the file may span multiple reads.
+- **replace_string_in_file**: Apply all **Answer Buffer** updates to `spec-file` in Step 5 only.
 - **run_in_terminal**: Run Branch Detection in Step 2 (`git branch --show-current`) only when `spec-file` is absent.
 - Do NOT use tools not listed here unless the skill explicitly escalates.
 </tools>
 
 <!-- SECTION 6: Output format -->
 <output_format>
+
+**Short Chat Summary** (output immediately before the Completion Report, in plain prose, 2–4 sentences):
+
+> Clarified `{spec-file}` over N pass(es), resolving N question(s) across [category list]. [One sentence on the most significant change made.] [One sentence on any outstanding gaps or suggested next step.]
 
 **Completion Report**:
 
@@ -288,6 +273,7 @@ Sections touched:   [list of section names]
 | Constraints & Tradeoffs             | Resolved / Deferred / Clear / Outstanding |
 | Completion Signals                  | Resolved / Deferred / Clear / Outstanding |
 | Misc / Placeholders                 | Resolved / Deferred / Clear / Outstanding |
+| Documented Assumptions              | Resolved / Deferred / Clear / Outstanding |
 
 ### Deferred / Outstanding Items
 [List any categories with Deferred or Outstanding status and rationale]
@@ -312,18 +298,15 @@ Expected behavior: Reads config, loads spec directly from supplied path. Pass 1:
 
 <example type="counter">
 Input: Clarify the spec and write each answer immediately as it is accepted.
-Expected behavior: Skill detects conflict with a core constraint. Responds: "spec-clarification v1.0 accumulates all answers in the Answer Buffer and writes only after explicit approval at the approval gate. I will run the multi-pass questioning loop now and present the full answer set for your review before writing. Shall I proceed?"
+Expected behavior: Skill proceeds with the multi-pass questioning loop, accumulates answers in the in-memory Answer Buffer only — no writes occur during the loop — then presents a summary table and writes all answers to the spec in one batch at Step 5.
 </example>
 </examples>
 
 <!-- SECTION 8: Critical reminders (recency position) -->
 <reminders>
-
-## Rules
-
-- **Never write to the spec file during the questioning loop** — WHY: the approval gate cannot review a partial, already-written state; all answers must be visible as a coherent set before any write occurs.
-- **Never write to the spec file without explicit user approval at the Step 5 approval gate** — WHY: unapproved writes silently alter the spec and are difficult to reverse.
-- **Never write to the spec file before confirming `spec-file` path** — WHY: writing to the wrong path corrupts unrelated feature specs and is difficult to reverse.
-- **Never exceed `totalQuestionBudget` across all passes** — WHY: the budget is a deliberate contract with the user; silently overriding it erodes trust and degrades response quality.
-
+- Constraint 1 — keep writes out of the questioning loop; use the **Answer Buffer** only.
+- Constraint 2 — confirm the resolved `spec-file` before writing.
+- Constraint 3 — stay within `maxQuestionsPerLoop` and `totalQuestionBudget`.
+- Constraint 5 — insert explicit markers for high-impact ambiguities that exceed the question budget.
+- Constraint 6 — honor sequential mode by asking exactly one question at a time.
 </reminders>

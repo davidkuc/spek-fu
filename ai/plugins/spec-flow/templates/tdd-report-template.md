@@ -36,19 +36,12 @@ Non-Functional Tests: X
 
 ---
 
-## 4. Ambiguities & Design Holes
+## 4. Risks and Ambiguities
 
-| ID | Severity | Description | Required Clarification |
-|----|----------|-------------|------------------------|
+| ID | Severity | Type | Test ID | Description | Required Clarification |
+|----|----------|------|---------|-------------|------------------------|
 
----
-
-## 5. Architectural Risk Signals
-
-- Global state risk:
-- Static dependency risk:
-- Mock explosion risk:
-- Test fragility risk:
+Type: AMBIGUITY | GLOBAL_STATE | STATIC_DEPENDENCY | MOCK_EXPLOSION | TEST_FRAGILITY
 
 ---
 

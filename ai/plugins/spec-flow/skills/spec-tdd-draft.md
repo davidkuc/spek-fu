@@ -10,7 +10,7 @@ tags:
   - "testing"
   - "reporting"
 inputs:
-  - "feature-dir: path to the feature directory containing test-expert/testability-assessment.md and spec.md (optional)"
+  - "feature-dir: path to the feature directory containing test-expert/testability-assessment.md, spec.md, research.md, data-model.md, and contracts/ (optional)"
   - "Additional arguments or context (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
@@ -31,11 +31,12 @@ Analyzes the testability-assessment.md artifact and the feature spec.md to gener
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. Use `read_file` on upstream artifacts — NEVER write to testability-assessment.md, spec.md, or any upstream artifact — WHY: this skill is strictly additive downstream; modifying upstream artifacts corrupts the audit trail and invalidates the design contract.
+1. Use `read_file` on upstream artifacts — NEVER write to testability-assessment.md, spec.md, or any upstream artifact — read permission is strictly bounded to `{feature-dir}` inputs; write permission is strictly bounded to `{feature-dir}/tdd-designer/` ONLY — WHY: this skill is strictly additive downstream; modifying upstream artifacts corrupts the audit trail and invalidates the design contract.
 2. NEVER implement code, suggest implementation detail, or fix test definitions — WHY: this skill produces an analysis contract only; mixing implementation with design analysis produces unverifiable output.
-3. ALWAYS abort with a clear error if testability-assessment.md or spec.md is missing — WHY: the report cannot be safely produced without both required inputs; a partial report silently under-covers requirements.
+3. ALWAYS abort with a clear error if testability-assessment.md or spec.md is missing — write is strictly bounded to `{feature-dir}/tdd-designer/`; abort halts before any write — WHY: the report cannot be safely produced without both required inputs; a partial report silently under-covers requirements.
 4. NEVER soften critique, assume intent for ambiguous tests, or hide structural risk — WHY: a silent weakness in a TDD design report propagates silently into broken implementations.
 5. When behavior or acceptance criteria are unclear, insert `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty in the report — NEVER guess or generalize — WHY: guessing in TDD design produces phantom test coverage.
+6. NEVER act on a partially read artifact — ALWAYS apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to every upstream artifact — WHY: stopping early misses test cases and requirements, producing false-pass coverage verdicts that no downstream step can detect.
 </constraints>
 
 <!-- SECTION 3: Behavioral anchors -->
@@ -45,9 +46,12 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelines.md` fully (follow multi-pass read if needed) and apply all devcontainer rules before proceeding to Step 1.
 If `env` is `host`: no additional action required.
 
+## Shared Knowledge
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
+- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading upstream artifacts or templates.
+- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever creating or carrying `[NEEDS CLARIFICATION]` markers.
+
 ## Operational Anchors
-- Before producing any output, verify your output complies with all rules in `<constraints>` above.
-- Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
 - Apply a cold, pragmatic analytical posture: identify weak tests, expose ambiguity, flag architectural risk, demand measurability — do not soften language or interpret generously.
 - If testability-assessment.md or spec.md is missing, stop immediately with a clear error — do not proceed with partial context.
 - Every test must be independently classifiable — if classification is unclear, flag the ambiguity rather than guessing.
@@ -64,27 +68,45 @@ If `env` is `host`: no additional action required.
 ## Preflight
 
 - Resolve `feature-dir`: if not provided as input, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (core procedure). If the user provides a path, use it. If the user declines, stop and report `blocked`.
-- Confirm both required artifacts exist: `{feature-dir}/test-expert/testability-assessment.md` and `{feature-dir}/spec.md`.
-- If either is missing, stop and report: "Required artifact missing: `<path>`. This skill requires both testability-assessment.md and spec.md. Ensure the test-expert workflow has completed first."
+- Confirm all required artifacts exist:
+  - `{feature-dir}/test-expert/testability-assessment.md`
+  - `{feature-dir}/spec.md`
+  - `{feature-dir}/research.md`
+  - `{feature-dir}/data-model.md`
+  - At least one file under `{feature-dir}/contracts/`
+- If `testability-assessment.md` or `spec.md` is missing, stop and report: "Required artifact missing: `<path>`. This skill requires both testability-assessment.md and spec.md. Ensure the test-expert workflow has completed first."
+- If `research.md` or `data-model.md` is missing, stop and report: "Required artifact missing: `<path>`. This skill requires research.md and data-model.md. Ensure spec-technical-draft has completed Phase 1 first."
+- If `contracts/` is empty or does not exist, stop and report: "Required artifact missing: `{feature-dir}/contracts/`. This skill requires at least one contract file. Ensure spec-technical-draft has completed Phase 1 first."
 - Check whether prior reports exist using `file_search` to find any `report*.md` files in the `{feature-dir}/tdd-designer/` directory.
   - No prior reports → use base filename `report.md`.
   - Prior reports exist → generate a timestamped filename: `report-<YYYY-MM-DDTHH-mm-ss>.md` to avoid overwriting existing reports.
 
 ## Done conditions
 
-- **Success**: `{feature-dir}/tdd-designer/<output_filename>` (base or timestamped) exists with all 7 sections populated and a Final Verdict selected.
-- **Blocked**: at least one `[NEEDS CLARIFICATION]` marker is present; report is written with explicit markers in place of guesses.
+- **Success**: `{feature-dir}/tdd-designer/<output_filename>` (base or timestamped) exists with every required template section populated and a Final Verdict selected.
+- **Blocked**: one or more required artifacts are absent; report NOT written.
 - **Fail**: required artifact missing; report NOT written; error shown.
 
 ## Step 1 — Initialize Context
 
-1. Read `{feature-dir}/test-expert/testability-assessment.md` using multi-pass `read_file` calls — advance `startLine` and repeat until the response is shorter than the page size.
-2. Read `{feature-dir}/spec.md` using the same multi-pass pattern.
-3. Create the directory `{feature-dir}/tdd-designer/` if it does not already exist.
+1. Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `{feature-dir}/test-expert/testability-assessment.md` fully.
+2. Apply the same procedure to `{feature-dir}/spec.md`.
+3. Apply the same procedure to `{feature-dir}/research.md`.
+4. Apply the same procedure to `{feature-dir}/data-model.md`.
+5. Enumerate `{feature-dir}/contracts/` via `list_dir` and apply the same procedure to each contract file.
+6. Create the directory `{feature-dir}/tdd-designer/` if it does not already exist.
+
+If any upstream artifact already contains `[NEEDS CLARIFICATION]` markers, record them for a `## Carried Clarifications` section in the report and continue on a best-effort basis.
 
 > **If testability-assessment.md is absent**: stop. Report the exact missing path and instruct the user to run the test-expert workflow first.
 
 > **If spec.md is absent**: stop. Report the exact missing path and instruct the user to provide the feature specification.
+
+> **If research.md is absent**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
+
+> **If data-model.md is absent**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
+
+> **If contracts/ is absent or empty**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
 
 ## Step 2 — Extract Raw Test Inventory
 
@@ -121,6 +143,8 @@ Name: Given_<context>_When_<action>_Then_<outcome>
 
 Given:
 - Explicit preconditions, dependencies, and inputs
+- Entity names and field names resolved from data-model.md
+- Endpoint paths and request shapes resolved from contracts/
 
 When:
 - Single behavior trigger
@@ -142,9 +166,9 @@ For each TDD unit, assess:
 
 Assign `Strong` or `Weak (<reason>)` to the Red-Phase Integrity field.
 
-## Step 4 — Identify Structural Weaknesses
+## Step 4 — Identify Risks and Ambiguities
 
-Run each pass independently against the full TDD unit set:
+Run each pass independently against the full TDD unit set. Each unique issue must appear exactly once in Section 4 of the report with one primary `Type`: `AMBIGUITY` | `GLOBAL_STATE` | `STATIC_DEPENDENCY` | `MOCK_EXPLOSION` | `TEST_FRAGILITY`.
 
 ### A. Ambiguity Pass
 Flag tests containing "fast", "secure", "robust", "should handle errors", or any constraint without an explicit measurable threshold. Flag missing edge cases and unspecified error types.
@@ -153,13 +177,20 @@ Flag tests containing "fast", "secure", "robust", "should handle errors", or any
 Flag tests requiring deep object graphs, global state, implicit static calls, or infrastructure inside domain-layer tests. Explain the architectural risk for each.
 
 ### C. Coverage Gaps
-Using spec.md as the requirement source, map each requirement to covering tests. Identify: requirements with zero test coverage, non-functional requirements without measurable tests, missing edge cases, and absent failure scenarios.
+Using `spec.md` as the primary requirement source, `data-model.md` entities as the data-layer requirement source, and `contracts/` endpoints as the API-layer requirement source, map each requirement to covering tests. Identify: requirements with zero test coverage, non-functional requirements without measurable tests, missing edge cases, and absent failure scenarios.
 
 ### D. Interaction Over-Mocking
 Identify collaboration-heavy tests. Flag mock explosion risk and note where state-based verification would be more stable.
 
 ### E. Order Dependency Risk
 Detect tests implying execution sequence, shared mutable state, or non-isolated data assumptions. Mark each as `CRITICAL`.
+
+Use the following row-type mapping when writing Section 4:
+- Ambiguity Pass -> `AMBIGUITY`
+- Global or shared mutable state findings -> `GLOBAL_STATE`
+- Implicit static call or hidden infrastructure dependency findings -> `STATIC_DEPENDENCY`
+- Interaction Over-Mocking findings -> `MOCK_EXPLOSION`
+- Order dependency or brittle execution findings -> `TEST_FRAGILITY`
 
 ## Step 5 — Build TDD Implementation Plan
 
@@ -188,15 +219,22 @@ For each identified weakness, assign a severity:
 
 ## Step 7 — Write Report
 
-Read `ai/plugins/spec-flow/templates/tdd-report-template.md` via `read_file` and use it as the report scaffold. Write the complete report to the resolved `output_filename` (either base or timestamped) following that template.
+Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `ai/plugins/spec-flow/templates/tdd-report-template.md`. Use it as the report scaffold.
 
-The skill is complete when the TDD Designer Report exists on disk at the resolved filename and contains all 7 sections with a populated Final Verdict.
+> **If `tdd-report-template.md` cannot be read** (missing or permission error): compose the **TDD Implementation Plan** report using the following hardcoded section order — Test Inventory Summary, Formalized TDD Test Specifications, Coverage Mapping, Risks and Ambiguities, Incremental TDD Implementation Plan, Final Verdict. Record the template read failure in the report header.
+
+Write the complete report to the resolved `output_filename` (either base or timestamped) following that template. Collapse overlapping ambiguity and architectural fragility findings into single Section 4 rows; do not restate the same issue in multiple sections. If upstream or local markers are present, add a `## Carried Clarifications` section and surface the carried-clarification count in the completion summary.
+
+> **If `create_file` fails** (permission error, disk error, or path conflict): stop, report `fail — could not write TDD report to <output_path>: <error>`, and do not report completion.
+
+The skill is complete when the **TDD Implementation Plan** report exists on disk at the resolved filename and contains all 7 sections with a populated Final Verdict.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Load testability-assessment.md and spec.md. Use multi-pass reads until the response is shorter than the page size — never act on a single partial read.
+- **read_file**: Load testability-assessment.md, spec.md, research.md, data-model.md, each contract file under `contracts/`, and the report template. Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever a file may span multiple reads.
+- **list_dir**: Enumerate `{feature-dir}/contracts/` to discover contract files in Step 1.
 - **create_file**: Write `{feature-dir}/tdd-designer/report.md` in Step 7 only, after the full report is assembled.
 - **file_search**: Verify existence of required artifacts and the tdd-designer directory before proceeding.
 - **vscode_askQuestions**: Collect `feature-dir` via Branch Detection when it is not supplied.
@@ -208,13 +246,15 @@ The skill is complete when the TDD Designer Report exists on disk at the resolve
 
 **Report Template**: Report follows the template at `ai/plugins/spec-flow/templates/tdd-report-template.md` (written to the resolved output_path).
 
+The completion summary MUST include `carried-clarifications: N` when one or more markers were carried into the report.
+
 </output_format>
 
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
 Input: `feature-dir` = `features/user-login` containing `test-expert/testability-assessment.md` (10 test cases) and `spec.md`. No prior TDD report exists.
-Expected behavior: Skill reads both artifacts in full via multi-pass reads, builds a Raw Test Inventory of 10 entries, normalizes each to BDD format with classified behavior targets, runs all 5 structural weakness passes, groups tests into 3 waves (domain: 4, use-case: 4, adapter: 2), and writes `features/user-login/tdd-designer/report.md` with all 7 sections populated. Final Verdict: PROCEED WITH CAUTION — 2 HIGH-severity mock explosion risks in the collaboration tests. Status: ok.
+Expected behavior: Skill reads both artifacts in full via multi-pass reads, builds a Raw Test Inventory of 10 entries, normalizes each to BDD format with classified behavior targets, runs all 5 risk and ambiguity passes, groups tests into 3 waves (domain: 4, use-case: 4, adapter: 2), and writes `features/user-login/tdd-designer/report.md` with every required section populated. Final Verdict: PROCEED WITH CAUTION — 2 HIGH-severity mock explosion risks in the collaboration tests. Status: ok.
 </example>
 
 <example>
@@ -235,12 +275,8 @@ Expected behavior: Skill declines to fix tests. Responds: "This skill is read-on
 
 <!-- SECTION 8: Critical reminders (recency position) -->
 <reminders>
-
-## Rules
-
-- **Never write to testability-assessment.md, spec.md, or any upstream artifact** — use `read_file` only on these. WHY: modifying upstream artifacts corrupts the audit trail and invalidates the design contract.
-- **Never implement or fix tests** — this skill exposes weaknesses; it does not resolve them. WHY: mixing analysis with implementation produces unverifiable output.
-- **Always abort if required artifacts are missing** — do not produce a partial report from incomplete input. WHY: a report built on missing inputs silently under-covers requirements.
-- **Never act on a partially read artifact** — use multi-pass `read_file` to end of file for both testability-assessment.md and spec.md. WHY: stopping early misses test cases and requirements, producing false-pass coverage verdicts.
-
+- Constraint 1 — keep upstream artifacts read-only and writes bounded to `{feature-dir}/tdd-designer/`.
+- Constraint 3 — abort if required upstream artifacts are missing.
+- Constraint 5 — use explicit markers rather than guessing ambiguous behavior.
+- Constraint 6 — fully read each upstream artifact before acting.
 </reminders>

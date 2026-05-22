@@ -42,13 +42,13 @@
     {
       "name": "spec-feature-draft.prompt.md",
       "type": "file",
-      "description": "Generates a quality-validated feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
+      "description": "Generates a feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
       "path": ".github/prompts/spec-feature-draft.prompt.md"
     },
     {
       "name": "spec-tasks-draft.prompt.md",
       "type": "file",
-      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (plan.md, spec.md, data-model.md, contracts/), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
+      "description": "Generates a dependency-ordered tasks.md from feature design artifacts (spec.md, research.md, data-model.md, contracts/, quickstart.md), producing a phased, checklist-format task plan organised by user story. USE FOR: creating an executable task plan before implementation begins. DO NOT USE FOR: implementing tasks, reviewing spec quality, or drafting spec files.",
       "path": ".github/prompts/spec-tasks-draft.prompt.md"
     },
     {
@@ -68,6 +68,30 @@
       "type": "file",
       "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at FEATURE_DIR/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; use implementation skills for test execution.",
       "path": ".github/prompts/spec-testability-draft.prompt.md"
+    },
+    {
+      "name": "spec-clarification.prompt.md",
+      "type": "file",
+      "description": "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers and writing to disk only after explicit user approval. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes.",
+      "path": ".github/prompts/spec-clarification.prompt.md"
+    },
+    {
+      "name": "spec-feature-analysis.prompt.md",
+      "type": "file",
+      "description": "Inspects all spec-flow pipeline artifacts in a feature directory, producing a Feature Analysis Report with artifact inventory, staleness signals, [NEEDS CLARIFICATION] marker counts, tasks state breakdown, cross-artifact consistency findings, and a readiness verdict. USE FOR: verifying all upstream artifacts are complete, coherent, and non-stale before starting implementation. DO NOT USE FOR: modifying artifacts, re-running upstream pipeline skills, or implementing the feature.",
+      "path": ".github/prompts/spec-feature-analysis.prompt.md"
+    },
+    {
+      "name": "spec-implement.prompt.md",
+      "type": "file",
+      "description": "Executes a targeted phase (or explicit set of phases) from tasks.md, with checklist gate verification and progress tracking. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, or making architectural changes outside the task plan.",
+      "path": ".github/prompts/spec-implement.prompt.md"
+    },
+    {
+      "name": "spec-tests-draft.prompt.md",
+      "type": "file",
+      "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at FEATURE_DIR/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; use implementation skills for test execution.",
+      "path": ".github/prompts/spec-tests-draft.prompt.md"
     }
   ]
 }

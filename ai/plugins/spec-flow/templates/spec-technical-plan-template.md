@@ -3,11 +3,24 @@
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `technical-draft` skill. See `ai/plugins/spec-flow/templates/spec-technical-template.md` for the execution workflow.
+**Note**: This file is produced by the `spec-technical-draft` skill (Step 8). It synthesizes all Phase 0 and Phase 1 artifacts into a single reference plan. Downstream skills (`spec-tasks-draft`, `spec-implement`) use this file as their primary technical reference.
 
 ## Summary
 
 [Extract from feature spec: primary requirement + technical approach from research]
+
+## Input Artifacts
+
+> These artifacts were used as source inputs when generating this plan. Load them for full detail; this plan is a synthesis, not a replacement.
+
+| Artifact | Path | Notes |
+|----------|------|-------|
+| Feature Spec | `[feature-dir]/spec.md` | Required |
+| Research | `[feature-dir]/research.md` | Phase 0 — resolved technical unknowns |
+| Data Model | `[feature-dir]/data-model.md` | Phase 1 — entities and relationships |
+| API Contracts | `[feature-dir]/contracts/` | Phase 1 — OpenAPI / GraphQL schemas |
+| Quickstart | `[feature-dir]/quickstart.md` | Phase 1 — developer onboarding |
+| Testability Assessment | `[feature-dir]/test-expert/testability-assessment.md` | Optional |
 
 ## Technical Context
 
@@ -49,6 +62,7 @@ specs/[###-feature]/
 ├── data-model.md        # Phase 1 output (technical-draft skill)
 ├── quickstart.md        # Phase 1 output (technical-draft skill)
 ├── contracts/           # Phase 1 output (technical-draft skill)
+├── technical-plan.md    # Phase 1 output (technical-draft skill) ← this file
 └── tasks.md             # Phase 2 output (tasks skill - NOT created by technical-draft skill)
 ```
 

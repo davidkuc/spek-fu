@@ -10,7 +10,7 @@ tags:
   - "requirements"
 inputs:
   - "Feature description — natural language description of the feature to specify (required)"
-  - "config_path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
+  - "config-path: workspace-relative path to the config file — defaults to ai/plugins/spec-flow/skills/config.json (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Spec file written to `spec-file` path inside the numbered feature branch directory"
@@ -44,9 +44,12 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelines.md` fully (follow multi-pass read if needed) and apply all devcontainer rules before proceeding to Step 1.
 If `env` is `host`: no additional action required.
 
+## Shared Knowledge
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
+- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading config, templates, or existing specs.
+- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever placing or resolving `[NEEDS CLARIFICATION]` markers.
+
 ## Operational Anchors
-- Before producing any output, verify your output complies with all rules in `<constraints>` above.
-- Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
 - If the feature description is empty or ambiguous, call `vscode_askQuestions` rather than guessing.
 - Detect run state before acting: if a spec file already exists at the expected path, read and update it rather than recreating; if a branch already exists for this feature number and short name, resume from the current spec content.
 </behavioral_anchors>
@@ -56,7 +59,7 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `config_path` from inputs, defaulting to `ai/plugins/spec-flow/skills/config.json` if absent. Read the config file and extract `spec-feature-draft.maxNeedsClariMarkers` (default: `10`). Apply this value wherever this skill references `maxNeedsClariMarkers`.
+- Resolve `config-path` from inputs, defaulting to `ai/plugins/spec-flow/skills/config.json` if absent. Read the config file and extract `spec-feature-draft.maxNeedsClariMarkers` (default: `10`). Apply this value wherever this skill references `maxNeedsClariMarkers`.
 
 > **If the config file cannot be read or the `spec-feature-draft` key is absent**: apply the default value of `10` and proceed.
 
@@ -68,7 +71,12 @@ If `env` is `host`: no additional action required.
     "allowFreeformInput": true
   }
   ```
-- Confirm run state: if a spec file exists for this feature already, resume from existing content rather than restarting.
+  > **If `vscode_askQuestions` is unavailable (non-interactive context)**: stop, report `blocked — feature description required; re-run interactively or pass the description as an argument`.
+
+- **Detect run state** — this check runs AFTER Step 2 (feature number is required to locate the spec file):
+  - Branch and `spec-file` already exist, spec content present WITH `[NEEDS CLARIFICATION]` markers → **resume**: read existing spec, re-run Step 6 to resolve remaining markers only.
+  - Branch and `spec-file` already exist, spec content present WITH NO `[NEEDS CLARIFICATION]` markers → **already complete**: report `ok — spec already complete at <spec-file>` and stop.
+  - No existing branch or spec file → **new**: proceed through all steps.
 
 ## Done conditions
 
@@ -105,17 +113,19 @@ Run the script exactly once:
 python ai/scripts/python/create-new-feature.py --feature-number <N> --feature-name "<short-name>" --output-json
 ```
 
-Read the JSON output from the terminal. Extract:
-- `branch-name`: the created branch name
-- `spec-file`: the canonical path to write the spec
-- `feature-dir`: the feature directory root
+Capture **stdout only** as the JSON source. Discard stderr (warnings and progress messages on stderr do not contaminate the JSON payload). Read the JSON output from stdout. Extract:
+- **`branch-name`**: the created branch name
+- **`spec-file`**: the canonical path to write the spec
+- **`feature-dir`**: the feature directory root
 
 > **If the script fails or exits with a non-zero code**: stop, report `fail` with the error text, and do not proceed.
-> **If `branch-name` or `spec-file` are absent from the output**: stop, report `fail`, and display the raw terminal output for diagnosis.
+> **If `branch-name` or `spec-file` are absent from the stdout JSON**: stop, report `fail`, and display the raw terminal output for diagnosis.
+
+Apply the run-state detection from Preflight now that **`branch-name`**, **`spec-file`**, and **`feature-dir`** are known.
 
 ## Step 4 — Load spec template
 
-Read `ai/plugins/spec-flow/templates/spec-feature-template.md` using successive `read_file` calls until the response is shorter than the page size (multi-pass). Identify all required sections and their order.
+Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `ai/plugins/spec-flow/templates/spec-feature-template.md` fully. Identify all required sections and their order.
 
 > **If the template file cannot be read**: stop, report `fail` with the path `ai/plugins/spec-flow/templates/spec-feature-template.md`, and ask the user to verify the file exists.
 
@@ -130,13 +140,21 @@ Parse the feature description and extract actors, actions, data, constraints, an
 
 **Success criteria** must be measurable (specific metrics), technology-agnostic (no frameworks or tools), user-focused (business/user outcomes), and verifiable without implementation details.
 
-Write the specification to `spec-file` using the template structure. Preserve all section headings and order. Do NOT embed checklists inside the spec body.
+For every informed guess or default applied during content generation, add a corresponding `[ASSUMPTION: <what was assumed and why>]` entry to the `## Assumptions` section. No silent guesses — every assumption must be documented.
+
+Write the specification to **`spec-file`** using the template structure. Preserve all section headings and order. Do NOT embed checklists inside the spec body.
+
+> **If `create_file` fails** (permission error, path conflict, or disk error): stop, report `fail — could not write spec to <spec-file>: <error>`, and do not report completion.
 
 ## Step 6 — Resolve clarifications (if any)
 
 If `[NEEDS CLARIFICATION]` markers remain in the spec:
 
-1. Extract all markers. If more than `maxNeedsClariMarkers` exist, keep the `maxNeedsClariMarkers` most critical and make informed guesses for the rest.
+Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` for marker prioritization, placement, and resolution.
+
+> **If `vscode_askQuestions` is unavailable (non-interactive context)**: leave all remaining markers in the spec, report `blocked — N [NEEDS CLARIFICATION] markers unresolved; re-run interactively to resolve them`, and stop. Do not attempt to guess answers.
+
+1. Extract all markers. If more than `maxNeedsClariMarkers` exist, keep the `maxNeedsClariMarkers` most critical and make informed guesses for the rest (recording each guess as an assumption in `## Assumptions`).
 2. Ask all clarification questions in one `vscode_askQuestions` call, one question per marker:
    ```json
    {
@@ -163,7 +181,7 @@ The skill is complete when `spec-file` exists on disk with all required sections
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **run_in_terminal**: Run git commands (Step 2) and the create-new-feature script (Step 3) — run one command and read full output before proceeding to the next.
-- **read_file**: Load config file (Preflight) and `ai/plugins/spec-flow/templates/spec-feature-template.md` (Step 4) using multi-pass reads; also read existing spec files when resuming.
+- **read_file**: Load the config file (Preflight), `ai/plugins/spec-flow/templates/spec-feature-template.md` (Step 4), and existing spec files when resuming. Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever the file may span multiple reads.
 - **create_file**: Write `spec-file` (Step 5) — only after `branch-name` and `spec-file` are confirmed from script output.
 - **replace_string_in_file**: Replace `[NEEDS CLARIFICATION]` markers (Step 6) after user responses are received.
 - **vscode_askQuestions**: Collect feature description if absent (Preflight) and present clarification questions (Step 6).
@@ -204,11 +222,10 @@ Expected behavior: Skill writes spec with `[ASSUMPTION: authentication follows s
 <!-- SECTION 8: Critical reminders (recency position) -->
 <reminders>
 
-## Rules
-
-- **Never run the create-new-feature script more than once per invocation** — WHY: duplicate runs corrupt the branch numbering sequence.
-- **Never include implementation details in the spec** (languages, frameworks, databases, APIs) — WHY: specs describe user and business value; implementation belongs in technical planning artifacts.
-- **Never exceed `maxNeedsClariMarkers` (from config) `[NEEDS CLARIFICATION]` markers** — WHY: more than the configured limit signals an underspecified input; make informed guesses for lower-priority gaps.
-- **Always verify** output against `<constraints>` before reporting completion.
+- Constraint 1 — confirm `branch-name` and `spec-file` from script stdout before any write.
+- Constraint 2 — run the create-new-feature script once per invocation.
+- Constraint 3 — cap `[NEEDS CLARIFICATION]` markers at `maxNeedsClariMarkers`.
+- Constraint 4 — keep implementation details out of the spec body.
+- Constraint 5 — collect missing feature description details interactively instead of guessing.
 
 </reminders>
