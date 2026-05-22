@@ -3,5 +3,17 @@
     "maxRevisionAttempts": 3,
     "maxLessonsToSurface": 10,
     "knowledgeDistillationThreshold": 15
+  },
+  "skillSelection": {
+    "ignoredSkills": [
+      "ai/plugins/spec-flow/skills/spec-testability-draft.md",
+      "ai/plugins/spec-flow/skills/spec-technical-draft.md",
+      "ai/plugins/spec-flow/skills/spec-tdd-draft.md",
+      "ai/plugins/spec-flow/skills/spec-tasks-draft.md",
+      "ai/plugins/spec-flow/skills/spec-feature-draft.md",
+      "ai/plugins/spec-flow/skills/spec-feature-analysis.md",
+      "ai/plugins/spec-flow/skills/spec-devils-advocate.md",
+      "ai/plugins/spec-flow/skills/spec-clarification.md"
+    ]
   }
 }

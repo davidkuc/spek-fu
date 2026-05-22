@@ -94,6 +94,7 @@ If `knowledge-result-path` is provided:
 4. Merge all collected `children` arrays into a single unified skill catalog. Note the source plugin name in the selection rationale for any skill selected from a non-skf plugin.
 5. If no plugin's `skills-index.json` could be read: return blocked status with reason: "no plugin skill catalog is readable".
 - Confirm that each entry in the merged catalog contains `id`, `description`, `anti-scope`, `dispatch-variant` fields.
+6. **Load the ignore list**: Use `read_file` to read `ai/plugins/skf/skills/config.json`. Extract the `skillSelection.ignoredSkills` array. If the file cannot be read or the key is absent, treat the ignore list as empty and continue. Remove any skill from the merged catalog whose `path` field exactly matches an entry in `ignoredSkills`. Log the count of ignored skills in the output summary.
 
 ## Step 3 — Select relevant skills
 
@@ -124,6 +125,7 @@ Format:
 
 Problem context: {synthesis from Step 1}  
 Catalog size: {total skills}  
+Ignored: {count} skills  
 Selected: {count} skills  
 
 | ID | Path | Description | Recommended Tier | Dispatch Variant | Anti-scope |
@@ -170,6 +172,7 @@ Return the report in the format defined in `<output_format>`.
 Skill selection complete:
   Problem context: {one-line synthesis from Step 1}
   Catalog size: {total skills in index}
+  Ignored: {count} skills (from config ignore list)
   Selected: {count} skills
   Output: .orchestration-temp/skill-inventory.md
 ```
@@ -180,6 +183,7 @@ Skill selection complete:
 
 Problem context: {synthesis from Step 1}  
 Catalog size: {total skills}  
+Ignored: {count} skills  
 Selected: {count} skills  
 
 | ID | Path | Description | Recommended Tier | Dispatch Variant | Anti-scope |
