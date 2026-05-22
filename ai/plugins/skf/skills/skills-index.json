@@ -7,7 +7,7 @@
     {
       "id": "gov-update",
       "type": "file",
-      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
+      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py followed by sync-index-files.py --check. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
       "path": "ai/plugins/skf/skills/gov-update.md",
       "version": 1.0,
       "tags": [
@@ -25,7 +25,7 @@
       "outputs": [
         "Count of changes applied/skipped",
         "Governance update summary",
-        "Index sync script output"
+        "Index sync and validation script output"
       ],
       "dispatch-variant": "full",
       "anti-scope": "Does NOT perform analysis, modify source code, or touch iteration in-progress files.",
@@ -134,6 +134,7 @@
       "inputs": [
         "Operation to perform: create, evaluate, or refine (required)",
         "Skill description — required for create (optional)",
+        "Plugin assignment — optional for create, checked against existing plugins (optional)",
         "Group assignment — optional for create (optional)",
         "Skill draft file path or content — required for evaluate and refine (optional)",
         "Evaluation report path or content — required for refine (optional)",
@@ -575,7 +576,7 @@
       "type": "file",
       "description": "Runs a single combined flow that first consolidates duplicate or near-duplicate lessons in `knowledge-database.md`, then distills the cleaned lesson set into reusable PT0xx pattern files. USE FOR: cleaning up the knowledge database and promoting general-recurring lessons to patterns in one pass. DO NOT USE FOR: recording or retrieving lessons, implementing tasks, or modifying non-pattern files outside the distillation flow.",
       "path": "ai/plugins/skf/skills/meta-knowledge-distillation.md",
-      "version": 1.1,
+      "version": 1.0,
       "tags": [
         "meta",
         "patterns",

@@ -2,21 +2,27 @@
 """
 generate-prompt-files.py
 
-Reads ai/plugins/skf/skills/skills-index.json and generates one .prompt.md
-file per skill entry in .github/prompts/.
+Discovers all plugins under ai/plugins/, reads their skills-index.json files,
+and generates one .prompt.md file per user-facing skill entry in .github/prompts/.
+User-facing skills are all skills EXCEPT those whose id starts with a prefix
+listed in EXCLUDED_PREFIXES (currently "orch-" and "impl-").
 
 Usage: python3 ai/scripts/python/generate-prompt-files.py
 Run from the workspace root: /workspaces/spek-fu/
 
 Exit codes:
     0  All prompt files generated successfully.
-    1  Error reading skills-index.json or writing output files.
+    1  Error reading plugins directory or writing output files.
 """
 
 import argparse
 import json
 import sys
 from pathlib import Path
+
+# Skills whose id starts with any of these prefixes are internal-dispatch-only
+# and are NOT exposed as slash commands. All other skills are user-facing.
+EXCLUDED_PREFIXES = ("orch-", "impl-")
 
 
 def build_frontmatter(entry: dict) -> str:
@@ -43,9 +49,10 @@ def build_frontmatter(entry: dict) -> str:
 def generate_prompt_file(entry: dict, output_dir: Path) -> Path:
     """Generate a single .prompt.md file for a skill entry."""
     skill_id = entry.get("id", "")
+    skill_path = entry.get("path", "")
     frontmatter = build_frontmatter(entry)
     body = (
-        f"\nConsult the skill from `ai/plugins/skf/skills/{skill_id}.md`."
+        f"\nConsult the skill from `{skill_path}`."
         " Execute its full protocol exactly as described.\n"
     )
     content = frontmatter + "\n" + body
@@ -56,44 +63,57 @@ def generate_prompt_file(entry: dict, output_dir: Path) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Generate .prompt.md files from skills-index.json."
+        description="Generate .prompt.md files from skills-index.json across all plugins."
     )
     parser.parse_args()
 
     workspace_root = Path(__file__).resolve().parent.parent.parent.parent
-    skills_index_path = (
-        workspace_root / "ai" / "plugins" / "skf" / "skills" / "skills-index.json"
-    )
+    plugins_dir = workspace_root / "ai" / "plugins"
     output_dir = workspace_root / ".github" / "prompts"
 
-    if not skills_index_path.exists():
+    if not plugins_dir.exists():
         print(
-            f"ERROR: skills-index.json not found at {skills_index_path}",
+            f"ERROR: plugins directory not found at {plugins_dir}",
             file=sys.stderr,
         )
         return 1
 
-    try:
-        data = json.loads(skills_index_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        print(f"ERROR: Failed to parse skills-index.json: {exc}", file=sys.stderr)
-        return 1
-
-    children = data.get("children", [])
-    if not children:
-        print("WARNING: No entries found in skills-index.json children array.")
-        return 0
-
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Only gov-* and meta-* skills are user-facing slash commands.
-    # orch-* and impl-* are internal-dispatch-only skills and are not exposed as prompts.
+    # Discover all plugin directories and their skills-index.json files
+    all_skills = []
+    for plugin_dir in sorted(plugins_dir.iterdir()):
+        if not plugin_dir.is_dir():
+            continue
+
+        skills_index_path = plugin_dir / "skills" / "skills-index.json"
+        if not skills_index_path.exists():
+            continue
+
+        try:
+            data = json.loads(skills_index_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            print(
+                f"WARNING: Failed to parse {skills_index_path}: {exc}",
+                file=sys.stderr,
+            )
+            continue
+
+        children = data.get("children", [])
+        all_skills.extend(children)
+
+    if not all_skills:
+        print("WARNING: No skills found in any plugin.")
+        return 0
+
+    # All skills are user-facing slash commands EXCEPT orch-* and impl-*.
+    # See EXCLUDED_PREFIXES at the top of this file.
     count = 0
-    for entry in children:
+    for entry in all_skills:
         skill_id = entry.get("id", "")
         if not skill_id:
             continue
-        if not (skill_id.startswith("gov-") or skill_id.startswith("meta-")):
+        if any(skill_id.startswith(prefix) for prefix in EXCLUDED_PREFIXES):
             continue
         try:
             generate_prompt_file(entry, output_dir)

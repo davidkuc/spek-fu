@@ -79,6 +79,7 @@ Two complementary databases feed the orchestration cycle:
 | **Direct commands** | `/` slash commands | Use when operation is already well-defined |
 | **Framework changes** | `/gov-update` | Run after adding/renaming/removing artifacts |
 | **Custom plugin** | `create-plugin.py` + `/gov-update` | Scaffold plugin, add skills, sync index |
+| **Plugin skills** | `/` slash commands | Every user-facing skill from any registered plugin is available as a slash command |
 
 See [Using Skills as Slash Commands](#using-skills-as-slash-commands) and [Creating a Custom Plugin](#creating-a-custom-plugin) for detailed guidance.
 
@@ -104,20 +105,35 @@ Syncs all `*-index.json` files with the actual filesystem state:
 - Extracts frontmatter data
 - Preserves existing descriptions
 
+Recommended pre-commit check: `python3 ai/scripts/python/sync-index-files.py --check`.
+
 Run after adding, renaming, or removing any indexed framework artifact.
 
+**Linux/macOS (bash):**
 ```bash
 python3 ai/scripts/python/sync-index-files.py
+```
+
+**Windows (PowerShell/CMD):**
+```powershell
+python ai/scripts/python/sync-index-files.py
 ```
 
 ---
 
 **`generate-prompt-files.py`**  
-Generates `.prompt.md` files (one per `gov-` or `meta-` skill) in `.github/prompts/`.  
-Run after creating or modifying a `gov-` or `meta-` skill.
+Generates `.prompt.md` files (one per user-facing skill across all registered plugins) in `.github/prompts/`.  
+User-facing skills are all skills except those starting with `orch-` or `impl-`.  
+Run after creating or modifying any user-facing skill, or after adding a new plugin.
 
+**Linux/macOS (bash):**
 ```bash
 python3 ai/scripts/python/generate-prompt-files.py
+```
+
+**Windows (PowerShell/CMD):**
+```powershell
+python ai/scripts/python/generate-prompt-files.py
 ```
 
 ---
@@ -136,11 +152,16 @@ ai/plugins/<plugin-name>/
 - `--name <plugin-name>` **(required)** — plugin slug (lowercase alphanumeric + hyphens)
 - `--dry-run` **(optional)** — preview paths without writing files
 
-**Usage:**
-
+**Linux/macOS (bash):**
 ```bash
 python3 ai/scripts/python/create-plugin.py --name <plugin-name>
 python3 ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
+```
+
+**Windows (PowerShell/CMD):**
+```powershell
+python ai/scripts/python/create-plugin.py --name <plugin-name>
+python ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
 ```
 
 
@@ -183,6 +204,23 @@ python3 ai/scripts/python/sync-index-files.py
 #    Or: run /gov-update — it calls sync automatically.
 ```
 
+**Windows (PowerShell/CMD):**
+
+```powershell
+# 1. Preview the scaffold (no files written)
+python ai/scripts/python/create-plugin.py --name my-plugin --dry-run
+
+# 2. Scaffold the plugin
+python ai/scripts/python/create-plugin.py --name my-plugin
+
+# 3. Add skill files to ai/plugins/my-plugin/skills/
+#    Use /meta-skill-manage to create them following the standard format.
+
+# 4. Register new skills in the index chain
+python ai/scripts/python/sync-index-files.py
+#    Or: run /gov-update — it calls sync automatically.
+```
+
 Once step 4 is complete, `@skf-general-orchestrator` can discover and dispatch your plugin's skills on the next request — the same way it routes to built-in `skf` skills.
 
 
@@ -192,7 +230,103 @@ The `--name` slug must be lowercase alphanumeric with hyphens (e.g. `dotnet`, `d
 
 
 
-## 💬 Using Skills as Slash Commands
+## � Spec-Flow Plugin
+
+**Spec-Flow** is a built-in plugin that implements an **eight-step feature specification pipeline**, transforming raw ideas into implementation-ready task lists through structured, adversarial review and test-driven design.
+
+### Workflow Chain
+
+The pipeline follows a strict dependency order, with each step producing an artifact consumed by the next:
+
+```
+spec-feature-draft
+      ↓
+spec-clarification
+      ↓
+spec-devils-advocate
+      ↓
+spec-testability-draft
+      ↓
+spec-tdd-draft
+      ↓
+spec-technical-draft
+      ↓
+spec-tasks-draft
+   ↓
+spec-implement
+```
+
+### Eight Steps
+
+| # | Step | Purpose | Output Artifact | Required |
+|----|------|---------|-----------------|----------|
+| 1 | **spec-feature-draft** | Generate initial feature spec from raw idea | `FEATURE_DIR/spec.md` | ✅ Required |
+| 2 | **spec-clarification** | Resolve ambiguities through structured Q&A | `FEATURE_DIR/spec.md` (amended) | ✅ Required |
+| 3 | **spec-devils-advocate** | Red-team spec to surface failure modes | `FEATURE_DIR/devils-advocate/devils-advocate-report.md` | 🔶 Strongly recommended |
+| 4 | **spec-testability-draft** | Evaluate from test-engineering perspective | `FEATURE_DIR/test-expert/testability-assessment.md` | ✅ Required |
+| 5 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
+| 6 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
+| 7 | **spec-tasks-draft** | Decompose design into phased, ordered task list | `FEATURE_DIR/tasks.md` | ✅ Required |
+| 8 | **spec-implement** | Execute the task plan phase by phase | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
+
+### Invocation Pattern
+
+The spec-flow pipeline is best invoked manually using prompt slash commands like `/spec-devils-advocate`, since there is a lot of user interaction involved in this flow.
+
+### Key Design Principles
+
+- **Fail-fast adversarial review**: Step 3 (devils-advocate) surfaces architectural fragility before downstream planning, reducing rework.
+- **Test-first design**: Step 5 converts testability analysis into a TDD implementation contract that developers follow before writing code.
+- **Incremental clarity**: Step 2 (clarification) prevents ambiguities from cascading into every downstream artifact.
+- **Phased decomposition**: Step 7 produces implementation waves with explicit dependencies and verification criteria.
+
+### Required Execution
+
+All eight steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy.
+
+### Example: Generating a Feature Spec
+
+For an **API Rate Limiting** feature, you would work through the pipeline manually:
+
+```
+1. /spec-feature-draft
+   Input: "Per-endpoint rate limiting with configurable thresholds and flexible retry headers"
+   Output: FEATURE_DIR/spec.md
+
+2. /spec-clarification
+   Input: FEATURE_DIR/spec.md
+   Output: Amended spec.md with clarifications
+   
+3. /spec-devils-advocate
+   Input: FEATURE_DIR/spec.md
+   Output: FEATURE_DIR/devils-advocate/devils-advocate-report.md
+   
+4. /spec-testability-draft
+   Input: FEATURE_DIR with spec.md and devils-advocate report
+   Output: FEATURE_DIR/test-expert/testability-assessment.md
+   
+5. /spec-tdd-draft
+   Input: FEATURE_DIR with testability assessment
+   Output: FEATURE_DIR/tdd-designer/report.md
+   
+6. /spec-technical-draft
+   Input: FEATURE_DIR with upstream artifacts
+   Output: FEATURE_DIR/research.md, FEATURE_DIR/data-model.md, FEATURE_DIR/contracts/, FEATURE_DIR/quickstart.md
+   
+7. /spec-tasks-draft
+   Input: FEATURE_DIR with research.md, data-model.md, contracts/, quickstart.md, and spec.md
+   Output: FEATURE_DIR/tasks.md
+
+8. /spec-implement
+   Input: FEATURE_DIR with tasks.md and optional upstream design artifacts
+   Output: implementation changes in the feature branch and completed tasks marked in FEATURE_DIR/tasks.md
+```
+
+Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is then executed by `spec-implement`.
+
+
+
+## �💬 Using Skills as Slash Commands
 
 **User-facing skills** (`gov-` and `meta-`) are exposed as slash commands for direct interaction.
 
@@ -351,7 +485,7 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ├── .github/
 │   ├── copilot-instructions.md      # Bootstrap Copilot context — SSOT pointers only
 │   ├── agents/                      # Canonical agent definitions used by VS Code chat
-│   └── prompts/                     # Canonical slash commands (gov-* and meta-* only)
+│   └── prompts/                     # Canonical slash commands (all plugin skills except orch-* and impl-*)
 └── .vscode/
     └── settings.json                # VS Code configuration
 ```
@@ -372,8 +506,11 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 |-------|---------|----------|
 | **`meta-`** | Framework lifecycle & maintenance | ✅ Slash commands |
 | **`gov-`** | Governance changes w/ approval | ✅ Slash commands |
+| **`spec-`** | Feature specification pipeline | ✅ Slash commands |
 | **`orch-`** | Orchestration & cross-skill services | Internal only |
 | **`impl-`** | Code execution & implementation | Internal only |
+
+> Any skill not starting with `orch-` or `impl-` is automatically available as a slash command, regardless of plugin or prefix.
 
 
 ### Patterns
@@ -422,7 +559,7 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ### Commands
 
 **Commands** are VS Code slash commands (`.prompt.md` files) providing direct user-facing entry points:
-- Only `gov-` and `meta-` skills exposed
+- All skills exposed as slash commands except `orch-` and `impl-` (internal dispatch only)
 - Stored in `.github/prompts/`
 
 📌 **Authoritative inventory:** `.github/prompts/prompts-index.json`

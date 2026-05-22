@@ -1,0 +1,20 @@
+{
+  "spec-clarification": {
+    "maxQuestionsPerLoop": 5,
+    "maxLoops": 10,
+    "questionMode": "sequential",
+    "totalQuestionBudget": 20
+  },
+  "spec-feature-draft": {
+    "maxNeedsClariMarkers": 10
+  },
+  "spec-devils-advocate": {
+    "maxFindings": 100
+  },
+  "spec-testability-draft": {
+    "maxFindings": 100
+  },
+  "spec-implement": {
+    "maxFixCycles": 3
+  }
+}
