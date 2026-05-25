@@ -166,16 +166,15 @@
       "inputs": [
         "Index of the wave just completed (required)",
         "Index of the wave about to start (required)",
-        "Relative path to the orchestration plan markdown file (required)",
-        "Override path for the working-state directory (optional)",
+        "Structured orchestration plan object (required)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "Path to .orchestration-temp/wave-{N}-coherence-report.md (coherence report)",
+        "Structured inline coherence report",
         "Summary of coherence check result"
       ],
       "dispatch-variant": "compact",
-      "anti-scope": "It writes only to `.orchestration-temp/wave-{N}-coherence-report.md`. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility.",
+      "anti-scope": "It returns a structured inline coherence report only. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility.",
       "name": "orch-artifact-coherence-check",
       "recommended-tier": "fast-agent"
     },
@@ -192,12 +191,12 @@
         "analysis"
       ],
       "inputs": [
-        "Path to one framework-traversal-branched-###.json file in .orchestration-temp/ (required)",
+        "Path to one framework-traversal-branched-###.json spill file or equivalent structured branch payload (required)",
         "Free-form context summary of the orchestration request (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "framework-branch-analysis-###.json written to .orchestration-temp/",
+        "Structured branch analysis payload",
         "Analysis Summary block emitted inline in chat"
       ],
       "dispatch-variant": "compact",
@@ -218,7 +217,7 @@
         "reporting"
       ],
       "inputs": [
-        "Path to .orchestration-temp/orchestration-summary.md or inline summary text (required)",
+        "Inline orchestration summary text or structured orchestration state (required)",
         "Explicit list of file paths to check (required)",
         "Path to the relevant iteration spec.md (optional)",
         "Path to the relevant iteration plan.md (optional)",
@@ -226,7 +225,7 @@
       ],
       "outputs": [
         "Overall quality gate result: ok, blocked, or fail",
-        "Path to .orchestration-temp/final-quality-report.md",
+        "Inline final quality report",
         "One-line summary of the quality assessment"
       ],
       "dispatch-variant": "full",
@@ -249,12 +248,12 @@
       "inputs": [
         "Free-form text describing what the caller is looking for (required)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'",
-        "Output file path for the traversal report — optional; defaults to .orchestration-temp/traversal-report.md"
+        "Optional spill output path for the traversal report when inline compaction is insufficient"
       ],
       "outputs": [
         "Navigation result status: ok, blocked, or fail",
         "One-line summary of navigation result",
-        "Path to written traversal report (supplied output-path or default .orchestration-temp/traversal-report.md)"
+        "Optional spill path for the traversal report"
       ],
       "dispatch-variant": "compact",
       "anti-scope": "It does NOT read resolved resource files, modify source or index files, or ask the user questions.",
@@ -264,7 +263,7 @@
     {
       "id": "orch-initialize",
       "type": "file",
-      "description": "Reads skf-config.json, resolves the runtime environment, manages the .orchestration-temp/ working folder lifecycle, and writes a compact initialization report to .orchestration-temp/init-result.md. USE FOR: framework initialization at the start of every orchestration run; centralizing config loading, environment resolution, and temp-folder setup away from inline orchestrator logic. DO NOT USE FOR: per-wave state tracking, skill index navigation, or orchestration planning.",
+      "description": "Reads skf-config.json, resolves the runtime environment, detects spec context, and returns a compact initialization result inline. USE FOR: framework initialization at the start of every orchestration run; centralizing config loading and environment resolution away from inline orchestrator logic. DO NOT USE FOR: per-wave state tracking, skill index navigation, or orchestration planning.",
       "path": "ai/plugins/skf/skills/orch-initialize.md",
       "version": 1.0,
       "tags": [
@@ -278,19 +277,20 @@
         "env: runtime environment override — if provided, skips config-based env resolution and uses this value directly; must be devcontainer or host (optional)"
       ],
       "outputs": [
-        "Path to .orchestration-temp/init-result.md (always written)",
         "Status: ok | hard-fail",
-        "hard-fail-reason: descriptive string when status is hard-fail, else none"
+        "hard-fail-reason: descriptive string when status is hard-fail, else none",
+        "spec-context: true | false | unknown — whether an active spec-flow branch and spec.md were detected",
+        "spec-feature-dir: resolved feature dir path or none"
       ],
       "dispatch-variant": "compact",
-      "anti-scope": "Does NOT execute orchestration waves, dispatch sub-agents, or manage any file outside .orchestration-temp/ and skf-config.json.",
+      "anti-scope": "Does NOT execute orchestration waves, dispatch sub-agents, or manage any workspace file outside skf-config.json and spec-context detection inputs.",
       "name": "orch-initialize",
       "recommended-tier": "fast-agent"
     },
     {
       "id": "orch-intake-context",
       "type": "file",
-      "description": "Accepts orchestrator-provided intake context and writes it to .orchestration-temp/intake-context.md as a structured markdown document. USE FOR: capturing user-request, complexity tier, framework traversal results, knowledge lessons, pattern selection status, clarifications, and pre-planning validation status before planning begins; overwriting a stale intake snapshot with an overwrite notice.",
+      "description": "Accepts orchestrator-provided intake context and returns it inline as a structured orchestration-state object. USE FOR: capturing user-request, complexity tier, framework traversal results, knowledge lessons, pattern selection status, clarifications, and pre-planning validation status before planning begins.",
       "path": "ai/plugins/skf/skills/orch-intake-context.md",
       "version": 1.0,
       "tags": [
@@ -304,15 +304,14 @@
         "Complexity tier, one of Simple, Standard, or Complex, with rationale (required)",
         "Relevant files and context from framework traversal (optional)",
         "Applicable lessons from knowledge consultation (optional)",
-        "Pattern selection status, one of ok, blocked, or skipped, with result file path (optional)",
+        "Pattern selection status, one of ok, blocked, or skipped, with structured result payload (optional)",
         "Resolved clarifications from the user (optional)",
-        "Override path for the working-state directory (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
         "Execution status: ok, blocked, or fail",
-        "Path to written artifact",
-        "One-line summary of what was written"
+        "Structured intake context object",
+        "One-line summary of what was assembled"
       ],
       "dispatch-variant": "compact",
       "anti-scope": "It does NOT perform framework traversal, run knowledge consultation, execute pattern selection, modify plan or spec files, or prompt the user with questions.",
@@ -322,7 +321,7 @@
     {
       "id": "orch-orchestration-plan",
       "type": "file",
-      "description": "Builds a structured orchestration plan using intake context (request scope, constraints, complexity tier) and pre-decomposed wave inputs. Produces a formal plan document aligned with user intent and scope. Surfaces gaps explicitly.",
+      "description": "Builds a structured orchestration plan using intake context (request scope, constraints, complexity tier) and pre-decomposed wave inputs. Produces a formal inline plan aligned with user intent and scope. Surfaces gaps explicitly.",
       "path": "ai/plugins/skf/skills/orch-orchestration-plan.md",
       "version": 1.0,
       "tags": [
@@ -332,10 +331,10 @@
         "wave"
       ],
       "inputs": [
-        "intake-context-path: path to .orchestration-temp/intake-context.md (output of orch-intake-context; provides user request, scope, constraints, work-type classification, and complexity-tier) — required",
-        "wave-decomp-path: path to .orchestration-temp/wave-decompose.md (output of orch-wave-decompose) — required",
-        "skill-inventory-path: path to .orchestration-temp/skill-inventory.md (output of orch-skill-resolve) — required",
-        "pattern-select-result-path: path to .orchestration-temp/pattern-select-result.md (output of orch-pattern-select; provides required and advisory pattern IDs applicable to this orchestration) — optional",
+        "intake-context: structured intake context (output of orch-intake-context; provides user request, scope, constraints, work-type classification, and complexity-tier) — required",
+        "wave-decomp: structured wave decomposition (output of orch-wave-decompose) — required",
+        "skill-inventory: structured skill inventory (output of orch-skill-resolve) — required",
+        "pattern-select-result: structured result from orch-pattern-select; provides required and advisory pattern IDs applicable to this orchestration — optional",
         "governance: include | skip (optional; defaults to include if omitted)",
         "planning-strategy-hint: optional hint about which planning strategy to use (optional)",
         "Supplementary context such as iteration folder, constraints, and prior decisions (optional)",
@@ -343,18 +342,18 @@
       ],
       "outputs": [
         "Inline plan document with wave assignments, decisions, reasoning, and gaps",
-        "Structured plan document written to .orchestration-temp/orchestration-plan.md",
-        "The plan document uses the pre-decomposed waves from wave-decompose.md as its wave structure."
+        "Optional spill path under reports/orchestration-spill/ when the compact inline budget is exceeded",
+        "The plan document uses the pre-decomposed waves from wave-decomp as its wave structure."
       ],
       "dispatch-variant": "compact",
-      "anti-scope": "It does NOT execute any skill, ask the user questions, or load any files other than intake-context.md, wave-decompose.md, skill-inventory.md, and pattern-select-result.md (if provided) from the provided input paths.",
+      "anti-scope": "It does NOT execute any skill, ask the user questions, or read arbitrary workspace files. It operates only on caller-provided structured inputs plus optional spill fallback when the inline budget is exceeded.",
       "name": "orch-orchestration-plan",
       "recommended-tier": "standard-agent"
     },
     {
       "id": "orch-orchestration-summary",
       "type": "file",
-      "description": "Compiles and writes the orchestration summary document from wave summary files and the orchestration plan. USE FOR: generating the final timestamped orchestration summary report under reports/ at the close of a workflow run; filling the summary template from wave summaries and plan data; returning the completed summary inline for chat display.",
+      "description": "Compiles and writes the orchestration summary document from inline wave summaries and the orchestration plan. USE FOR: generating the final timestamped orchestration summary report under reports/ at the close of a workflow run; filling the summary template from accumulated orchestration state; returning the completed summary inline for chat display.",
       "path": "ai/plugins/skf/skills/orch-orchestration-summary.md",
       "version": 1.0,
       "tags": [
@@ -367,7 +366,8 @@
         "One-line description of what was orchestrated (required)",
         "Task complexity tier, one of Simple, Standard, or Complex (required)",
         "Integer count of waves that ran (required)",
-        "Override path for the working-state directory (optional)",
+        "Inline wave summaries and verification state (required)",
+        "Inline orchestration plan or approved plan summary (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
@@ -422,8 +422,7 @@
         "gate"
       ],
       "inputs": [
-        "Relative path to the orchestration plan file (required)",
-        "Override path for the working-state directory (optional)",
+        "Structured orchestration plan object (required)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
@@ -438,7 +437,7 @@
     {
       "id": "orch-resume-detect",
       "type": "file",
-      "description": "Enumerates prior wave summary files in .orchestration-temp/ to determine whether a prior orchestration run can be resumed. USE FOR: resume detect, resume check, resume state, prior state detection, workflow resume. Returns a structured resume-state report.",
+      "description": "Reports that resume is disabled under the inline-only orchestration contract. USE FOR: callers that still dispatch resume detection during migration; returning a deterministic no-resume report instead of probing temp state.",
       "path": "ai/plugins/skf/skills/orch-resume-detect.md",
       "version": 1.0,
       "tags": [
@@ -448,7 +447,6 @@
         "workflow-state"
       ],
       "inputs": [
-        "Override path for the working-state directory (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
@@ -463,7 +461,7 @@
     {
       "id": "orch-skill-resolve",
       "type": "file",
-      "description": "Analyzes accumulated orchestration context (intake, traversal, knowledge consultation) and selects the most appropriate skills from skills-index.json for the current problem. Produces a curated skill inventory with selection rationale. USE FOR: Phase 2 before plan generation — resolving which skills are needed based on what was learned during intake.",
+      "description": "Analyzes accumulated orchestration context (intake, traversal, knowledge consultation) and selects the most appropriate skills from skills-index.json. Produces a curated inline skill inventory with selection rationale. USE FOR: Phase 2 before plan generation — resolving which skills are needed based on what was learned during intake.",
       "path": "ai/plugins/skf/skills/orch-skill-resolve.md",
       "version": 1.0,
       "tags": [
@@ -473,14 +471,14 @@
         "context-driven"
       ],
       "inputs": [
-        "Path to intake context file (required) — typically .orchestration-temp/intake-context.md",
-        "Path to traversal results or navigation result (optional) — if produced during intake",
-        "Path to knowledge consultation output (optional) — if produced during intake",
+        "Structured intake context object (required)",
+        "Structured traversal summary or navigation result (optional)",
+        "Structured knowledge consultation output (optional)",
         "Request summary or free-form problem description (optional, supplements intake context)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "Curated skill inventory written to .orchestration-temp/skill-inventory.md",
+        "Curated inline skill inventory",
         "Selection rationale for each chosen skill",
         "Count of selected skills"
       ],
@@ -492,7 +490,7 @@
     {
       "id": "orch-wave-decompose",
       "type": "file",
-      "description": "Decomposes a task into an ordered wave plan. Reads intake context, applies wave organization rules, and writes `.orchestration-temp/wave-decompose.md`. USE FOR: before orchestration planning — decomposing task scope into sequenced waves with dependencies declared. DO NOT USE FOR: plan authoring, skill assignment, or agent tier selection.",
+      "description": "Decomposes a task into an ordered wave plan. Reads inline intake context, applies wave organization rules, and returns a structured wave decomposition inline. USE FOR: before orchestration planning — decomposing task scope into sequenced waves with dependencies declared. DO NOT USE FOR: plan authoring, skill assignment, or agent tier selection.",
       "path": "ai/plugins/skf/skills/orch-wave-decompose.md",
       "version": 1.0,
       "tags": [
@@ -502,11 +500,11 @@
         "wave"
       ],
       "inputs": [
-        "Path to intake context file (required) — typically .orchestration-temp/intake-context.md",
+        "Structured intake context object (required)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "Wave decomposition document written to .orchestration-temp/wave-decompose.md",
+        "Structured wave decomposition",
         "Execution status: ok or blocked"
       ],
       "dispatch-variant": "compact",
@@ -517,7 +515,7 @@
     {
       "id": "orch-wave-pattern-bundle",
       "type": "file",
-      "description": "Builds a wave pattern bundle for a specific execution wave by reading the pattern-select result and resolving each required and advisory pattern to its full file body. USE FOR: assembling per-wave pattern bundles before subagent dispatch; resolving pattern IDs to full bodies via the patterns index; writing .orchestration-temp/wave-{N}-pattern-bundle.md.",
+      "description": "Builds a wave pattern bundle for a specific execution wave by reading the structured pattern-select result and resolving each required and advisory pattern to its full file body. USE FOR: assembling per-wave pattern bundles before subagent dispatch; resolving pattern IDs to full bodies via the patterns index; returning compact inline bundle state with optional spill fallback.",
       "path": "ai/plugins/skf/skills/orch-wave-pattern-bundle.md",
       "version": 1.0,
       "tags": [
@@ -529,11 +527,11 @@
       "inputs": [
         "1-based integer wave index for which to build the bundle (required)",
         "Complexity tier level for pattern selection — Simple, Standard, or Complex (required)",
-        "Override path for the working-state directory (optional)",
+        "Structured pattern-select result with required and advisory pattern IDs (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
-        "Path to written wave pattern bundle at .orchestration-temp/wave-{N}-pattern-bundle.md",
+        "Structured wave pattern bundle",
         "Summary of pattern bundle generation"
       ],
       "dispatch-variant": "compact",
@@ -544,7 +542,7 @@
     {
       "id": "orch-wave-verification",
       "type": "file",
-      "description": "Composes and writes the wave summary document, then independently verifies a completed execution wave by comparing the wave plan (expected tasks and outputs) against the wave summary (actual results). USE FOR: documenting what a wave executed, confirming produced expected artifacts, and catching structural and semantic gaps before moving to the next wave. Produces both wave summary and verification report files.",
+      "description": "Composes the wave summary state inline, then independently verifies a completed execution wave by comparing the wave plan (expected tasks and outputs) against the wave summary (actual results). USE FOR: documenting what a wave executed, confirming produced expected artifacts, and catching structural and semantic gaps before moving to the next wave. Produces both wave summary and verification state inline.",
       "path": "ai/plugins/skf/skills/orch-wave-verification.md",
       "version": 1.0,
       "tags": [
@@ -557,13 +555,13 @@
         "Integer wave number identifying which wave to verify (required)",
         "Wave task list with IDs, descriptions, assigned agent or skill, and expected output files (required)",
         "Wave execution task records (inline or as file path) — used to compose the wave summary in Step 0 (required)",
-        "Path to the wave summary markdown file or inline summary content (may be omitted if task records are provided for Step 0) (optional)",
+        "Inline wave summary content (may be omitted if task records are provided for Step 0) (optional)",
         "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
       ],
       "outputs": [
         "Execution status: ok, blocked, or fail (WAVE PASS or WAVE FAIL)",
-        "Path to written wave summary: `.orchestration-temp/wave-{N}-summary.md`",
-        "Path to written verification artifact: `.orchestration-temp/wave-{N}-verification.md`",
+        "Structured wave summary state",
+        "Structured verification state",
         "One-line summary of wave verification result"
       ],
       "dispatch-variant": "full",

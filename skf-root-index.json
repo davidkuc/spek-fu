@@ -66,6 +66,12 @@
       "type": "folder",
       "description": "",
       "path": "features/"
+    },
+    {
+      "name": "dd.md",
+      "type": "file",
+      "description": "",
+      "path": "dd.md"
     }
   ]
 }

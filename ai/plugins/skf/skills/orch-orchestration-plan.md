@@ -2,26 +2,26 @@
 id: "orch-orchestration-plan"
 recommended-tier: "standard-agent"
 version: 1.0
-description: "Builds a structured orchestration plan using intake context (request scope, constraints, complexity tier) and pre-decomposed wave inputs. Produces a formal plan document aligned with user intent and scope. Surfaces gaps explicitly."
-anti-scope: "It does NOT execute any skill, ask the user questions, or load any files other than intake-context.md, wave-decompose.md, skill-inventory.md, and pattern-select-result.md (if provided) from the provided input paths."
+description: "Builds a structured orchestration plan using intake context (request scope, constraints, complexity tier) and pre-decomposed wave inputs. Produces a formal inline plan aligned with user intent and scope. Surfaces gaps explicitly."
+anti-scope: "It does NOT execute any skill, ask the user questions, or read arbitrary workspace files. It operates only on caller-provided structured inputs plus optional spill fallback when the inline budget is exceeded."
 tags:
   - "utility"
   - "orchestration"
   - "planning"
   - "wave"
 inputs:
-  - "intake-context-path: path to .orchestration-temp/intake-context.md (output of orch-intake-context; provides user request, scope, constraints, work-type classification, and complexity-tier) — required"
-  - "wave-decomp-path: path to .orchestration-temp/wave-decompose.md (output of orch-wave-decompose) — required"
-  - "skill-inventory-path: path to .orchestration-temp/skill-inventory.md (output of orch-skill-resolve) — required"
-  - "pattern-select-result-path: path to .orchestration-temp/pattern-select-result.md (output of orch-pattern-select; provides required and advisory pattern IDs applicable to this orchestration) — optional"
+  - "intake-context: structured intake context (output of orch-intake-context; provides user request, scope, constraints, work-type classification, and complexity-tier) — required"
+  - "wave-decomp: structured wave decomposition (output of orch-wave-decompose) — required"
+  - "skill-inventory: structured skill inventory (output of orch-skill-resolve) — required"
+  - "pattern-select-result: structured result from orch-pattern-select; provides required and advisory pattern IDs applicable to this orchestration — optional"
   - "governance: include | skip (optional; defaults to include if omitted)"
   - "planning-strategy-hint: optional hint about which planning strategy to use (optional)"
   - "Supplementary context such as iteration folder, constraints, and prior decisions (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Inline plan document with wave assignments, decisions, reasoning, and gaps"
-  - "Structured plan document written to .orchestration-temp/orchestration-plan.md"
-  - "The plan document uses the pre-decomposed waves from wave-decompose.md as its wave structure."
+  - "Optional spill path under reports/orchestration-spill/ when the compact inline budget is exceeded"
+  - "The plan document uses the pre-decomposed waves from wave-decomp as its wave structure."
 dispatch-variant: "compact"
 ---
 
@@ -30,7 +30,7 @@ dispatch-variant: "compact"
 <!-- SECTION 1: Identity (primacy position) -->
 Builds a structured orchestration plan from intake context and pre-decomposed wave inputs. Uses intake context (user request, scope, constraints, work-type classification, complexity tier) to frame planning decisions. Produces a formal plan document aligned with user intent. Surfaces gaps explicitly.
 
-**Scope boundary**: This skill produces a plan document only. It does NOT execute any skill or ask the user questions. Planning context (user request, scope, constraints, work-type, complexity tier), wave structure, and skill inventory must be provided by the caller via `intake-context.md`, `wave-decompose.md`, and `skill-inventory.md`.
+**Scope boundary**: This skill produces a plan document only. It does NOT execute any skill or ask the user questions. Planning context (user request, scope, constraints, work-type, complexity tier), wave structure, and skill inventory must be provided by the caller as structured inputs.
 
 **Agent tier dispatch**: Dispatch this skill using the tier that matches the `complexity-tier` input:
 - `Complex` → `standard-agent`
@@ -40,7 +40,7 @@ Builds a structured orchestration plan from intake context and pre-decomposed wa
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. Read ONLY the files at `intake-context-path`, `wave-decomp-path`, `skill-inventory-path`, and `pattern-select-result-path` (if provided); all other context must be provided by the caller. WHY: this skill uses intake context (which contains user request, scope, constraints, work-type, and complexity tier), wave decomposition, and skill inventory as the authoritative structured inputs for planning. It does not perform discovery or load arbitrary workspace files.
+1. Operate ONLY on the caller-provided structured inputs `intake-context`, `wave-decomp`, `skill-inventory`, and `pattern-select-result` (if provided); all other context must be provided by the caller. WHY: this skill uses those structured inputs as the authoritative planning baseline. It does not perform discovery or load arbitrary workspace files.
 2. Produce planning output only; execution remains the orchestrator's responsibility after plan approval. WHY: mixing planning and execution collapses the approval boundary.
 3. Always surface unresolved inputs even when no gaps are found elsewhere. WHY: hidden gaps cause mid-execution failures.
 4. Treat governance follow-on work as mandatory per `runbook-plan.md` unless the caller explicitly passes `governance: skip`. When skipped, record this decision in Gaps / Risks. WHY: governance actions should be explicit and caller-controlled rather than injected by convention.
@@ -65,16 +65,14 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Confirm `intake-context-path`, `wave-decomp-path`, and `skill-inventory-path` inputs are present before proceeding.
+- Confirm `intake-context`, `wave-decomp`, and `skill-inventory` inputs are present before proceeding.
 
 > **If any required input is absent**: stop immediately; return `{"status": "blocked", "reason": "{field} input missing", "skill": "orch-orchestration-plan"}` — do not produce a partial plan.
 
-- Read the intake context from `intake-context-path`. This file contains the user request, scope, constraints, work-type classification, and complexity-tier — all essential planning context.
-- Read the wave decomposition from `wave-decomp-path` and the skill inventory from `skill-inventory-path`.
-- If `pattern-select-result-path` is provided:
-  - Read the file at that path.
+- Use the supplied intake context, wave decomposition, and skill inventory directly.
+- If `pattern-select-result` is provided:
   - Extract `required` pattern IDs and `advisory` pattern IDs.
-  - If the file is missing or unreadable, record as a gap but do not block planning.
+  - If the payload is malformed, record as a gap but do not block planning.
 - If required intake context fields are missing (complexity-tier, request, scope), return blocked status with reason: "required field missing from intake-context".
 - Record which optional planning inputs are absent so the missing context is surfaced later under Gaps / Risks.
 - Decide whether governance follow-on work is explicitly required by the `governance` input parameter (defaults to include if omitted).
@@ -82,7 +80,7 @@ If `env` is `host`: no additional action required.
 ## Done conditions
 
 - **inline plan** is done when the plan includes the required sections for its complexity tier, every referenced `skill-id` has passed Step 5a validation, and all unresolved inputs are surfaced under `Gaps / Risks`.
-- **disk write** is done when `.orchestration-temp/orchestration-plan.md` has been written and matches the returned plan.
+- **spill fallback** is done when an optional spill artifact has been written under `reports/orchestration-spill/` because the compact inline budget could not preserve required fidelity.
 
 ## Step 0 — Load and Leverage Intake Context for Planning
 
@@ -106,10 +104,10 @@ Carry the classification label (`Simple`, `Standard`, or `Complex`) into Step 5 
 
 ## Step 1 — Load Pre-Decomposed Waves and Build Skill Sequence
 
-The wave structure is provided by the caller via `wave-decompose.md`. Use the scope and constraints from the intake context to validate and frame the wave assignments. Do NOT re-derive wave assignments or re-organize tasks into waves.
+The wave structure is provided by the caller via `wave-decomp`. Use the scope and constraints from the intake context to validate and frame the wave assignments. Do NOT re-derive wave assignments or re-organize tasks into waves.
 
-1. Read `wave-decompose.md` from `wave-decomp-path`. This file contains the pre-decomposed wave and task assignments.
-2. Read `skill-inventory.md` from `skill-inventory-path`. Use only skills present in the inventory. Flag any needed skill not found there as a gap.
+1. Use `wave-decomp`. This input contains the pre-decomposed wave and task assignments.
+2. Use `skill-inventory`. Use only skills present in the inventory. Flag any needed skill not found there as a gap.
 3. Map each task in the wave decomposition to its corresponding skill from the inventory.
 4. Chain skills so required inputs are satisfied by prior outputs or provided context.
 5. Apply skill minimization: remove any skill not contributing to a required output.
@@ -187,7 +185,7 @@ Optional governance follow-on skills: assign them to the final wave and label it
 3. Any skill capability limitation relevant to the request.
 4. If orchestration is not read-only and any mandatory governance skill could not be included or verified, flag it.
 5. If `governance: skip` was passed as a parameter, document that governance wave is omitted.
-6. If `pattern-select-result-path` was provided but the file is missing or unreadable, flag: `⚠ pattern-select-result unavailable — patterns not included in plan`.
+6. If `pattern-select-result` was provided but is malformed or incomplete, flag: `⚠ pattern-select-result unavailable — patterns not included in plan`.
 
 List all under `Gaps / Risks`. Write *None identified.* if empty (or omit the section entirely for **Simple** tier).
 
@@ -211,7 +209,7 @@ Format the plan following the output structure defined in Section 6 (`<output_fo
 8. **Decisions**, **Reasoning**: *All tiers.* — **Further Considerations**: *Simple*: omit if empty. *Standard*: optional, include only if non-empty. *Complex*: mandatory. — **Gaps / Risks**: *Simple*: omit if empty. *Standard/Complex*: mandatory (write *None identified.* if empty).
 9. **Relevant Files (Complete)**: table listing every file touched across all waves. *All tiers.*
 
-Write to `.orchestration-temp/orchestration-plan.md` as a markdown document with required sections (see Step 5b); return inline as a markdown plan to the caller when used in-context.
+Return the plan inline as the canonical output. If the plan cannot stay within the compact output budget after removing nonessential wording, an optional spill artifact under `reports/orchestration-spill/` is allowed.
 
 > **Manual wave structure validation**: After writing the plan, review the wave structure manually: confirm wave headings are sequential (Wave 1, 2, 3...), each wave contains at least one step, no duplicate wave numbers exist, and a TL;DR/Summary section is present.
 
@@ -230,19 +228,15 @@ Before returning the plan, cross-check all `skill-id` values present in the plan
 
 > **Manual validation alternative**: If automated validation is not available, after writing the plan, manually verify each `skill-id:` reference by checking it matches an entry in `ai/plugins/skf/skills/skills-index.json`.
 
-## Step 5b — Pre-Write State Check
+## Step 5b — Output Budget Check
 
-> Markdown structure validation: Before writing, verify the plan document includes required markdown sections. Required sections: `# Orchestration Plan:` title, `## TL;DR`, `## Scope Summary`, numbered `### Wave` sections, `### Verification`, `### Decisions`, and `### Reasoning`. If any required section is missing, surface it as a gap rather than writing an incomplete file.
+> Markdown structure validation: Before returning, verify the plan document includes required markdown sections. Required sections: `# Orchestration Plan:` title, `## TL;DR`, `## Scope Summary`, numbered `### Wave` sections, `### Verification`, `### Decisions`, and `### Reasoning`. If any required section is missing, surface it as a gap rather than returning an incomplete plan.
 
-Before writing to `.orchestration-temp/orchestration-plan.md`:
+Before returning the plan:
 
-1. If the file does not exist → proceed as **first-run write**.
-2. If the file exists and was produced by a prior run in the same session → proceed as **refresh write**.
-3. If the file exists and its content already matches the current plan (same request, same wave structure) → treat as **already-complete**; skip the write and note `Plan unchanged — write skipped.` in the return.
-
-> **If the file exists but its origin is ambiguous**: overwrite with current plan content.
-
-> **If the file write fails**: halt; surface the error to the caller; return the plan inline instead of silently proceeding.
+1. Compact wording aggressively while preserving meaning.
+2. Remove redundant explanatory prose that duplicates structured fields.
+3. If the plan still exceeds the compact output budget and fidelity would be lost, write a spill artifact under `reports/orchestration-spill/` and return the spill path alongside the compact summary.
 
 The skill is complete when the plan is produced and returned to the caller.
 
@@ -271,8 +265,7 @@ The plan produced is aligned with the user's request and scope as captured in th
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Use ONLY to read the files at `wave-decomp-path` and `skill-inventory-path` provided by the caller. Do not load any other files.
-- **create_file / replace_string_in_file**: Use only to write the plan to `.orchestration-temp/orchestration-plan.md`. No other file writes.
+- **create_file**: Use only for optional spill fallback under `reports/orchestration-spill/` when the compact output budget is exceeded.
 - Do not use deleted helper scripts in this skill; perform metadata, governance, and wave-conflict checks directly from the caller-provided context.
 </tools>
 
@@ -284,7 +277,7 @@ The plan produced is aligned with the user's request and scope as captured in th
 | skill_id | `orch-orchestration-plan` |
 | wave | `N` |
 | step | `N.M` |
-| output_path | `.orchestration-temp/orchestration-plan.md` |
+| output_path | `none` or `reports/orchestration-spill/...` |
 | summary | one-line summary of what was done |
 
 Minimum required sections (in order):
@@ -361,9 +354,9 @@ Expected behavior: Stops in preflight, reports that `requirements` is missing, a
 
 ## Rules
 
-- Read ONLY `wave-decompose.md` and `skill-inventory.md` from the provided input paths; NEVER load the runbook Dispatch Contract sections, `orchestration-plan-template.md`, or any other file.
+- Read ONLY the caller-provided structured planning inputs; NEVER load the runbook Dispatch Contract sections, `orchestration-plan-template.md`, or any other file.
 - ALWAYS dispatch this skill using the agent tier matching `complexity-tier`: Complex → `large-context-agent`; Standard → `standard-agent`; Simple → `fast-agent`.
-- ALWAYS read `wave-decompose.md` and `skill-inventory.md` from the provided paths before building the plan. Do NOT re-decompose waves from scratch.
+- ALWAYS use `wave-decomp` and `skill-inventory` from the provided inputs before building the plan. Do NOT re-decompose waves from scratch.
 - Always include Gaps / Risks when unresolved inputs remain (Simple tier may omit the section only when truly empty).
 - Include mandatory governance skills unless the orchestration is purely read-only or `governance: skip` is set; record any skip reason in Gaps / Risks.
 - ALWAYS classify task complexity in Step 0 — wave count and section set must match the assigned tier.
@@ -371,5 +364,5 @@ Expected behavior: Stops in preflight, reports that `requirements` is missing, a
 - ALWAYS include Verification checklist (Step 4.2) — do not omit even when empty.
 - Further Considerations: mandatory for Complex; optional for Standard (omit if empty); omit for Simple if empty.
 - ALWAYS run Step 5a skill-id validation before returning the plan.
-- ALWAYS perform the Step 5b pre-write state check before writing `.orchestration-temp/orchestration-plan.md`.
+- ALWAYS perform the Step 5b output budget check before returning the plan.
 </reminders>

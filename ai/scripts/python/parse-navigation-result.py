@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Spek-Fu — Parse Navigation Result: markdown-native using markdown parsing
+"""Spek-Fu — Parse Navigation Result: markdown-native using markdown parsing.
 
-Default behavior: reads markdown input (.orchestration-temp/traversal-report.md)
+Default behavior: reads markdown input from --input-file or stdin
 and outputs Python dicts or markdown to stdout or file.
 
 Usage:
     # Markdown input → Python objects to stdout (default)
-    python3 ai/scripts/python/parse-navigation-result.py --input-file .orchestration-temp/traversal-report.md
+    python3 ai/scripts/python/parse-navigation-result.py --input-file reports/orchestration-spill/traversal-report.md
 
     # Markdown input → JSON output
-    python3 ai/scripts/python/parse-navigation-result.py --input-file .orchestration-temp/traversal-report.md --as-json
+    python3 ai/scripts/python/parse-navigation-result.py --input-file reports/orchestration-spill/traversal-report.md --as-json
 
     # Extract domain groups from markdown bullet list
-    python3 ai/scripts/python/parse-navigation-result.py --input-file .orchestration-temp/traversal-report.md --extract-domains
+    python3 ai/scripts/python/parse-navigation-result.py --input-file reports/orchestration-spill/traversal-report.md --extract-domains
 
     # Extract skill paths from markdown bullet list
-    python3 ai/scripts/python/parse-navigation-result.py --input-file .orchestration-temp/traversal-report.md --extract-skills
+    python3 ai/scripts/python/parse-navigation-result.py --input-file reports/orchestration-spill/traversal-report.md --extract-skills
 
 Exit codes:
     0 = success

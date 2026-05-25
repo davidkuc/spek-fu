@@ -10,11 +10,11 @@ steps: 6
 
 **Phase 3** | Steps 1–6 | Orchestrator: skf-general-orchestrator
 
-Loads dispatch protocol, checks for prior resume state, executes the approved plan wave-by-wave with verification and coherence checks. Phase 4 (Closure) begins after Step 6 or on early closure.
+Loads dispatch protocol, caches approved inline orchestration state, executes the approved plan wave-by-wave with verification and coherence checks. Phase 4 (Closure) begins after Step 6 or on early closure.
 
 > **Shared protocols**: See `runbook-shared.md` for Dispatch Contract, Escalation Policy, and Bounded Retry Policy. Re-read at phase entry.
 
-> **Skill inventory caching**: Read `.orchestration-temp/skill-inventory.md` once at Phase 3 entry. Reference this in-memory copy for all subsequent dispatch manifest construction — do not re-read per dispatch.
+> **Skill inventory caching**: Cache the inline `skill-inventory` once at Phase 3 entry. Reference this in-memory copy for all subsequent dispatch manifest construction — do not re-read or reconstruct it per dispatch.
 
 > **DELEGATE-OR-STOP**: Before every tool call, verify against the DELEGATE-OR-STOP protocol. Only `runSubagent`, `vscode/askQuestions`, `todo`, `web`, and allowlisted `read_file` are permitted.
 
@@ -25,9 +25,9 @@ Loads dispatch protocol, checks for prior resume state, executes the approved pl
 **Inline dispatch checklist** — verify before EVERY `runSubagent` call:
 
 1. **Variant selection**: `impl-*`/`gov-*` → Full manifest by default; `orch-*`/`meta-*` → Compact manifest by default. If `dispatch-variant` in the skill inventory says otherwise, follow the inventory.
-2. **Static fields**: read from `.orchestration-temp/skill-inventory.md` (id, path, description, anti-scope, inputs, outputs, dispatch-variant)
-3. **Runtime fields**: read from `.orchestration-temp/orchestration-plan.md` (task, context, constraints, wave/step number)
-4. **Response format**: subagent must return `status` (ok/blocked/fail) + `summary` (one line) + `output_path` (if file artifact produced)
+2. **Static fields**: read from the cached inline `skill-inventory` (id, path, description, anti-scope, inputs, outputs, dispatch-variant)
+3. **Runtime fields**: read from the approved inline orchestration plan (task, context, constraints, wave/step number)
+4. **Response format**: subagent must return `status` (ok/blocked/fail) + `summary` (one line) + structured result payload; `output_path` is optional and reserved for durable reports or oversize spill artifacts
 5. **SKILL section**: must point to file path, not inline behavior description
 6. **CONTEXT section**: must cite file paths only — never paste file contents
 7. **CONSTRAINTS**: must include wave number and step number
@@ -45,26 +45,11 @@ Loads dispatch protocol, checks for prior resume state, executes the approved pl
 
 ---
 
-## Step 2 — Resume Check
+## Step 2 — Cache Approved State
 
-Dispatch `ai/plugins/skf/skills/orch-resume-detect.md` (compact). Do NOT probe `.orchestration-temp/` directly — `read_file` cannot resolve globs, search tools prohibited.
+Cache the approved plan, skill inventory, wave decomposition, pattern selection, and intake context from Phase 2. Execution is single-session only in this contract.
 
-**Prior state detected** → offer via `vscode/askQuestions` using this template:
-
-```json
-{
-  "header": "resume_detection",
-  "question": "Prior execution state detected. How would you like to proceed?",
-  "options": [
-    { "label": "Continue from Wave {N+1}", "recommended": true },
-    { "label": "Restart from Wave 1" },
-    { "label": "Abort" }
-  ],
-  "allowFreeformInput": true
-}
-```
-
-**No prior state or malformed summaries** → alert user, offer restart-from-Wave-1 only.
+**Rule**: Do not dispatch `orch-resume-detect.md`. Resume remains disabled until a non-temp persistence model is approved.
 
 ---
 
@@ -82,13 +67,13 @@ Clean → `✓ No file conflicts in Wave {N}.`
 
 ### 3.2 Wave Pattern Bundle
 
-Reference the current wave bundle `.orchestration-temp/wave-{N}-pattern-bundle.md`. If this file is not present, dispatch `ai/plugins/skf/skills/orch-wave-pattern-bundle.md` (compact) to build it now before proceeding. If the current wave bundle already exists (resume), reuse it.
+Reference the current wave's inline pattern bundle. If it has not been built yet, dispatch `ai/plugins/skf/skills/orch-wave-pattern-bundle.md` (compact) to build it now before proceeding.
 
-- **Success**: reference bundle path in each task's CONTEXT section
-- **Skipped** (no `pattern-select-result.md`): log warning, dispatch without bundle
+- **Success**: inject compact required/advisory pattern state into each task's CONSTRAINTS and ADVISORY sections
+- **Skipped** (no pattern selection result): log warning, dispatch without bundle
 - **No bundle at dispatch time**: proceed without blocking
 
-The bundle aggregates required (binding) + advisory (informational) patterns from `pattern-select-result.md`, resolved via `patterns-index.json`. Subagents read one bundle file per wave rather than many individual pattern files.
+The bundle aggregates required (binding) + advisory (informational) patterns from the inline pattern selection result, resolved via `patterns-index.json`. Subagents consume one compact wave bundle object rather than many individual pattern files.
 
 **Precedence within bundle**: required > advisory; within advisory, earlier PT-ID > later. PT025 (Self-Correction) requires PT009 (Test Before Trust) when either is selected.
 
@@ -96,9 +81,9 @@ The bundle aggregates required (binding) + advisory (informational) patterns fro
 
 Log: `→ Wave {N}, Step {M} → {agent-tier}: {skill-id} — {reason}`
 
-**Manifest**: full for `impl-*`/`gov-*` and any skill whose `dispatch-variant` is `full`; compact for `orch-*`/`meta-*` and any skill whose `dispatch-variant` is `compact`. Look up the skill entry in `.orchestration-temp/skill-inventory.md` (produced by `orch-skill-resolve` in Phase 2) to get all static fields, then use the matching template from `runbook-shared.md § Dispatch Manifest Templates` to build the manifest. Fill all `<RUNTIME: ...>` fields from the orchestration plan.
+**Manifest**: full for `impl-*`/`gov-*` and any skill whose `dispatch-variant` is `full`; compact for `orch-*`/`meta-*` and any skill whose `dispatch-variant` is `compact`. Look up the skill entry in the cached inline `skill-inventory` (produced by `orch-skill-resolve` in Phase 2) to get all static fields, then use the matching template from `runbook-shared.md § Dispatch Manifest Templates` to build the manifest. Fill all `<RUNTIME: ...>` fields from the orchestration plan.
 
-**Tier selection**: Select the appropriate agent tier for this dispatch. Consult the `recommended-tier` field in `.orchestration-temp/skill-inventory.md` as a starting point, but decide based on task complexity and context. Never default all dispatches to the same agent tier.
+**Tier selection**: Select the appropriate agent tier for this dispatch. Consult the `recommended-tier` field in the cached inline `skill-inventory` as a starting point, but decide based on task complexity and context. Never default all dispatches to the same agent tier.
 
 **Dry run**: before irreversible/bulk actions (`rm`, `drop`, `truncate`, mass refactors) → preview → confirm → execute.
 
@@ -120,7 +105,7 @@ Log: `→ Wave {N}, Step {M} → {agent-tier}: {skill-id} — {reason}`
 
 ## Step 4 — Verify Each Wave
 
-Dispatch `ai/plugins/skf/skills/orch-wave-verification.md` (full manifest) with task list, expected outputs, plan reference, and wave scope. The skill performs structural + semantic verification and writes both `wave-{N}-summary.md` and `wave-{N}-verification.md` to `.orchestration-temp/`.
+Dispatch `ai/plugins/skf/skills/orch-wave-verification.md` (full manifest) with task list, expected outputs, plan reference, and wave scope. The skill performs structural + semantic verification and returns both wave summary and verification state inline. If the compact response budget is exceeded after compaction, it may spill to `reports/orchestration-spill/` as an exception.
 
 **Failure handling**:
 - First fail → retry with correction context in CONSTRAINTS (consumes `maxWaveRetries`)
@@ -157,7 +142,7 @@ Dispatch `ai/plugins/skf/skills/orch-artifact-coherence-check.md` (compact) afte
 - No schema mismatches between Wave N output and N+1 expected input
 - No path assumption mismatches (Wave N wrote `a.md` but N+1 expects `b.md`)
 
-**Incoherence detected** → HALT before Wave N+1. Surface: "Wave N produced `{paths}` but Wave N+1 expects `{expected}`. Resolution needed." Resume only after user resolves.
+**Incoherence detected** → HALT before Wave N+1. Surface: "Wave N produced `{paths}` but Wave N+1 expects `{expected}`. Resolution needed."
 
 ---
 
@@ -169,7 +154,7 @@ After all waves complete + final coherence check passes → **Phase 4 — Closur
 
 ## Error Paths
 
-- **Verification failure (3.4/4)**: retry once after 2s. Second fail → blocked, surface with devcontainer context.
-- **Coherence failure (6)**: halt, surface, resume after resolution.
+- **Verification failure (3.4/4)**: retry once with concrete correction context. Second fail → blocked, surface with devcontainer context.
+- **Coherence failure (6)**: halt and surface for resolution.
 - **User cancels (3)**: stop current action, preserve work → Phase 4.
 - **Correction budget exhausted (5)**: escalate — never invent third approach without authorization.

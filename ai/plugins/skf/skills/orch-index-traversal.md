@@ -12,11 +12,11 @@ tags:
 inputs:
   - "Free-form text describing what the caller is looking for (required)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
-  - "Output file path for the traversal report — optional; defaults to .orchestration-temp/traversal-report.md"
+  - "Optional spill output path for the traversal report when inline compaction is insufficient"
 outputs:
   - "Navigation result status: ok, blocked, or fail"
   - "One-line summary of navigation result"
-  - "Path to written traversal report (supplied output-path or default .orchestration-temp/traversal-report.md)"
+  - "Optional spill path for the traversal report"
 dispatch-variant: "compact"
 ---
 
@@ -26,7 +26,7 @@ dispatch-variant: "compact"
 <!-- SECTION 1: Identity (primacy position) -->
 Traverses the Spek-Fu index hierarchy based on a free-form query. Starts at `skf-root-index.json`, follows index pointers through intermediate indexes using progressive disclosure, evaluates entries for relevance to the query at each level, and returns only the most relevant files and folders as a Navigation Result report.
 
-**Scope boundary**: This skill traverses indexes and reports paths only. It does NOT read resolved resource files, modify source or index files, or ask the user questions. It writes the Navigation Result report to the supplied output path (or `.orchestration-temp/traversal-report.md`) for downstream orchestration use.
+**Scope boundary**: This skill traverses indexes and reports paths only. It does NOT read resolved resource files, modify source or index files, or ask the user questions. It returns the Navigation Result report inline for downstream orchestration use and may spill under `reports/orchestration-spill/` only when compaction is insufficient.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -56,13 +56,7 @@ If `env` is `host`: no additional action required.
 
 ## Idempotency Check
 
-Before reading any indexes, resolve the output path from the optional input. If none is supplied, use `.orchestration-temp/traversal-report.md`.
-
-Then check whether a prior traversal report already exists:
-
-- **if-exists** (prior traversal report detected): the supplied output path exists and is non-empty → return the prior report and ask the caller whether to refresh (re-run traversal) or reuse the existing result.
-- **if-empty** (no prior state): the report file does not exist → proceed normally from Step 1.
-- **if-complete** (report exists and query is unchanged): the file exists, is non-empty, and was produced for the same query → return the existing report with a note; exit without re-traversing unless the caller explicitly requests a refresh.
+No temp-state reuse applies in the inline-only contract. Always traverse from source indexes for the current query.
 
 ## Preflight
 
@@ -149,9 +143,9 @@ Produce and return the Navigation Result report using the template defined in `<
 
 The skill is complete when it returns a Navigation Result report with either a filtered matches table or a no-relevant-resources-found status.
 
-Write the Navigation Result report to the supplied output path (using `create_file` or `replace_string_in_file`) before returning inline. The file content must match the inline report exactly.
+Return the Navigation Result report inline. If the result cannot fit within the compact output budget after compaction, spill to the supplied output path or to `reports/orchestration-spill/traversal-report.md` and return that path.
 
-**Script**: Use `parse-navigation-result.py` to render or parse the Navigation Result table: `python3 ai/scripts/python/parse-navigation-result.py --input-file {output-path}`
+**Script**: Use `parse-navigation-result.py` to render or parse a spilled Navigation Result table when needed.
 
 </workflow>
 
@@ -159,7 +153,7 @@ Write the Navigation Result report to the supplied output path (using `create_fi
 <tools>
 - **read_file**: Primary tool for reading index JSON files during traversal. Use it for every index read and stop at terminal paths rather than loading resource file bodies.
 - **file_search / grep_search**: Fallback if an index file path cannot be determined from parent index entries alone. Prefer index traversal over direct file search.
-- **create_file / replace_string_in_file**: Only to write the Navigation Result report to the supplied output path. No other files may be written.
+- **create_file**: Only for optional spill fallback under `reports/orchestration-spill/` or an explicitly supplied spill path. No other files may be written.
 </tools>
 
 <!-- SECTION 6: Output format -->
@@ -168,7 +162,7 @@ Write the Navigation Result report to the supplied output path (using `create_fi
 |-------|-------|
 | status | `ok` \| `blocked` \| `fail` |
 | summary | `one-line summary` |
-| output_path | dynamically resolved from input (default: `.orchestration-temp/traversal-report.md`) |
+| output_path | optional spill path (default: `none`) |
 
 Return a Navigation Result report. Do not add explanatory prose beyond what the template defines.
 

@@ -160,9 +160,9 @@ Verified lessons captured from framework operations.
 
 **Trigger**: Direct `read_file` access to skf-config.json was previously needed as bootstrap step but is no longer required after orch-initialize.
 
-**Context**: orch-initialize reads skf-config.json and returns config values in init-result.md (an allowlisted subagent output). Keeping skf-config.json in the allowlist creates unnecessary bypass potential.
+**Context**: orch-initialize reads skf-config.json and returns config values in its inline initialization result. Keeping skf-config.json in the allowlist creates unnecessary bypass potential.
 
-**Solution**: Remove skf-config.json from orchestrator read_file allowlist once orch-initialize is verified. Config values are accessible via `.orchestration-temp/init-result.md`.
+**Solution**: Remove skf-config.json from orchestrator read_file allowlist once orch-initialize is verified. Config values are accessible via the inline initialization result.
 
 ---
 

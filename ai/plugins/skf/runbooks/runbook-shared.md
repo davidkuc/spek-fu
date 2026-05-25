@@ -20,11 +20,11 @@ Every `runSubagent` call is clean-slate — subagents inherit nothing from the o
 
 ## Dispatch Manifest Templates
 
-The orchestrator builds dispatch manifests from skill metadata in `.orchestration-temp/skill-inventory.md` (produced by `ai/plugins/skf/skills/orch-skill-resolve.md` in Phase 2). No external script is required.
+The orchestrator builds dispatch manifests from the inline `skill-inventory` returned by `ai/plugins/skf/skills/orch-skill-resolve.md` in Phase 2. No external script is required.
 
 **Variant selection**: `impl-*` and `gov-*` use the **Full** template by default. `orch-*` and `meta-*` use the **Compact** template by default. When in doubt, check the `dispatch-variant` field in the skill inventory entry and follow it.
 
-**How to use**: Copy the appropriate template below. Replace every `<skill-inventory: fieldname>` value by reading the matching field from the skill's entry in `.orchestration-temp/skill-inventory.md`. Replace every `<RUNTIME: ...>` value with the appropriate value from the orchestration plan / wave context.
+**How to use**: Copy the appropriate template below. Replace every `<skill-inventory: fieldname>` value by reading the matching field from the skill's entry in the cached inline `skill-inventory`. Replace every `<RUNTIME: ...>` value with the appropriate value from the orchestration plan / wave context.
 
 ### Full Manifest (impl-*, gov-*, or any skill marked `full`)
 
@@ -47,7 +47,7 @@ The orchestrator builds dispatch manifests from skill metadata in `.orchestratio
 - **Phase scope**: {Wave N, Step M — one-sentence wave goal}
 - **Affected paths**: {list of relevant file paths}
 - **Spec excerpt**: {direct quote or path reference, or "none"}
-- **Prior wave output**: {path or summary of relevant prior outputs, or "none"}
+- **Prior wave output**: {path or compact structured summary of relevant prior outputs, or "none"}
 - **Devcontainer guidelines** (include if env=devcontainer): path `ai/plugins/skf/knowledge/devcontainer-guidelines.md` — apply all devcontainer operational rules.
 
 ### Constraints
@@ -59,7 +59,7 @@ The orchestrator builds dispatch manifests from skill metadata in `.orchestratio
 - **Recommended patterns**: {list of advisory PT-IDs, or none}
 
 ### Output Format
-{Expected output structure — describe what the subagent should return inline and/or write to .orchestration-temp/}
+{Expected output structure — describe what the subagent should return inline; durable report paths are allowed only for final reports or oversize spill fallback}
 
 ### Inputs
 {Skill inputs from skill inventory — file paths or inline content}
@@ -80,7 +80,7 @@ The orchestrator builds dispatch manifests from skill metadata in `.orchestratio
 ### Context
 - **Phase scope**: {Wave N, Step M — one-sentence wave goal}
 - **Affected paths**: {list of relevant file paths}
-- **Prior wave output**: {path or summary of relevant prior outputs, or "none"}
+- **Prior wave output**: {path or compact structured summary of relevant prior outputs, or "none"}
 - **Devcontainer guidelines** (include if env=devcontainer): path `ai/plugins/skf/knowledge/devcontainer-guidelines.md` — apply all devcontainer operational rules.
 
 ### Constraints
@@ -104,15 +104,17 @@ Subagents must return a markdown-structured response inline as the primary outpu
 - **Step**: {N.M}
 - **Output path**: {path/to/artifact or none}
 - **Summary**: {one-line description — no newlines}
+- **State**: {compact structured payload or `none`}
 ```
 
 **Rules**:
 - `Status` is one of: `ok`, `blocked`, `fail`
 - `Skill` matches the skill id from frontmatter
 - `Wave` and `Step` are taken from the dispatch prompt
-- `Output path` is omitted if no file artifact was produced
+- `Output path` is omitted if no durable file artifact was produced
 - `Summary` is a single line (no newlines) suitable for inline reporting
-- If artifact exceeds 20 KB, write to `.orchestration-temp/{wave}-{step}-{skill-id}-output.{ext}` first, then return path in `Output path`
+- `State` is the canonical orchestration handoff object for downstream phases
+- If payload exceeds 20 KB after compaction, first compress wording and remove nonessential prose. If fidelity still cannot fit, spill to `reports/orchestration-spill/{wave}-{step}-{skill-id}-output.{ext}` and return the spill path in `Output path`
 
 ### Manifest Variants
 
@@ -124,10 +126,10 @@ Subagents must return a markdown-structured response inline as the primary outpu
 
 ### Resolve-and-Fill Pipeline
 
-The orchestrator builds dispatch manifests from skill metadata in `.orchestration-temp/skill-inventory.md` using the templates defined in **Dispatch Manifest Templates** above. No external script is required.
+The orchestrator builds dispatch manifests from skill metadata in the inline `skill-inventory` using the templates defined in **Dispatch Manifest Templates** above. No external script is required.
 
 1. Select the appropriate template variant based on skill prefix (see Dispatch Manifest Templates above)
-2. Fill `{field}` values by reading the matching field from the skill's entry in `.orchestration-temp/skill-inventory.md`
+2. Fill `{field}` values by reading the matching field from the skill's entry in the inline `skill-inventory`
 3. Fill `<RUNTIME: ...>` placeholders with task-specific values from the orchestration plan
 
 ### Field Ownership
@@ -148,7 +150,7 @@ IDENTITY is injected inline (role anchor). SKILL contains only the file path —
 
 The `skf-general-orchestrator` runs at Tier 2.
 
-> **Tier selection is advisory**: the orchestrator selects the appropriate agent tier for each dispatch based on task complexity, context, and the `recommended-tier` field in `.orchestration-temp/skill-inventory.md`. No prefix routing table overrides this judgment.
+> **Tier selection is advisory**: the orchestrator selects the appropriate agent tier for each dispatch based on task complexity, context, and the `recommended-tier` field in the inline `skill-inventory`. No prefix routing table overrides this judgment.
 
 ### Anti-Patterns
 

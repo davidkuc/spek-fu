@@ -21,8 +21,8 @@ Breaks work into waves, applies complexity gate per task, generates formal plan 
 ## Step 1 — Resolve Skill Inventory & Decompose Waves (Parallel)
 
 Dispatch `ai/plugins/skf/skills/orch-skill-resolve.md` (compact manifest).
-- Input: `intake-context-path: .orchestration-temp/intake-context.md`
-- Output: `.orchestration-temp/skill-inventory.md`
+- Input: `intake-context: structured object from Intake Step 9`
+- Output: structured `skill-inventory`
 - If blocked → surface error.
 
 ---
@@ -30,8 +30,8 @@ Dispatch `ai/plugins/skf/skills/orch-skill-resolve.md` (compact manifest).
 ## Step 2 — Decompose into Waves (Parallel)
 
 Dispatch `ai/plugins/skf/skills/orch-wave-decompose.md` (compact manifest).
-- Input: `intake-context-path: .orchestration-temp/intake-context.md`
-- Output: `.orchestration-temp/wave-decompose.md`
+- Input: `intake-context: structured object from Intake Step 9`
+- Output: structured `wave-decompose`
 - If blocked → surface error.
 
 ---
@@ -43,15 +43,15 @@ Dispatch `ai/plugins/skf/skills/orch-wave-decompose.md` (compact manifest).
 Dispatch `ai/plugins/skf/skills/orch-orchestration-plan.md`.
 
 **Key inputs**:
-- Intake context: `.orchestration-temp/intake-context.md`
-- Skill inventory: `.orchestration-temp/skill-inventory.md` (from Step 1)
-- Wave decomposition: `.orchestration-temp/wave-decompose.md` (from Step 2)
-- Pattern selection result: `.orchestration-temp/pattern-select-result.md` (from intake Step 7, if available — optional)
+- Intake context: structured object from Intake Step 9
+- Skill inventory: structured result from Step 1
+- Wave decomposition: structured result from Step 2
+- Pattern selection result: structured result from intake Step 7 (optional)
 - Governance wave: include | skip
 
-**Constraints**: validate all skill-ids against the skill inventory; no invented skill names; output to `.orchestration-temp/orchestration-plan.md`.
+**Constraints**: validate all skill-ids against the skill inventory; no invented skill names; return the orchestration plan inline as the canonical planning output.
 
-**Expected output**: formal plan document using the pre-decomposed waves from `wave-decompose.md`, skill-id + agent tier per task, expected outputs, dependency markers.
+**Expected output**: formal plan document using the pre-decomposed waves from `wave-decompose`, skill-id + agent tier per task, expected outputs, dependency markers.
 
 ---
 
@@ -100,7 +100,7 @@ Pattern bundle dispatch happens per-wave in Phase 3 — see `runbook-execute.md`
 
 ## Step 5 — Pre-Execution Validation
 
-Dispatch `ai/plugins/skf/skills/orch-pre-execution-validation.md` (compact) with approved plan path. Validate skill IDs, detect wave conflicts, check dependency issues.
+Dispatch `ai/plugins/skf/skills/orch-pre-execution-validation.md` (compact) with the approved inline plan. Validate skill IDs, detect wave conflicts, check dependency issues.
 
 | Failure | Action |
 |---|---|

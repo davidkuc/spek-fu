@@ -69,9 +69,7 @@
                     "/^terraform\\s+(apply|destroy)\\b/": false
                 },
                 "chat.customAgentInSubagent.enabled": true,
-                "files.watcherExclude": {
-                    "**/.orchestration-temp/**": true
-                },
+                "files.watcherExclude": {},
                 "search.exclude": {
                     "**/node_modules": true,
                     "**/bin": true,

@@ -62,7 +62,7 @@ CATALOG: list[dict[str, Any]] = [
         "folder": "",
         "excluded": [
             ".devcontainer", ".git", ".gitattributes", ".gitignore",
-            ".vscode", ".orchestration-temp",
+            ".vscode",
             "plan.md",
             "skf-root-index.json",  # the index itself (belt-and-suspenders)
         ],

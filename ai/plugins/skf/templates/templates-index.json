@@ -24,13 +24,13 @@
     {
       "name": "wave-summary-template.md",
       "type": "file",
-      "description": "Canonical markdown wave summary template for .orchestration-temp/wave-{N}-summary.md files",
+      "description": "Canonical markdown wave summary template for inline wave-summary state",
       "path": "ai/plugins/skf/templates/wave-summary-template.md"
     },
     {
       "name": "orchestration-summary-template.md",
       "type": "file",
-      "description": "Orchestration summary scaffold for .orchestration-temp/orchestration-summary.md — final run summary with wave results and outcomes",
+      "description": "Orchestration summary scaffold for reports/orchestration-summary-{timestamp}.md using inline wave results and outcomes",
       "path": "ai/plugins/skf/templates/orchestration-summary-template.md"
     },
     {

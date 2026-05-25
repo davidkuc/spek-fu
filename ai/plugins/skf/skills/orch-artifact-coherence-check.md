@@ -3,7 +3,7 @@ id: "orch-artifact-coherence-check"
 recommended-tier: "fast-agent"
 version: 1.0
 description: "Verifies that all outputs produced by Wave N are present and compatible with the inputs expected by Wave N+1 according to the orchestration plan. USE FOR: inter-wave coherence checks after a wave completes; detecting missing outputs or path mismatches before the next wave starts."
-anti-scope: "It writes only to `.orchestration-temp/wave-{N}-coherence-report.md`. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility."
+anti-scope: "It returns a structured inline coherence report only. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility."
 tags:
   - "utility"
   - "artifacts"
@@ -12,11 +12,10 @@ tags:
 inputs:
   - "Index of the wave just completed (required)"
   - "Index of the wave about to start (required)"
-  - "Relative path to the orchestration plan markdown file (required)"
-  - "Override path for the working-state directory (optional)"
+  - "Structured orchestration plan object (required)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "Path to .orchestration-temp/wave-{N}-coherence-report.md (coherence report)"
+  - "Structured inline coherence report"
   - "Summary of coherence check result"
 dispatch-variant: "compact"
 ---
@@ -24,15 +23,15 @@ dispatch-variant: "compact"
 # Skill: orch-artifact-coherence-check
 
 <!-- SECTION 1: Identity (primacy position) -->
-After completing Wave N, verifies that all declared outputs of Wave N exist on disk and match the inputs expected by Wave N+1 as declared in the orchestration plan. Returns a structured OK or BLOCKED report inline and writes it to `.orchestration-temp/wave-{completed-wave}-coherence-report.md`.
+After completing Wave N, verifies that all declared outputs of Wave N exist on disk and match the inputs expected by Wave N+1 as declared in the orchestration plan. Returns a structured OK or BLOCKED report inline.
 
-**Scope boundary**: It writes only to `.orchestration-temp/wave-{N}-coherence-report.md`. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility.
+**Scope boundary**: It returns only a structured inline coherence report. It does NOT create missing artifacts, execute other skills, halt execution, or ask the user questions. Corrective action and halt decisions are the caller's responsibility.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. Write ONLY to `.orchestration-temp/wave-{N}-coherence-report.md` — never modify plan files, wave summaries, or any artifact file. WHY: the coherence report is the skill's persisted deliverable; all other files are inputs and must be kept intact.
-2. If the plan file is unreadable or not found, return `BLOCKED` immediately with that as the reason. WHY: no plan means no declared output/input contracts to verify.
+1. Return the coherence report inline as the canonical output — never modify plan files, wave summaries, or any artifact file. WHY: the inline report is the declared deliverable; all files are inputs and must be kept intact.
+2. If the plan input is absent or malformed, return `BLOCKED` immediately with that as the reason. WHY: no plan means no declared output/input contracts to verify.
 3. Never issue a halt — return only the structured report. The caller decides whether to block the next wave. WHY: this skill reports facts; execution control is an orchestrator responsibility.
 4. Evaluate every declared output and every declared input found in the plan — do not short-circuit on the first failure. WHY: partial validation produces incomplete reports that mis-direct resolution effort.
 5. If no inter-wave dependencies are declared in the plan for Wave N+1, return `OK` with note `"no inter-wave dependencies declared"` rather than failing. WHY: absence of declared dependencies is a valid plan state.
@@ -54,17 +53,9 @@ If `env` is `host`: no additional action required.
 <!-- SECTION 4: Workflow -->
 <workflow>
 
-## Idempotency Check
-
-Before executing any steps, check whether a prior coherence report already exists for this wave:
-
-- **if-exists** (prior report detected): `.orchestration-temp/wave-{completed-wave}-coherence-report.md` exists and is non-empty → return the prior report and ask the caller whether to refresh (re-run checks) or reuse the existing report.
-- **if-empty** (no prior state): the report file does not exist → proceed normally from Step 1.
-- **if-complete** (report exists with `Status: OK`): the file exists, is non-empty, and declares `Status: OK` → return the existing report with a note that coherence was already confirmed; exit without re-running unless the caller explicitly requests a refresh.
-
 ## Preflight
 
-- Confirm `completed-wave`, `next-wave`, and `plan-file` are all present and non-empty before loading any files.
+- Confirm `completed-wave`, `next-wave`, and `plan` are all present and non-empty before loading any files.
 - If any required input is absent, Return **BLOCKED** — reason: Missing required input: {field} and halt.
 - Keep all steps read-only.
 
@@ -73,12 +64,11 @@ Before executing any steps, check whether a prior coherence report already exist
 ## Step 1 — Validate inputs
 1. Confirm `completed-wave` is a positive integer. If not, Return **BLOCKED** — reason: "completed-wave must be a positive integer" and halt.
 2. Confirm `next-wave` is a positive integer. If not, Return **BLOCKED** — reason: "next-wave must be a positive integer" and halt.
-3. Confirm `plan-file` is present and non-empty. If not, Return **BLOCKED** — reason: "plan-file is required" and halt.
-4. Resolve `orchestration-temp-path` (default: `.orchestration-temp/`).
+3. Confirm `plan` is present and non-empty. If not, Return **BLOCKED** — reason: "plan is required" and halt.
 
 ## Step 2 — Read plan and extract wave contracts
 
-1. Call `read_file` on `plan-file` to load the full plan content. If unreadable, Return **BLOCKED** — reason: "plan-file is unreadable or not found: {plan-file}" and halt.
+1. Use the caller-provided `plan` object. If malformed, Return **BLOCKED** — reason: "plan is unreadable or malformed" and halt.
 2. Parse the plan as markdown. Search for headings such as `## Wave {N}`, `### Wave {N}`, or equivalent markers. Extract declared **outputs** — fields, lists, or inline artifact paths labelled `outputs`, `produces`, `output-files`, or equivalent. For Wave N+1 extract declared **inputs** — fields labelled `inputs`, `requires`, `input-files`, `depends-on`, or equivalent.
 3. If Wave N has no declared outputs and Wave N+1 has no declared inputs, record `no_declared_outputs = true` and `no_declared_inputs = true`. Proceed to Step 6 (early OK).
 4. Normalize all extracted paths to forward-slash format.
@@ -146,7 +136,7 @@ Assemble the structured report:
 **message:** Wave N produced {produced-paths} but Wave N+1 expects {expected-paths}. Resolution needed.
 
 **Plan unreadable** (Step 2 halt):
-Return **BLOCKED** — reason: "plan-file is unreadable or not found: {plan-file}"
+Return **BLOCKED** — reason: "plan is unreadable or malformed"
 
 Rules:
 - `status` is `OK` only when every check has `exists: true` and `incoherences` is empty.
@@ -154,40 +144,15 @@ Rules:
 - The `message` field summarizes the overall result in one human-readable sentence.
 - `incoherences` array is always present; use `[]` when empty.
 
-**After assembling the JSON report, write the report as a markdown file** to `.orchestration-temp/wave-{completed-wave}-coherence-report.md` using `create_file`. The markdown format is:
-
-```markdown
-# Wave {N}→{N+1} Coherence Report
-
-Status: OK | BLOCKED
-Completed wave: {N}
-Next wave: {N+1}
-
-## Checks
-
-| File | Produced by Wave {N} | Required by Wave {N+1} | Exists |
-|------|----------------------|------------------------|--------|
-| {path} | yes/no | yes/no | yes/no |
-
-## Incoherences
-
-{none — or bullet list}
-
-## Notes
-
-{message}
-```
-
-Call `create_file` with the assembled markdown content. If the `.orchestration-temp/` directory does not exist, `create_file` will create it automatically.
+Return the structured JSON report inline. Do not write a coherence report file.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Use in Step 2 to load the full plan file. Use in Steps 3 and 4 to check artifact existence (first 3 lines per file). Read one file per call; prefer one call per file over fragmented reads.
+- **read_file**: Use in Steps 3 and 4 to check artifact existence (first 3 lines per file). Read one file per call; prefer one call per file over fragmented reads.
 - **file_search**: Permitted as a fallback when `read_file` returns ambiguous results for artifact existence checks (Steps 3–4).
-- **grep_search**: Permitted as a fallback in Step 2 to locate wave headings or extract output/input declarations when `read_file` content is ambiguous.
-- **create_file**: Use in Step 6 to write the coherence report to `.orchestration-temp/wave-{N}-coherence-report.md`.
+- **grep_search**: Prohibited — wave contracts come from the caller-provided plan object, not file parsing.
 - **replace_string_in_file / run_in_terminal**: Prohibited — this skill never modifies existing files and never executes commands.
 </tools>
 
@@ -199,10 +164,10 @@ Call `create_file` with the assembled markdown content. If the `.orchestration-t
 | skill_id | `orch-artifact-coherence-check` |
 | wave | `N` |
 | step | `5.5` |
-| output_path | `.orchestration-temp/wave-{N}-coherence-report.md` |
+| output_path | `none` |
 | summary | one-line summary of coherence check result |
 
-Return the structured JSON report defined in Step 6 as inline output. The full structured report is also written to `.orchestration-temp/wave-{N}-coherence-report.md`. No additional prose wrapping is required.
+Return the structured JSON report defined in Step 6 as inline output. No additional prose wrapping is required.
 
 Rules:
 - Always include `status`, `completedWave`, `nextWave`, `checks`, `incoherences`, and `message` in every non-BLOCKED response.
@@ -215,7 +180,7 @@ Rules:
 
 | Field | Type | Enum | Description |
 |---|---|---|---|
-| output_path | string | — | Path to `.orchestration-temp/wave-{N}-coherence-report.md` (coherence report) |
+| output_path | string | — | `none` |
 | summary | string | — | Summary of coherence check result |
 
 </output_format>
@@ -223,13 +188,13 @@ Rules:
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: completed_wave=2, next_wave=3, plan_file=plan.md. Wave 2 declares output `.orchestration-temp/final-quality-report.md`. Wave 3 declares input `.orchestration-temp/final-quality-report.md`. The file exists on disk. Path contract is satisfied.
-Expected output: Status OK, checks table shows the file as present, incoherences empty. Report written to `.orchestration-temp/wave-{N}-coherence-report.md`.
+Input: completed_wave=2, next_wave=3, inline plan. Wave 2 declares output `reports/orchestration-summary-{timestamp}.md`. Wave 3 declares input `reports/orchestration-summary-{timestamp}.md`. The file exists on disk. Path contract is satisfied.
+Expected output: Status OK, checks table shows the file as present, incoherences empty. Report returned inline.
 </example>
 
 <example>
-Input: completed_wave=1, next_wave=2, plan_file=plan.md. Wave 1 declares output `.orchestration-temp/orchestration-plan.md`. Wave 2 declares input `.orchestration-temp/orchestration-plan.md`. The file does not exist on disk.
-Expected output: Status BLOCKED, checks table shows `.orchestration-temp/orchestration-plan.md` as exists=no, incoherences list `missing-output`. Report written to `.orchestration-temp/wave-{N}-coherence-report.md`.
+Input: completed_wave=1, next_wave=2, inline plan. Wave 1 declares output `reports/orchestration-summary-{timestamp}.md`. Wave 2 declares input `reports/orchestration-summary-{timestamp}.md`. The file does not exist on disk.
+Expected output: Status BLOCKED, checks table shows `reports/orchestration-summary-{timestamp}.md` as exists=no, incoherences list `missing-output`. Report returned inline.
 </example>
 
 <example type="counter">

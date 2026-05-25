@@ -38,7 +38,7 @@ Runs **unconditionally** — even after partial completion, cancellation, or fai
 
 Dispatch `ai/plugins/skf/skills/orch-final-orchestration-validation.md` (full 9-section manifest).
 
-**Scope**: all artifacts produced during execution (from wave summaries). For partial runs: scope to completed artifacts only. Read-only — do not modify files.
+**Scope**: all artifacts produced during execution (from inline wave summaries and verification state). For partial runs: scope to completed artifacts only. Read-only — do not modify files.
 
 **Checks**: schema conformance, cross-reference integrity, completeness.
 
@@ -54,7 +54,7 @@ Dispatch `ai/plugins/skf/skills/gov-update.md` (full 9-section manifest).
 
 Update framework indexes, READMEs, and governance docs to reflect execution changes. Only update docs corresponding to actual changes — do not touch unchanged components.
 
-**Input context**: wave summaries, changed file list, iteration path.
+**Input context**: inline wave summaries, changed file list, iteration path.
 
 **If fails**: note in orchestration summary. Do NOT block Steps 4–5.
 
@@ -66,7 +66,7 @@ Update framework indexes, READMEs, and governance docs to reflect execution chan
 
 **[parallel with Step 5]** Steps 4 and 5 write to different output paths and have no shared file targets — dispatch both concurrently. Step 4 is independent of Step 3 documentation result.
 
-Dispatch `ai/plugins/skf/skills/orch-orchestration-summary.md` (compact) to write `reports/orchestration-summary-{YYYY-MM-DD-HHmmss}.md` using template at `ai/plugins/skf/templates/orchestration-summary-template.md`.
+Dispatch `ai/plugins/skf/skills/orch-orchestration-summary.md` (compact) using the accumulated inline execution state to write `reports/orchestration-summary-{YYYY-MM-DD-HHmmss}.md` using template at `ai/plugins/skf/templates/orchestration-summary-template.md`.
 
 Then present summary **inline in chat** — user must see outcome without reading a file. (Orchestration summary is available in `reports/orchestration-summary-{YYYY-MM-DD-HHmmss}.md` for reference.)
 
@@ -123,7 +123,7 @@ Closure ALWAYS runs:
 - QA returned FAIL → continue all steps
 - Documentation update failed → continue remaining steps
 - Index sync failed → continue remaining steps (will note in summary)
-- Orchestration was resumed from prior state
+- Execution remained within the current session (resume disabled in the inline-only contract)
 
 Each step is independent — failure at Step N does NOT block Step N+1.
 

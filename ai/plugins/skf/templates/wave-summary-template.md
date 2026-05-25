@@ -8,7 +8,7 @@ version: 1.0
 
 # Wave Summary Template
 
-This template defines the canonical markdown format for `.orchestration-temp/wave-{N}-summary.md` files produced after each execution wave.
+This template defines the canonical markdown format for inline `wave-summary` state produced after each execution wave.
 
 ---
 
@@ -55,4 +55,4 @@ This template defines the canonical markdown format for `.orchestration-temp/wav
 
 ## Usage
 
-Wave summaries are written to `.orchestration-temp/wave-{N}-summary.md` by the `orch-wave-verification` skill after each wave completes. The orchestrator reads these files to confirm wave success before dispatching the next wave.
+Wave summaries are returned inline by the `orch-wave-verification` skill after each wave completes. The orchestrator carries this state forward to confirm wave success before dispatching the next wave. If a spill fallback is required, it must live under `reports/orchestration-spill/`.

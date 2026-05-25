@@ -10,14 +10,14 @@ tags:
   - "quality-gate"
   - "reporting"
 inputs:
-  - "Path to .orchestration-temp/orchestration-summary.md or inline summary text (required)"
+  - "Inline orchestration summary text or structured orchestration state (required)"
   - "Explicit list of file paths to check (required)"
   - "Path to the relevant iteration spec.md (optional)"
   - "Path to the relevant iteration plan.md (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Overall quality gate result: ok, blocked, or fail"
-  - "Path to .orchestration-temp/final-quality-report.md"
+  - "Inline final quality report"
   - "One-line summary of the quality assessment"
 dispatch-variant: "full"
 ---
@@ -32,7 +32,7 @@ Reads the orchestration summary, all artifact files produced during the run, and
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. Read orchestration artifacts freely to assess quality — NEVER write to, modify, or delete them. The only permitted write action is creating `.orchestration-temp/final-quality-report.md`. WHY: QA and remediation are separate responsibilities; mixing them bypasses review gates.
+1. Read orchestration artifacts freely to assess quality — NEVER write to, modify, or delete them. WHY: QA and remediation are separate responsibilities; mixing them bypasses review gates.
 2. Include every planned artifact in the report, even when it is absent — do NOT omit any planned artifact from the report, including absent ones. WHY: a missing artifact is a completeness failure; omitting it from the report hides the failure.
 3. Read the file before assessing it — do not mark PASS from file name or description alone. WHY: placeholder files or trivially short files that match the expected name produce false PASS verdicts.
 4. ALWAYS produce a report even if the orchestration was only partially completed — mark missing artifacts as ABSENT and continue; do NOT halt or skip report writing because some artifacts are missing. WHY: Closure phase runs even on partial completion; a partial report is more useful than no report.
@@ -57,9 +57,8 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve the orchestration summary path and the initial artifact list before loading files.
-- Determine the report output path up front so reruns refresh `.orchestration-temp/final-quality-report.md` in place.
-- Classify the run as first-write, refresh, or blocked before artifact checks by checking whether the report file already exists and whether the orchestration summary is readable.
+- Resolve the orchestration summary input and the initial artifact list before loading files.
+- Classify the run as blocked or ready before artifact checks by checking whether the orchestration summary is readable.
 - If the orchestration summary is missing, stop before artifact checks and return the blocked status.
 
 ## Step 1 — Load orchestration context
@@ -107,20 +106,19 @@ Compute overall-status:
 - `PASS-WITH-WARNINGS` — no FAIL verdicts, but at least one WARN.
 - `FAIL` — at least one FAIL verdict in any dimension.
 
-## Step 6 — Write and return Final Quality Report
+## Step 6 — Return Final Quality Report
 
-Write `.orchestration-temp/final-quality-report.md` using the report template in `<output_format>`. Return the report inline in chat.
+Return the report inline in chat.
 
-The skill is complete when `.orchestration-temp/final-quality-report.md` has been written and the report has been returned inline.
+The skill is complete when the report has been returned inline.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
 - **read_file**: Primary tool — read orchestration summary, spec, plan, skills-index.json and every artifact file. Read large files in increments (increment startLine until response < page size) before assessing.
-- **file_search**: Discover artifact files if the artifact list must be inferred from `.orchestration-temp/` or iteration folder.
+- **file_search**: Discover artifact files if the artifact list must be inferred from the iteration folder or explicit artifact roots.
 - **grep_search**: Scan files for placeholder patterns (`{TODO}`, `[placeholder]`, etc.) and cross-reference targets.
-- **create_file**: Write the final quality report to `.orchestration-temp/final-quality-report.md`.
 - Do NOT use edit or execute tools — this skill is read-only except for writing the report file.
 - Use `read_file` and `grep_search` to perform completeness, placeholder, and verdict checks directly; do not rely on terminal helper scripts.
 </tools>
@@ -134,10 +132,10 @@ The skill is complete when `.orchestration-temp/final-quality-report.md` has bee
 | skill_id | `orch-final-orchestration-validation` |
 | wave | `N` |
 | step | `N.M` |
-| output_path | `.orchestration-temp/final-quality-report.md` |
+| output_path | `none` |
 | summary | one-line quality assessment |
 
-Return the Final Quality Report inline in chat using the template below. Provide the full report, not a summary. The written `.orchestration-temp/final-quality-report.md` is the primary artifact; the inline copy is for immediate orchestrator review.
+Return the Final Quality Report inline in chat using the template below. Provide the full report, not a summary.
 
 **Field definitions:**
 - `Date`: ISO 8601 date of the run (e.g., `2026-04-13`)
@@ -199,12 +197,12 @@ Overall: {PASS | PASS-WITH-WARNINGS | FAIL}
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: orchestration-summary=".orchestration-temp/orchestration-summary.md" (states goal "Add a new utility skill", lists 3 produced artifacts: the new skill file, skills-index.json (updated)); explicit list of file paths includes those three files.
-Expected output: Reads the summary and the listed artifacts. Completeness: all 3 PRESENT. Consistency: the new skill file references a valid indexed skill-id -> PASS; skills-index.json new entry name matches file name -> PASS. Correctness: scan for placeholders — none found; content matches stated purpose -> all PASS. Overall: PASS. Writes final-quality-report.md, returns full report inline.
+Input: inline orchestration summary (states goal "Add a new utility skill", lists 3 produced artifacts: the new skill file, skills-index.json (updated)); explicit list of file paths includes those three files.
+Expected output: Reads the summary and the listed artifacts. Completeness: all 3 PRESENT. Consistency: the new skill file references a valid indexed skill-id -> PASS; skills-index.json new entry name matches file name -> PASS. Correctness: scan for placeholders — none found; content matches stated purpose -> all PASS. Overall: PASS. Returns full report inline.
 </example>
 
 <example>
-Input: orchestration-summary=".orchestration-temp/orchestration-summary.md" (states 4 artifacts); artifact-list includes one file that does not exist; another file contains `{{skill-description}}` placeholder.
+Input: inline orchestration summary (states 4 artifacts); artifact-list includes one file that does not exist; another file contains `{{skill-description}}` placeholder.
 Expected output: Completeness: 3 PRESENT, 1 ABSENT → FAIL. Correctness: file with `{{skill-description}}` → FAIL (unfilled placeholder at line X). Overall: FAIL. Report includes two recommendations: "Create the missing file at {path}" and "Fill placeholder `{{skill-description}}` in {file} line {N}."
 </example>
 

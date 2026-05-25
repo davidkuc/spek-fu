@@ -10,8 +10,7 @@ tags:
   - "validation"
   - "gate"
 inputs:
-  - "Relative path to the orchestration plan file (required)"
-  - "Override path for the working-state directory (optional)"
+  - "Structured orchestration plan object (required)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Execution status: ok, blocked, or fail"
@@ -25,7 +24,7 @@ dispatch-variant: "compact"
 <!-- SECTION 1: Identity (primacy position) -->
 Runs gated pre-execution checks on the orchestration plan before the orchestrator begins executing tasks. Detects wave conflicts and parses the dependency graph. Returns a structured PASS/FAIL report; takes no corrective action.
 
-**Scope boundary**: This skill reads the plan file and runs Python validation scripts only. It does NOT modify any file, create missing artifacts, execute skills, or ask the user questions. Corrective action is the caller's responsibility.
+**Scope boundary**: This skill reads the inline plan object only. It does NOT modify any file, create missing artifacts, execute skills, or ask the user questions. Corrective action is the caller's responsibility.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -33,9 +32,8 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 1. Keep this skill strictly read-and-report. WHY: validation must not mutate; corrective action belongs to the caller.
 2. Run BOTH checks (PE-02, PE-03) even if an earlier check fails. WHY: partial validation produces false confidence and allows silent failures through the gate.
 3. Return findings inline instead of asking follow-up questions. WHY: interaction is the orchestrator's responsibility, not this skill's.
-4. If `plan-file` is absent or the file is unreadable, record FAIL immediately and do not proceed to any script. WHY: running scripts against an unknown or missing plan produces undefined output.
-5. When a Python script exits non-zero, capture its full stdout/stderr and carry it verbatim into the report. WHY: full output is required for the caller to diagnose and fix.
-6. If a dependency summary cannot be derived confidently from the plan structure, record PE-03 as SKIPPED — do not fail. WHY: graceful degradation is correct when the plan format does not support a reliable dependency summary.
+4. If `plan` is absent or malformed, record FAIL immediately and do not proceed to any checks. WHY: validating an unknown or missing plan produces undefined output.
+5. If a dependency summary cannot be derived confidently from the plan structure, record PE-03 as SKIPPED — do not fail. WHY: graceful degradation is correct when the plan format does not support a reliable dependency summary.
 </constraints>
 
 <!-- SECTION 3: Behavioral anchors -->
@@ -44,7 +42,7 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 - Implement EXACTLY and ONLY what this skill defines — run checks, produce a report, nothing more.
 - Record every check result (PASS, FAIL, or SKIPPED) regardless of outcome.
 - Carry all raw script output into the report verbatim for any FAIL check.
-- Do not infer the plan path from context — require it explicitly from the caller.
+- Do not infer the plan from conversation context — require it explicitly from the caller.
 
 ## Environment Preflight
 If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelines.md` fully (follow multi-pass read if needed) and apply all devcontainer rules before proceeding to Step 1.
@@ -56,19 +54,18 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Confirm `plan-file` is present in the inputs before selecting any checks.
+- Confirm `plan` is present in the inputs before selecting any checks.
 - Keep all validation steps read-only.
 - **State detection**: This skill produces an inline report only (no output file is written). Each invocation re-runs all validation checks fresh; there is no prior-output file to detect. Proceed with normal execution.
 
 ## Step 1 — Validate inputs
 
-1. Confirm `plan-file` is present and non-empty. If absent or empty, record FAIL: `plan-file is required` and halt — skip Steps 2–5.
-2. Attempt to read the first 5 lines of `plan-file` using `read_file`. If the file is unreadable or not found, record FAIL: `plan-file not found or unreadable: {plan-file}` and halt.
-3. Resolve `orchestration-temp-path` (default: `.orchestration-temp/`).
+1. Confirm `plan` is present and non-empty. If absent or empty, record FAIL: `plan is required` and halt — skip Steps 2–4.
+2. Confirm the plan exposes wave sections and step entries. If the structure is malformed, record FAIL: `plan malformed` and halt.
 
 ## Step 2 — Run PE-02: Wave Conflict Detection
 
-Read the plan file and compare steps within each wave.
+Read the plan object and compare steps within each wave.
 
 - **PASS**: no two parallel steps modify the same target file and no step depends on a prerequisite satisfied only by another step in the same wave.
 - **FAIL**: one or more parallel steps collide on target files or have mutually incompatible preconditions. Capture the conflicting wave, step IDs, and target files in the finding detail.
@@ -92,9 +89,7 @@ Compile all check results and return the structured Pre-Execution Validation Rep
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Use in Step 1 to verify `plan-file` is readable. Read in one call per file; prefer large reads over fragmented reads.
-- **file_search**: Use in Step 4 only if you need to verify referenced plan targets exist on disk.
-- **grep_search**: Permitted as a fallback in Step 1 to locate plan headings when `read_file` output is ambiguous.
+- No file-reading, search, or execution tools are permitted for the core validation logic because the plan is provided inline.
 - **edit / create_file / replace_string_in_file**: Prohibited because this skill never modifies or creates files.
 </tools>
 
@@ -111,7 +106,7 @@ Compile all check results and return the structured Pre-Execution Validation Rep
 
 ```
 ## Pre-Execution Validation Report
-Plan file: {plan-file}
+Plan: inline structured plan
 
 PE-02 Conflict detection: PASS | FAIL
 PE-03 Dependency summary: PASS | FAIL | SKIPPED
@@ -136,24 +131,24 @@ Rules:
 - Overall is PASS only when all executed checks are PASS (SKIPPED does not count as FAIL).
 - Script output blocks are omitted entirely when both PE-02 and PE-03 pass.
 - Dependency Graph Summary block is omitted when PE-03 is FAIL or SKIPPED.
-- FAIL at Step 1 (missing plan-file) produces the minimal report: `Plan file: {value or "not provided"} — Overall: FAIL — Reason: {message}`.
+- FAIL at Step 1 (missing plan) produces the minimal report: `Plan: not provided — Overall: FAIL — Reason: {message}`.
 </output_format>
 
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: plan-file=".orchestration-temp/orchestration-plan.md"; detect-wave-conflicts exits 0; get-plan-dependency-summary exits 0.
+Input: inline plan; no conflicts detected; dependency summary derivable.
 Expected output: PE-02 PASS, PE-03 PASS. Overall: PASS. Structured report returned inline. No files modified.
 </example>
 
 <example>
-Input: plan-file=".orchestration-temp/orchestration-plan.md"; detect-wave-conflicts exits 0 but dependency summary indicates issues; get-plan-dependency-summary reveals problems.
+Input: inline plan; conflict detection passes but dependency summary reveals issues.
 Expected output: PE-02 PASS, PE-03 FAIL. Overall: FAIL. Full findings in report with dependency details listed.
 </example>
 
 <example type="counter">
-Input: plan-file not provided.
-Expected behavior: Returns minimal FAIL report: "Plan file: not provided — Overall: FAIL — Reason: plan-file is required". No scripts are run. No files are modified.
+Input: plan not provided.
+Expected behavior: Returns minimal FAIL report: "Plan: not provided — Overall: FAIL — Reason: plan is required". No scripts are run. No files are modified.
 </example>
 </examples>
 

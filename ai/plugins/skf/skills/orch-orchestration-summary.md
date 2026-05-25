@@ -2,7 +2,7 @@
 id: "orch-orchestration-summary"
 recommended-tier: "fast-agent"
 version: 1.0
-description: "Compiles and writes the orchestration summary document from wave summary files and the orchestration plan. USE FOR: generating the final timestamped orchestration summary report under reports/ at the close of a workflow run; filling the summary template from wave summaries and plan data; returning the completed summary inline for chat display."
+description: "Compiles and writes the orchestration summary document from inline wave summaries and the orchestration plan. USE FOR: generating the final timestamped orchestration summary report under reports/ at the close of a workflow run; filling the summary template from accumulated orchestration state; returning the completed summary inline for chat display."
 anti-scope: "It does NOT modify any wave summary file, the orchestration plan, or any other artifact."
 tags:
   - "utility"
@@ -13,7 +13,8 @@ inputs:
   - "One-line description of what was orchestrated (required)"
   - "Task complexity tier, one of Simple, Standard, or Complex (required)"
   - "Integer count of waves that ran (required)"
-  - "Override path for the working-state directory (optional)"
+  - "Inline wave summaries and verification state (required)"
+  - "Inline orchestration plan or approved plan summary (optional)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
   - "Path to written timestamped orchestration summary report"
@@ -24,9 +25,9 @@ dispatch-variant: "compact"
 # Skill: orch-orchestration-summary
 
 <!-- SECTION 1: Identity (primacy position) -->
-Loads the orchestration summary template, fills all `{placeholder}` fields from wave summary files and the orchestration plan, writes the completed document to `reports/orchestration-summary-{YYYY-MM-DD-HHmmss}.md`, and returns the full summary text for inline chat display.
+Loads the orchestration summary template, fills all `{placeholder}` fields from inline wave summaries and the orchestration plan, writes the completed document to `reports/orchestration-summary-{YYYY-MM-DD-HHmmss}.md`, and returns the full summary text for inline chat display.
 
-**Scope boundary**: This skill reads template, wave summary, and plan files; writes exactly one timestamped summary report under `reports/`. It does NOT modify any wave summary file, the orchestration plan, or any other artifact. Placeholder values that cannot be resolved are replaced with `N/A` or `(not recorded)` — the output file is always written.
+**Scope boundary**: This skill reads the template and caller-provided orchestration state; writes exactly one timestamped summary report under `reports/`. It does NOT modify any wave summary state, the orchestration plan, or any other artifact. Placeholder values that cannot be resolved are replaced with `N/A` or `(not recorded)` — the output file is always written.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -55,7 +56,6 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `orchestration-temp-path` (default `.orchestration-temp/`).
 - Confirm all three required inputs are non-empty. If any are missing, Return **BLOCKED** with reason: `Missing required input: {field}` and halt.
 - **State detection**: Scan `reports/` for any existing `reports/orchestration-summary-*.md` using `file_search`. If prior summaries exist, note that a previous run has already been recorded — proceed to generate a fresh timestamped summary (each invocation produces a uniquely named file; no overwrite risk). If no prior summaries exist → proceed with normal execution.
 
@@ -87,19 +87,19 @@ Blockers: (not recorded)
 Notes: (not recorded)
 ```
 
-## Step 2 — Enumerate and read wave summary files
+## Step 2 — Collect inline wave summaries
 
-1. Use `file_search` for the glob pattern `{orchestration-temp-path}wave-*-summary.md` to find all wave summary files.
-2. Sort results by wave number ascending (parse the integer from the `wave-N-summary.md` filename).
-3. For each found file, read its full content using `read_file`. If a file is unreadable, record its path with content `(not recorded)`.
-4. If no wave summary files are found, record an empty list and note `(no wave summaries found)` for use in Step 4.
+1. Use the caller-provided wave summaries and verification state.
+2. Sort results by wave number ascending.
+3. If a wave summary is missing, record `(not recorded)` for that wave.
+4. If no wave summaries are provided, record an empty list and note `(no wave summaries found)` for use in Step 4.
 
 ## Step 3 — Read orchestration plan (optional)
 
-Attempt to read `{orchestration-temp-path}orchestration-plan.md` using `read_file`.
+Use the caller-provided orchestration plan or approved plan summary when present.
 
 - **Success**: Hold the content for placeholder resolution in Step 4.
-- **File not found / unreadable**: Proceed without plan data; any plan-derived placeholders will be filled with `N/A`.
+- **Absent or malformed**: Proceed without plan data; any plan-derived placeholders will be filled with `N/A`.
 
 ## Step 4 — Fill placeholders
 
@@ -112,7 +112,7 @@ Resolve every `{placeholder}` token in the working template string using the fol
 | `{total waves}` / `{waves-executed}` | `waves-executed` input |
 | `{total}` / `{count}` (steps planned, executed, skipped, failed) | Aggregated from wave summary files; `N/A` if not present |
 | Execution log rows | Populated from wave summaries in wave-number order; rows without data use `(not recorded)` |
-| Per-wave summary blocks | Populated verbatim from each `wave-N-summary.md` content; each missing wave → `(not recorded)` block |
+| Per-wave summary blocks | Populated verbatim from each inline wave summary content; each missing wave → `(not recorded)` block |
 | Manual intervention, retry, and knowledge-capture tables | Extracted from wave summaries where present; `None.` or `(not recorded)` when absent |
 
 **Rules:**
@@ -137,22 +137,22 @@ Do not truncate or abbreviate. The caller uses this inline text to confirm the s
 
 ## Run Telemetry
 
-The skill should collect the following telemetry fields from `.orchestration-temp/` artifacts and include them in the generated orchestration summary:
+The skill should collect the following telemetry fields from inline orchestration state and include them in the generated orchestration summary:
 
 | Field | Type | Source | Description |
 |---|---|---|---|
-| `run_id` | string | wave summary files / plan metadata | Timestamp-based identifier in format `YYYY-MM-DD-HHmmss` |
-| `complexity_tier` | enum | `intake-context.md` | One of: simple \| standard \| complex |
-| `total_dispatches` | integer | `orchestration-plan.md` | Total count of all dispatches in the run |
-| `failed_dispatches` | integer | wave summary files | Count of dispatches that returned fail or blocked status |
-| `retried_waves` | list | wave summary files | List of wave numbers that required retry |
-| `skills_used` | list | wave summary files | List of skill IDs that were dispatched |
+| `run_id` | string | wave summary state / plan metadata | Timestamp-based identifier in format `YYYY-MM-DD-HHmmss` |
+| `complexity_tier` | enum | caller inputs | One of: simple \| standard \| complex |
+| `total_dispatches` | integer | orchestration plan state | Total count of all dispatches in the run |
+| `failed_dispatches` | integer | wave summary state | Count of dispatches that returned fail or blocked status |
+| `retried_waves` | list | wave summary state | List of wave numbers that required retry |
+| `skills_used` | list | wave summary state | List of skill IDs that were dispatched |
 | `completion_state` | enum | aggregated from results | One of: full \| partial \| failed |
 
 **Data collection**:
 - `run_id`: Extract from wave summary file metadata or generate from current timestamp
-- `complexity_tier`: Read from `.orchestration-temp/intake-context.md` complexity field
-- `total_dispatches`: Count from `.orchestration-temp/orchestration-plan.md` dispatch list
+- `complexity_tier`: Read from the caller-provided complexity input or inline intake context
+- `total_dispatches`: Count from the inline orchestration plan dispatch list
 - `failed_dispatches`: Aggregate dispatch results from all wave summary files
 - `retried_waves`: Extract from wave summary file retry records
 - `skills_used`: Aggregate all skill IDs from all wave summary files
@@ -162,11 +162,10 @@ The skill should collect the following telemetry fields from `.orchestration-tem
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Use in Step 1 to load the template, Step 2 to read each wave summary file, and Step 3 to read the orchestration plan. Read the full file in a single call per file; prefer large reads over fragmented reads.
-- **file_search**: Use in Step 2 to enumerate `wave-*-summary.md` files. Prefer over terminal find or grep for file discovery.
+- **read_file**: Use in Step 1 to load the template only.
 - **create_file**: Use in Step 5 to write the timestamped orchestration summary report when the file does not yet exist.
 - **replace_string_in_file / multi_replace_string_in_file**: Use in Step 5 to overwrite the timestamped orchestration summary report when it already exists — replace the full content in one operation.
-- **grep_search**: Permitted as a fallback in Step 2 to locate wave summary files when `file_search` returns no results.
+- **grep_search**: Prohibited — wave summary data comes from caller-provided state, not search.
 - **run_in_terminal**: Prohibited — this skill performs no command execution.
 - **vscode_askQuestions**: Prohibited — this skill takes no interactive decisions.
 </tools>
@@ -200,7 +199,7 @@ Expected output: Template read; wave-1/2/3-summary.md files read; all placeholde
 </example>
 
 <example>
-Input: waves-executed=2 but only wave-1-summary.md found in .orchestration-temp/
+Input: waves-executed=2 but only one inline wave summary is provided
 Expected output: Wave 2 summary block filled with "(not recorded)" for all fields. Output file still written with partial data. Status: ok — a partial summary is better than no summary.
 </example>
 

@@ -116,7 +116,7 @@ The skill is complete when [done condition — name the artifact, state, or user
 - `wave` and `step` are taken from the dispatch prompt
 - `output_path` is omitted if the skill produced no file artifact
 - `summary` is a single line (no newlines) suitable for inline reporting
-- For large artifacts (>20 KB), write full result to `.orchestration-temp/{wave}-{step}-{skill-id}-output.json` first
+- For large artifacts (>20 KB), first compact wording while preserving meaning; if fidelity still cannot fit, write full result to `reports/orchestration-spill/{wave}-{step}-{skill-id}-output.json`
 
 **Prose Format** (optional, for additional context):
 

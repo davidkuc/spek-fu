@@ -75,13 +75,13 @@ For error conditions: state what was attempted, what failed, and what the caller
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Invocation: "Read skill at ai/plugins/skf/skills/orch-final-orchestration-validation.md and validate the orchestration artifacts listed in .orchestration-temp/orchestration-summary.md."
-Agent: Reads skill. Loads the supplied workflow artifacts systematically. Performs the full validation pass and reports SUCCESS with the generated report path.
+Invocation: "Read skill at ai/plugins/skf/skills/orch-final-orchestration-validation.md and validate the orchestration artifacts listed in the inline orchestration summary."
+Agent: Reads skill. Loads the supplied workflow artifacts systematically. Performs the full validation pass and reports SUCCESS with the generated inline report.
 </example>
 
 <example>
-Invocation: "Read skill at ai/plugins/skf/skills/orch-branch-analyze.md and analyze the branched framework subset in .orchestration-temp/framework-traversal-branched-001.json."
-Agent: Reads skill. Loads the branch file and its referenced artifacts, produces a structured branch analysis, and reports SUCCESS with the output path.
+Invocation: "Read skill at ai/plugins/skf/skills/orch-branch-analyze.md and analyze the branched framework subset in reports/orchestration-spill/framework-traversal-branched-001.json."
+Agent: Reads skill. Loads the branch file and its referenced artifacts, produces a structured branch analysis, and reports SUCCESS with the returned analysis state.
 </example>
 
 <example type="counter">

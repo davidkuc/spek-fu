@@ -22,7 +22,7 @@ Captures request, classifies complexity, gathers framework context, consults kno
 
 Dispatch `ai/plugins/skf/skills/orch-initialize.md` (compact) with `workspace-root` = workspace root path.
 
-- After dispatch: read `.orchestration-temp/init-result.md` (a subagent output file — allowlisted) to obtain all config values and environment.
+- After dispatch: cache the inline init result to obtain all config values and environment.
 - If returned `status: hard-fail` → **STOP** orchestration immediately with the `hard-fail-reason`.
 - On success: extract and cache inline for subsequent steps:
   - `maxClarificationLoops`
@@ -121,13 +121,13 @@ Gather framework guidance and tools relevant to the problem (not problem analysi
 
 - **Simple tasks**: Dispatch a single `ai/plugins/skf/skills/orch-index-traversal.md` (compact) from `skf-root-index.json`.
 - **Standard or Complex tasks**: Dispatch `ai/plugins/skf/skills/orch-index-traversal.md` (compact) **in parallel**, one per predefined framework branch:
-  - Branch 1: `ai/` (skills, scripts, patterns, knowledge) with `output-path: .orchestration-temp/traversal-report-ai.md`
-  - Branch 2: `constitution/` (rules, constraints) with `output-path: .orchestration-temp/traversal-report-constitution.md`
-  - Branch 3: `project/` (context, readme, configs) with `output-path: .orchestration-temp/traversal-report-project.md`
+  - Branch 1: `ai/` (skills, scripts, patterns, knowledge) with a compact inline traversal summary for the branch
+  - Branch 2: `constitution/` (rules, constraints) with a compact inline traversal summary for the branch
+  - Branch 3: `project/` (context, readme, configs) with a compact inline traversal summary for the branch
 
   > **Spec-context priority**: When `spec-context: true`, the `spec-flow` plugin branch (`ai/plugins/spec-flow/`) should be a priority traversal target within Branch 1 to ensure spec-flow skills and artifacts are surfaced for routing.
 
-Each branch dispatch targets the sub-section of `skf-root-index.json` relevant to that branch and produces its own traversal result.
+Each branch dispatch targets the sub-section of `skf-root-index.json` relevant to that branch and produces its own structured traversal result inline. If a branch summary cannot be kept compact without losing required fidelity, spill is allowed only under `reports/orchestration-spill/`.
 
 Guardrails: `skf-config.json` also permitted at Step 1. No speculative reads. No search-tool substitution for delegated discovery.
 
@@ -144,7 +144,7 @@ Dispatch `ai/plugins/skf/skills/orch-pattern-select.md` in parallel with Step 6 
 **Signal sources**: user request (Steps 2–3), complexity tier (Step 4), framework context (Step 6), lessons (Step 5, advisory).
 
 **Persistence**:
-- `status: ok` → carry result to Step 9, write `.orchestration-temp/pattern-select-result.md`
+- `status: ok` → carry the structured result directly to Step 9
 - `blocked` → continue without, note gap in intake context
 
 ---
@@ -182,13 +182,13 @@ Bounded loop: max iterations = `maxClarificationLoops`. Each iteration: one `vsc
 
 ## Step 9 — Capture Intake Context
 
-Dispatch `ai/plugins/skf/skills/orch-intake-context.md` (compact). Write `.orchestration-temp/intake-context.md` containing:
+Dispatch `ai/plugins/skf/skills/orch-intake-context.md` (compact). Return a structured intake context object containing:
 
 - User request (verbatim)
 - Complexity tier + rationale
 - Framework context summary (file list from Step 6)
 - Knowledge lessons (Step 5, or "none")
-- Pattern selection status + result file path (Step 7)
+- Pattern selection status + structured result (Step 7)
 - Clarifications (Step 8, or "none")
 
 If `orch-intake-context` returns `status != ok` → escalate: surface the error and do not advance to Phase 2.

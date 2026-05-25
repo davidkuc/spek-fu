@@ -2,7 +2,7 @@
 id: "orch-skill-resolve"
 recommended-tier: "fast-agent"
 version: 1.0
-description: "Analyzes accumulated orchestration context (intake, traversal, knowledge consultation) and selects the most appropriate skills from skills-index.json for the current problem. Produces a curated skill inventory with selection rationale. USE FOR: Phase 2 before plan generation — resolving which skills are needed based on what was learned during intake."
+description: "Analyzes accumulated orchestration context (intake, traversal, knowledge consultation) and selects the most appropriate skills from skills-index.json. Produces a curated inline skill inventory with selection rationale. USE FOR: Phase 2 before plan generation — resolving which skills are needed based on what was learned during intake."
 anti-scope: "It does NOT select skills without reading the gathered context. It does NOT return all skills from the index indiscriminately. It does NOT execute skills, validate skill output, or modify source files."
 tags:
   - "utility"
@@ -10,13 +10,13 @@ tags:
   - "planning"
   - "context-driven"
 inputs:
-  - "Path to intake context file (required) — typically .orchestration-temp/intake-context.md"
-  - "Path to traversal results or navigation result (optional) — if produced during intake"
-  - "Path to knowledge consultation output (optional) — if produced during intake"
+  - "Structured intake context object (required)"
+  - "Structured traversal summary or navigation result (optional)"
+  - "Structured knowledge consultation output (optional)"
   - "Request summary or free-form problem description (optional, supplements intake context)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "Curated skill inventory written to .orchestration-temp/skill-inventory.md"
+  - "Curated inline skill inventory"
   - "Selection rationale for each chosen skill"
   - "Count of selected skills"
 dispatch-variant: "compact"
@@ -25,9 +25,9 @@ dispatch-variant: "compact"
 # Skill: orch-skill-resolve
 
 <!-- SECTION 1: Identity (primacy position) -->
-Active skill-selection utility. Takes accumulated orchestration context and selects the most appropriate skills from `skills-index.json` for the problem at hand. Bridges the intake/research phase and the planning phase. Produces a curated `.orchestration-temp/skill-inventory.md` with a markdown table of selected skills and a `selection_rationale` section explaining why each skill was chosen.
+Active skill-selection utility. Takes accumulated orchestration context and selects the most appropriate skills from `skills-index.json` for the problem at hand. Bridges the intake/research phase and the planning phase. Produces a curated inline skill inventory with a markdown table of selected skills and a `selection_rationale` section explaining why each skill was chosen.
 
-**Scope boundary**: reads context artifacts and the skills index; reasons over them; writes the curated inventory. Does NOT return all skills. Does NOT execute skills. Does NOT modify source files.
+**Scope boundary**: reads caller-supplied structured context and the skills catalog; reasons over them; returns the curated inventory inline. Does NOT return all skills. Does NOT execute skills. Does NOT modify source files.
 
 <!-- SECTION 2: Constraints (non-negotiable) -->
 <constraints>
@@ -56,31 +56,20 @@ If `env` is `host`: no additional action required.
 <!-- SECTION 4: Workflow -->
 <workflow>
 
-## Idempotency Check
-
-Before reading any context files or the skills catalog, check whether a prior skill inventory already exists:
-
-- **if-exists** (prior inventory detected): `.orchestration-temp/skill-inventory.md` exists and is non-empty → return the prior inventory and ask the caller whether to refresh (re-run selection) or reuse the existing result.
-- **if-empty** (no prior state): the inventory file does not exist → proceed normally from Step 1.
-- **if-complete** (inventory exists and context is unchanged): the file exists, is non-empty, and was produced from the same intake context → return the existing inventory with a note; exit without re-selecting unless the caller explicitly requests a refresh.
-
 ## Preflight
 
-- Confirm `intake-context-path` is provided and readable. If absent, return blocked with reason: "intake-context-path missing".
+- Confirm `intake-context` is provided. If absent, return blocked with reason: "intake-context missing".
 
 ## Step 1 — Read gathered context
 
-Use `read_file` to read the intake context from `intake-context-path`.
+Use the caller-provided structured inputs directly.
 
-- If the file cannot be read: return blocked status with reason.
-- Extract key fields: `request`, `components_involved`, `work_type`, `problem_statement` (if present).
+- Extract key fields from `intake-context`: `request`, `components_involved`, `work_type`, `problem_statement`, `complexity-tier` (if present).
 
-If `traversal-result-path` is provided:
-- Use `read_file` to read the traversal results.
+If `traversal-result` is provided:
 - Extract any indices queried, code locations discovered, or framework components identified.
 
-If `knowledge-result-path` is provided:
-- Use `read_file` to read the knowledge consultation output.
+If `knowledge-result` is provided:
 - Extract lessons learned, constraints surfaced, or architectural guidance provided.
 
 **Synthesize a consolidated problem statement**: What is the request? What components are involved? What work type is it (impl, qa, spec, gov, util, mixed)?
@@ -121,7 +110,7 @@ For each skill entry in the `children` array, reason:
 
 Note: orchestration utility skills (`orch-*`) are excluded from the catalog by the ignore list; do not attempt to select them.
 
-## Step 4 — Build and write the inventory
+## Step 4 — Build and return the inventory
 
 Construct markdown output with the following structure:
 1. A summary section with problem context, catalog size, and count
@@ -158,20 +147,14 @@ Selected: {count} skills
 - **Outputs**: {outputs}
 ```
 
-Write to `.orchestration-temp/skill-inventory.md` using `create_file`.
-
-Verify file was written. Ensure markdown is well-formed and renders correctly.
-
 Return the report in the format defined in `<output_format>`.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Step 1 only — context files (intake context, traversal results, knowledge output).
 - **run_in_terminal**: Step 2 only — run `python3 ai/scripts/python/gather-skills.py --format json` to obtain the pre-filtered skill catalog.
-- **create_file**: Step 4 only — write .orchestration-temp/skill-inventory.md.
-- **replace_string_in_file**: Only if skill-inventory.md already exists and needs updating.
+- No state-writing tools are permitted for this skill.
 - **All search tools** (file_search, grep_search, semantic_search): Prohibited.
 </tools>
 
@@ -184,7 +167,7 @@ Skill selection complete:
   Catalog size: {total skills in index}
   Ignored: {count} skills (from config ignore list)
   Selected: {count} skills
-  Output: .orchestration-temp/skill-inventory.md
+  Output: inline skill-inventory state
 ```
 
 **Markdown block** (same structure as written to file):
@@ -223,7 +206,7 @@ Selected: {count} skills
 **Status**: Blocked  
 **Reason**: {reason}  
 **Count**: 0  
-**Output path**: .orchestration-temp/skill-inventory.md
+**Output path**: none
 ```
 
 Format invariants:
@@ -238,7 +221,7 @@ Format invariants:
 <examples>
 <example name="positive">
 Input:
-- intake-context-path: `.orchestration-temp/intake-context.md` containing:
+- intake-context: structured object containing:
   ```json
   {
     "request": "Implement three features from iteration 005: user auth, payment processing, and dashboard widgets",
@@ -267,7 +250,7 @@ Skill selection complete:
   Catalog size: 7
   Ignored: 23 skills (pre-filtered by gather-skills.py)
   Selected: 2 skills
-  Output: .orchestration-temp/skill-inventory.md
+  Output: inline skill-inventory state
 ```
 
 Markdown output file:
@@ -309,18 +292,18 @@ Selected: 2 skills
 </example>
 
 <example name="counter">
-Input: Orchestrator calls orch-skill-resolve without providing intake-context-path (only request-summary provided).
+Input: Orchestrator calls orch-skill-resolve without providing intake-context (only request-summary provided).
 
 Expected behavior:
-1. Step 1 preflight: intake-context-path is missing.
+1. Step 1 preflight: intake-context is missing.
 2. Return blocked immediately (markdown format):
 ```markdown
 # Skill Inventory
 
 **Status**: Blocked  
-**Reason**: intake-context-path missing  
+**Reason**: intake-context missing  
 **Count**: 0  
-**Output path**: .orchestration-temp/skill-inventory.md
+**Output path**: none
 ```
 3. Report to orchestrator: "Skill selection blocked — intake context required."
 
@@ -328,7 +311,7 @@ Expected behavior:
 </example>
 
 <example name="counter2">
-Input: intake-context-path points to valid intake-context.md. `gather-skills.py` fails (plugins-index.json is missing or malformed).
+Input: intake-context contains valid request data. `gather-skills.py` fails (plugins-index.json is missing or malformed).
 
 Expected behavior:
 1. Step 1: reads intake context successfully.
@@ -340,7 +323,7 @@ Expected behavior:
 **Status**: Blocked  
 **Reason**: skill catalog unavailable — gather-skills.py failed  
 **Count**: 0  
-**Output path**: .orchestration-temp/skill-inventory.md
+**Output path**: none
 ```
 
 **Why**: Cannot select skills without a catalog.

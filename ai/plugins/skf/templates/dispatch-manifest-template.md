@@ -44,7 +44,7 @@ This template defines the canonical markdown format for all `runSubagent` dispat
 - **Recommended patterns**: {list of advisory PT-IDs, or none}
 
 ### Output Format
-{Expected output structure — describe what the subagent should return inline and/or write to .orchestration-temp/}
+{Expected output structure — describe what the subagent should return inline; durable report paths are allowed only for final reports or oversize spill fallback}
 
 ### Inputs
 {Skill inputs from skill inventory — file paths or inline content}
@@ -92,15 +92,15 @@ This template defines the canonical markdown format for all `runSubagent` dispat
 
 | Field | Owner | Source |
 |---|---|---|
-| Identity.* | Skill inventory | `.orchestration-temp/skill-inventory.md` |
-| Skill.path | Skill inventory | `.orchestration-temp/skill-inventory.md` |
+| Identity.* | Skill inventory | inline `skill-inventory` |
+| Skill.path | Skill inventory | inline `skill-inventory` |
 | Task | Orchestrator | Orchestration plan (verbatim) |
 | Context.* | Orchestrator | Orchestration plan + wave context |
 | Constraints.runtime | Orchestrator | Wave context |
 | Constraints.required-patterns | Orchestrator | Pattern bundle |
 | Advisory.recommended-patterns | Orchestrator | Pattern bundle |
-| Output Format | Skill inventory | `.orchestration-temp/skill-inventory.md` |
-| Inputs | Skill inventory | `.orchestration-temp/skill-inventory.md` |
+| Output Format | Skill inventory | inline `skill-inventory` |
+| Inputs | Skill inventory | inline `skill-inventory` |
 
 ---
 
@@ -125,4 +125,4 @@ Every subagent must return a response in this markdown format:
 - `Wave` and `Step` are taken from the dispatch prompt's Constraints section
 - `Output path` is omitted or set to `none` if no file artifact was produced
 - `Summary` is a single line suitable for inline reporting
-- If artifact exceeds 20 KB, write to `.orchestration-temp/{wave}-{step}-{skill-id}-output.md` first, then reference path in Output path
+- If artifact exceeds 20 KB after compaction, write to `reports/orchestration-spill/{wave}-{step}-{skill-id}-output.md` first, then reference path in Output path

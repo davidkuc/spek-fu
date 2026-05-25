@@ -35,7 +35,7 @@ Steps failed: {count}
 
 ### Per-Wave Summaries
 
-> One block per wave (copied or condensed from `.orchestration-temp/wave-{N}-summary.md`).
+> One block per wave (copied or condensed from inline `wave-summary` state).
 
 #### Wave 1
 

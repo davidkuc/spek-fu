@@ -2,7 +2,7 @@
 id: "orch-wave-decompose"
 recommended-tier: "fast-agent"
 version: 1.0
-description: "Decomposes a task into an ordered wave plan. Reads intake context, applies wave organization rules, and writes `.orchestration-temp/wave-decompose.md`. USE FOR: before orchestration planning — decomposing task scope into sequenced waves with dependencies declared. DO NOT USE FOR: plan authoring, skill assignment, or agent tier selection."
+description: "Decomposes a task into an ordered wave plan. Reads inline intake context, applies wave organization rules, and returns a structured wave decomposition inline. USE FOR: before orchestration planning — decomposing task scope into sequenced waves with dependencies declared. DO NOT USE FOR: plan authoring, skill assignment, or agent tier selection."
 anti-scope: "Does NOT build the formal orchestration plan document, assign skills per task, or select agent tiers."
 tags:
   - "planning"
@@ -10,10 +10,10 @@ tags:
   - "decomposition"
   - "wave"
 inputs:
-  - "Path to intake context file (required) — typically .orchestration-temp/intake-context.md"
+  - "Structured intake context object (required)"
   - "env: runtime environment passed by the orchestrator — 'devcontainer' or 'host'"
 outputs:
-  - "Wave decomposition document written to .orchestration-temp/wave-decompose.md"
+  - "Structured wave decomposition"
   - "Execution status: ok or blocked"
 dispatch-variant: "compact"
 ---
@@ -23,7 +23,7 @@ dispatch-variant: "compact"
 **Dispatch variant**: compact  
 **Recommended tier**: standard-agent
 
-Decomposes a task into an ordered wave plan. Reads the intake context, applies wave organization rules and planning strategies, and produces `.orchestration-temp/wave-decompose.md` — a structured wave decomposition used as input for the orchestration planning step.
+Decomposes a task into an ordered wave plan. Reads the inline intake context, applies wave organization rules and planning strategies, and returns a structured wave decomposition used as input for the orchestration planning step.
 
 **Scope boundary**: This skill produces the wave decomposition only. It does NOT build the formal orchestration plan document, assign skills per task, or select agent tiers.
 
@@ -31,18 +31,18 @@ Decomposes a task into an ordered wave plan. Reads the intake context, applies w
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER produce anything beyond a wave decomposition document — WHY: producing plan content or skill assignments bypasses the formal planning step and breaks the orchestration contract.
-2. NEVER probe the filesystem for additional context beyond the provided intake context file — WHY: arbitrary reads introduce unreviewed inputs that corrupt the decomposition baseline.
+2. NEVER probe the filesystem for additional context beyond the provided intake context — WHY: arbitrary reads introduce unreviewed inputs that corrupt the decomposition baseline.
 3. ALWAYS ensure every wave has a clear, single goal; NEVER combine unrelated work in one wave — WHY: mixed-goal waves produce ambiguous verification criteria and undermine wave-level acceptance checking.
 4. ALWAYS declare inter-wave dependencies explicitly; NEVER leave dependency ambiguous — WHY: undeclared dependencies create silent ordering assumptions that cause wave execution failures.
 5. NEVER invent skill IDs or agent tiers in the decomposition — WHY: those identifiers belong to the planning step; inventing them here corrupts downstream plan construction.
-6. ALWAYS output to exactly `.orchestration-temp/wave-decompose.md`; NEVER write to any other path — WHY: downstream orchestration steps expect the file at this canonical path; any deviation breaks the handoff chain.
+6. ALWAYS return the wave decomposition inline as the canonical output — WHY: downstream orchestration steps now consume structured state directly.
 </constraints>
 
 <!-- SECTION 3: Behavioral anchors -->
 <behavioral_anchors>
 - Before producing any output, verify your output complies with all rules in `<constraints>` above.
 - Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
-- Done condition: wave-decompose.md written to `.orchestration-temp/`; each wave has a goal, task list, and dependency declaration.
+- Done condition: wave decomposition returned inline; each wave has a goal, task list, and dependency declaration.
 - If intake context has undeterminable scope → surface ambiguity as a named gap in the wave decomposition rather than blocking.
 - Wave count targets: Simple (1–2 waves), Standard (3–4 waves), Complex (4–6 waves).
 
@@ -56,14 +56,13 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-1. Confirm `intake-context-path` is provided. If absent, return blocked immediately — do NOT probe the filesystem.
-2. Read `.orchestration-temp/intake-context.md` (or provided path) using `read_file`.
-3. Idempotency check: if `.orchestration-temp/wave-decompose.md` already exists and was produced by the same intake context (same task hash), return the existing file path with status `ok`. Otherwise proceed.
+1. Confirm `intake-context` is provided. If absent, return blocked immediately — do NOT probe the filesystem.
+2. Use the supplied intake context directly.
 
 ## Done conditions
 
-- **ok** is done when `.orchestration-temp/wave-decompose.md` exists, each wave has a goal, a tasks table, and an explicit dependency declaration.
-- **blocked** is done when `intake-context-path` is absent or the file cannot be read — report blocked status with reason and stop without writing any file.
+- **ok** is done when the wave decomposition is returned inline, each wave has a goal, a tasks table, and an explicit dependency declaration.
+- **blocked** is done when `intake-context` is absent — report blocked status with reason and stop without writing any file.
 
 ---
 
@@ -130,15 +129,13 @@ Adjust wave task assignments if any task exceeds sizing limits.
 
 ---
 
-## Step 5 — Write wave-decompose.md
-
-Write the wave decomposition document to `.orchestration-temp/wave-decompose.md` using `create_file`.
+## Step 5 — Return wave decomposition
 
 **Document format**:
 ```markdown
 # Wave Decomposition
 
-**Generated from**: .orchestration-temp/intake-context.md
+**Generated from**: inline intake-context
 **Complexity tier**: {tier}
 **Planning strategy**: {strategy}
 **Total waves**: {N}
@@ -167,14 +164,13 @@ Inter-wave dependencies: {explicit list or "none"}
 - [ ] Dispatch sizing applied
 ```
 
-The skill is complete when `.orchestration-temp/wave-decompose.md` exists, all waves have a goal, a tasks table, and an explicit dependency declaration, and the verification checklist is present.
+The skill is complete when the structured wave decomposition has been returned inline, all waves have a goal, a tasks table, and an explicit dependency declaration, and the verification checklist is present.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Preflight and Step 1 — read the intake context file only. Do NOT use on arbitrary paths.
-- **create_file**: Step 5 only — write `.orchestration-temp/wave-decompose.md` when the file does not exist.
+- No state-writing or search tools are permitted for this skill.
 - Prohibited: All search tools (`file_search`, `grep_search`, `semantic_search`), edit tools, execution tools.
 - Do NOT use tools not listed here unless the skill explicitly escalates to a sub-skill.
 </tools>
@@ -188,14 +184,14 @@ The skill is complete when `.orchestration-temp/wave-decompose.md` exists, all w
 | skill_id | `orch-wave-decompose` |
 | wave | `{N}` |
 | step | `{M}` |
-| output_path | `.orchestration-temp/wave-decompose.md` |
+| output_path | `none` |
 | summary | one-line description |
 
 ```
 ## Wave Decomposition Complete
 
 Status: ok | blocked
-Output: .orchestration-temp/wave-decompose.md
+Output: inline wave decomposition
 Waves: {N}
 Strategy: {strategy}
 Complexity: {tier}
@@ -206,7 +202,7 @@ Complexity: {tier}
 ## Wave Decomposition — BLOCKED
 
 Status: blocked
-Reason: {description — e.g., "intake-context-path not provided" or "intake-context.md not found at path"}
+Reason: {description — e.g., "intake-context not provided" or "intake-context malformed"}
 Next action: {what the caller should do to unblock}
 ```
 
@@ -215,18 +211,18 @@ Next action: {what the caller should do to unblock}
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: intake-context.md with request "Add OAuth login to the API", complexity tier "Standard — single feature, 3 layers affected (data model, service, endpoint)".
-Expected behavior: Produces `.orchestration-temp/wave-decompose.md` using Feature-Slice strategy with 3 waves: Wave 1 — data layer (model + migration), Wave 2 — service layer (auth logic), Wave 3 — API layer (endpoint + verification). Build checkpoint marked after Wave 2. All inter-wave dependencies declared explicitly. Dispatch sizing applied per layer file count.
+Input: intake-context with request "Add OAuth login to the API", complexity tier "Standard — single feature, 3 layers affected (data model, service, endpoint)".
+Expected behavior: Returns inline wave decomposition using Feature-Slice strategy with 3 waves: Wave 1 — data layer (model + migration), Wave 2 — service layer (auth logic), Wave 3 — API layer (endpoint + verification). Build checkpoint marked after Wave 2. All inter-wave dependencies declared explicitly. Dispatch sizing applied per layer file count.
 </example>
 
 <example>
 Input: intake-context.md with request "Refactor payment module and add subscription service", complexity tier "Complex — cross-module refactor plus new feature, 6+ files affected".
-Expected behavior: Produces `.orchestration-temp/wave-decompose.md` using Mixed (Split) strategy: Horizontal phase for the payment refactor (one layer at a time, 3 waves), Feature-Slice phase for the subscription service (all layers per feature, 2 waves). 5 waves total. Build checkpoint marked after the refactor phase. All inter-wave dependencies declared. Dispatch sizing reduces large-file waves to 1–2 files per dispatch step.
+Expected behavior: Returns inline wave decomposition using Mixed (Split) strategy: Horizontal phase for the payment refactor (one layer at a time, 3 waves), Feature-Slice phase for the subscription service (all layers per feature, 2 waves). 5 waves total. Build checkpoint marked after the refactor phase. All inter-wave dependencies declared. Dispatch sizing reduces large-file waves to 1–2 files per dispatch step.
 </example>
 
 <example type="counter">
-Input: `intake-context-path` is absent (not provided by caller).
-Expected behavior: Returns blocked immediately without probing the filesystem. Reports: "Status: blocked. Reason: intake-context-path not provided. Next action: Supply intake-context-path pointing to `.orchestration-temp/intake-context.md`." No file is written.
+Input: `intake-context` is absent (not provided by caller).
+Expected behavior: Returns blocked immediately without probing the filesystem. Reports: "Status: blocked. Reason: intake-context not provided. Next action: Supply the structured intake context." No file is written.
 </example>
 </examples>
 
@@ -236,8 +232,8 @@ Expected behavior: Returns blocked immediately without probing the filesystem. R
 ## Rules
 
 - **NEVER produce plan content, skill assignments, or agent tier selections** — this skill produces a wave decomposition document only. WHY: those outputs belong to the planning step that consumes the decomposition.
-- **NEVER read files beyond the provided intake context path** — WHY: arbitrary reads corrupt the decomposition baseline with unreviewed inputs.
-- **ALWAYS output to exactly `.orchestration-temp/wave-decompose.md`** — WHY: downstream orchestration steps depend on this canonical path; any other path breaks the handoff chain.
+- **NEVER read files beyond the provided intake context** — WHY: arbitrary reads corrupt the decomposition baseline with unreviewed inputs.
+- **ALWAYS return the wave decomposition inline** — WHY: downstream orchestration steps now depend on the structured handoff object rather than a temp path.
 - **Always verify** output against `<constraints>` before reporting completion.
 
 </reminders>
