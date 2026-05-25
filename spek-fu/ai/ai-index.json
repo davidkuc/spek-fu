@@ -1,0 +1,21 @@
+{
+  "name": "ai-index.json",
+  "description": "Index of ai/ — AI framework: plugins, scripts, and orchestration infrastructure",
+  "path": "ai/",
+  "children": [
+    {
+      "name": "plugins",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/",
+      "index": "spek-fu/ai/plugins/plugins-index.json"
+    },
+    {
+      "name": "scripts",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/scripts/",
+      "index": "spek-fu/ai/scripts/scripts-index.json"
+    }
+  ]
+}

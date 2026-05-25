@@ -4,4 +4,4 @@ description: "Generates a dependency-ordered tasks.md from feature design artifa
 anti-scope: "Does not implement tasks, evaluate spec correctness, or modify any design artifact. For spec review, use spec-devils-advocate. For spec drafting, use spec-feature-draft."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-tasks-draft.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-tasks-draft.md`. Execute its full protocol exactly as described.

@@ -10,11 +10,11 @@ For each registered *-index.json, scans the corresponding folder and:
     (skills, patterns, prompts, agents).
 
 Usage:
-    python3 ai/scripts/python/sync-index-files.py
-    python3 ai/scripts/python/sync-index-files.py --check
-    python3 ai/scripts/python/sync-index-files.py --dry-run
-    python3 ai/scripts/python/sync-index-files.py --index constitution/constitution-index.json
-    python3 ai/scripts/python/sync-index-files.py --verbose
+    python3 spek-fu/ai/scripts/python/sync-index-files.py
+    python3 spek-fu/ai/scripts/python/sync-index-files.py --check
+    python3 spek-fu/ai/scripts/python/sync-index-files.py --dry-run
+    python3 spek-fu/ai/scripts/python/sync-index-files.py --index spek-fu/constitution/constitution-index.json
+    python3 spek-fu/ai/scripts/python/sync-index-files.py --verbose
 
 Options:
     --check       Validate index drift without writing any files.
@@ -37,9 +37,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent))
 import common
 
-# Repo root is three directories above this script:
-#   ai/scripts/python/sync-index-files.py -> ai/scripts/python -> ai/scripts -> ai -> root
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(common.get_repo_root())
 
 
 # ── Index catalog ───────────────────────────────────────────────────────────────
@@ -93,34 +91,34 @@ CATALOG: list[dict[str, Any]] = [
         "builder": "prompts",
         "preserve_top": [],
     },
-    # ── ai/ ───────────────────────────────────────────────────────────────────
+    # ── spek-fu/ai/ ───────────────────────────────────────────────────────────
     {
-        "index_file": "ai/ai-index.json",
-        "folder": "ai",
+        "index_file": "spek-fu/ai/ai-index.json",
+        "folder": "spek-fu/ai",
         "excluded": [],
         "builder": "standard",
         "preserve_top": [],
     },
     {
-        "index_file": "ai/scripts/scripts-index.json",
-        "folder": "ai/scripts",
+        "index_file": "spek-fu/ai/scripts/scripts-index.json",
+        "folder": "spek-fu/ai/scripts",
         "excluded": [],
         "builder": "standard",
         "preserve_top": [],
     },
     {
-        "index_file": "ai/scripts/python/python-index.json",
-        "folder": "ai/scripts/python",
+        "index_file": "spek-fu/ai/scripts/python/python-index.json",
+        "folder": "spek-fu/ai/scripts/python",
         "excluded": ["__pycache__"],
         "builder": "python",
         "preserve_top": [],
     },
-    # ── ai/plugins/ ───────────────────────────────────────────────────────────
+    # ── spek-fu/ai/plugins/ ──────────────────────────────────────────────────
     # plugins-index.json is always static; per-plugin entries are discovered
     # dynamically by _discover_plugin_catalogs() below.
     {
-        "index_file": "ai/plugins/plugins-index.json",
-        "folder": "ai/plugins",
+        "index_file": "spek-fu/ai/plugins/plugins-index.json",
+        "folder": "spek-fu/ai/plugins",
         "excluded": [],
         "builder": "standard",
         "preserve_top": [],
@@ -138,7 +136,7 @@ _FOLDER_BUILDER: dict[str, str] = {
 def _discover_plugin_catalogs(repo_root: Path) -> list[dict[str, Any]]:
     """Return CATALOG-compatible entries for every plugin in plugins-index.json.
 
-    Reads ai/plugins/plugins-index.json, then for each plugin reads its root
+    Reads spek-fu/ai/plugins/plugins-index.json, then for each plugin reads its root
     ``<name>-index.json`` to discover sub-folders.  Produces one entry for the
     plugin root index and one entry per sub-folder index found in the plugin's
     children list.
@@ -153,7 +151,7 @@ def _discover_plugin_catalogs(repo_root: Path) -> list[dict[str, Any]]:
     - All other sub-folders: standard builder, no exclusions.
     """
     entries: list[dict[str, Any]] = []
-    plugins_index_path = repo_root / "ai/plugins/plugins-index.json"
+    plugins_index_path = repo_root / "spek-fu/ai/plugins/plugins-index.json"
     try:
         plugins_index = common.load_json_file(plugins_index_path)
     except Exception as exc:
@@ -165,7 +163,7 @@ def _discover_plugin_catalogs(repo_root: Path) -> list[dict[str, Any]]:
         if not plugin_name:
             continue
 
-        plugin_folder = f"ai/plugins/{plugin_name}"
+        plugin_folder = f"spek-fu/ai/plugins/{plugin_name}"
         plugin_index_rel = f"{plugin_folder}/{plugin_name}-index.json"
 
         # Plugin root index entry.
@@ -247,8 +245,8 @@ def compute_index_pointer(folder: str, name: str) -> str | None:
     """Return the sub-index path for a folder child if the file exists on disk.
 
     Convention: <child_path>/<stem_without_leading_dot>-index.json
-    E.g. folder="" name=".github" → ".github/github-index.json"
-         folder="ai/plugins" name="skf" → "ai/plugins/skf/skf-index.json"
+        E.g. folder="" name=".github" → ".github/github-index.json"
+            folder="spek-fu/ai/plugins" name="skf" → "spek-fu/ai/plugins/skf/skf-index.json"
 
     Returns None when the computed path does not exist.
     """

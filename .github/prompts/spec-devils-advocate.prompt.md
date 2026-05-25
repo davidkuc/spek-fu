@@ -4,4 +4,4 @@ description: "Adversarially reviews a spec file and produces a structured Devils
 anti-scope: "Does not fix issues, rewrite the spec, or produce implementation plans. Read-only except for writing the final report."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-devils-advocate.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-devils-advocate.md`. Execute its full protocol exactly as described.

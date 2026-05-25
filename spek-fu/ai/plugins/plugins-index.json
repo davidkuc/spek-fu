@@ -1,0 +1,21 @@
+{
+  "name": "plugins-index.json",
+  "description": "Index of ai/plugins — plugin container",
+  "path": "ai/plugins/",
+  "children": [
+    {
+      "name": "skf",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/",
+      "index": "spek-fu/ai/plugins/skf/skf-index.json"
+    },
+    {
+      "name": "spec-flow",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/",
+      "index": "spek-fu/ai/plugins/spec-flow/spec-flow-index.json"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "runbooks-index.json",
+  "description": "Index of ai/plugins/skf/runbooks — per-phase orchestrator runbooks with shared dispatch, escalation, and retry protocols",
+  "path": "ai/plugins/skf/runbooks/",
+  "children": [
+    {
+      "name": "runbook-close.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/runbook-close.md"
+    },
+    {
+      "name": "runbook-execute.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/runbook-execute.md"
+    },
+    {
+      "name": "runbook-intake.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/runbook-intake.md"
+    },
+    {
+      "name": "runbook-plan.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/runbook-plan.md"
+    },
+    {
+      "name": "runbook-shared.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/runbook-shared.md"
+    }
+  ]
+}

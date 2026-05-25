@@ -4,4 +4,4 @@ description: "Executes the technical planning workflow against a validated featu
 anti-scope: "Does not author or modify the feature spec, run tests, or execute implementation work."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-technical-draft.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-technical-draft.md`. Execute its full protocol exactly as described.

@@ -26,7 +26,7 @@
         "cargo test": true,
         "go test": true,
         "/^git\\s+(status|diff|log|show|branch)\\b/": true,
-        "ai/scripts/**": true,
+        "spek-fu/ai/scripts/**": true,
         "rm": false,
         "rmdir": false,
         "del": false,

@@ -1,0 +1,34 @@
+{
+  "meta-knowledge-manage": {
+    "maxRevisionAttempts": 3,
+    "maxLessonsToSurface": 10,
+    "knowledgeDistillationThreshold": 15
+  },
+  "skillSelection": {
+    "ignoredSkills": [
+      "spek-fu/ai/plugins/spec-flow/skills/spec-testability-draft.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-technical-draft.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-tdd-draft.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-tasks-draft.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-feature-draft.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-feature-analysis.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-devils-advocate.md",
+      "spek-fu/ai/plugins/spec-flow/skills/spec-clarification.md",
+      "spek-fu/ai/plugins/skf/skills/orch-artifact-coherence-check.md",
+      "spek-fu/ai/plugins/skf/skills/orch-branch-analyze.md",
+      "spek-fu/ai/plugins/skf/skills/orch-final-orchestration-validation.md",
+      "spek-fu/ai/plugins/skf/skills/orch-index-traversal.md",
+      "spek-fu/ai/plugins/skf/skills/orch-initialize.md",
+      "spek-fu/ai/plugins/skf/skills/orch-intake-context.md",
+      "spek-fu/ai/plugins/skf/skills/orch-orchestration-plan.md",
+      "spek-fu/ai/plugins/skf/skills/orch-orchestration-summary.md",
+      "spek-fu/ai/plugins/skf/skills/orch-pattern-select.md",
+      "spek-fu/ai/plugins/skf/skills/orch-pre-execution-validation.md",
+      "spek-fu/ai/plugins/skf/skills/orch-resume-detect.md",
+      "spek-fu/ai/plugins/skf/skills/orch-skill-resolve.md",
+      "spek-fu/ai/plugins/skf/skills/orch-wave-decompose.md",
+      "spek-fu/ai/plugins/skf/skills/orch-wave-pattern-bundle.md",
+      "spek-fu/ai/plugins/skf/skills/orch-wave-verification.md"
+    ]
+  }
+}

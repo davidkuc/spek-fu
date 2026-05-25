@@ -16,33 +16,6 @@
       "path": "skf-config.json"
     },
     {
-      "name": "constitution",
-      "type": "folder",
-      "description": "Project governance — versioned, immutable guardrails; non-negotiable principles for both framework and project",
-      "path": "constitution/",
-      "index": "constitution/constitution.md"
-    },
-    {
-      "name": "project",
-      "type": "folder",
-      "description": "Project-level documentation — business requirements, technical spec, and architectural decision records",
-      "path": "project/",
-      "index": "project/project.md"
-    },
-    {
-      "name": "ai",
-      "type": "folder",
-      "description": "AI framework — plugins, scripts, and orchestration; the AI agentic and technical infrastructure of the framework",
-      "path": "ai/",
-      "index": "ai/ai-index.json"
-    },
-    {
-      "name": "reports",
-      "type": "folder",
-      "description": "Analysis outputs — auto-generated, git-tracked reports",
-      "path": "reports/"
-    },
-    {
       "name": ".github",
       "type": "folder",
       "description": "GitHub configuration and synced framework artifacts (agents, commands)",
@@ -62,16 +35,41 @@
       "path": "export.md"
     },
     {
-      "name": "features",
-      "type": "folder",
-      "description": "",
-      "path": "features/"
-    },
-    {
       "name": "dd.md",
       "type": "file",
       "description": "",
       "path": "dd.md"
+    },
+    {
+      "name": "ai",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/",
+      "index": "spek-fu/ai/ai-index.json"
+    },
+    {
+      "name": "constitution",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/constitution/constitution.md"
+    },
+    {
+      "name": "features",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/features/"
+    },
+    {
+      "name": "project",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/project/project.md"
+    },
+    {
+      "name": "reports",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/reports/"
     }
   ]
 }

@@ -1,0 +1,43 @@
+{
+  "name": "templates-index.json",
+  "description": "Index of ai/plugins/skf/templates — scaffolding templates for iteration artifacts and framework authoring",
+  "path": "ai/plugins/skf/templates/",
+  "children": [
+    {
+      "name": "constitution-subfile-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/constitution-subfile-template.md"
+    },
+    {
+      "name": "dispatch-manifest-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/dispatch-manifest-template.md"
+    },
+    {
+      "name": "orchestration-plan-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/orchestration-plan-template.md"
+    },
+    {
+      "name": "orchestration-summary-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/orchestration-summary-template.md"
+    },
+    {
+      "name": "skill-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/skill-template.md"
+    },
+    {
+      "name": "wave-summary-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/wave-summary-template.md"
+    }
+  ]
+}

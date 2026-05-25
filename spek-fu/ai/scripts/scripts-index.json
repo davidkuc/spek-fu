@@ -1,0 +1,14 @@
+{
+  "name": "scripts-index.json",
+  "description": "Index of ai/scripts — framework automation scripts; Python-primary scripting policy in effect",
+  "path": "ai/scripts/",
+  "children": [
+    {
+      "name": "python",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/scripts/python/",
+      "index": "spek-fu/ai/scripts/python/python-index.json"
+    }
+  ]
+}

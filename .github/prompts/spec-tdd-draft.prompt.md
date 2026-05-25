@@ -4,4 +4,4 @@ description: "Analyzes testability-assessment.md and spec.md to produce a struct
 anti-scope: "Does not modify upstream artifacts, run tests, or produce any implementation. Produces a report only."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-tdd-draft.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-tdd-draft.md`. Execute its full protocol exactly as described.

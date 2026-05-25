@@ -1,0 +1,148 @@
+{
+  "name": "patterns-index.json",
+  "description": "Index of ai/plugins/skf/patterns — behavioral patterns for AI agent orchestration with full audit metadata",
+  "path": "ai/plugins/skf/patterns/",
+  "tag-library": "ai/plugins/skf/patterns/pattern-tags.md",
+  "children": [
+    {
+      "name": "PT001",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT001-divide-and-conquer.md",
+      "description": "Divide large or complex work into separate, smaller, independently executable pieces. USE FOR: Project-wide work, large tasks, complex multi-concern tasks. DO NOT USE FOR: Small tasks, quick fixes, tightly coupled problems that cannot be cleanly split.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT002",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT002-prompt-chaining.md",
+      "description": "Pass the output of one prompt as the input to the next, building a deterministic pipeline. USE FOR: Multi-stage transformations where each step has a clear, verifiable output (e.g. extract → summarize → format). DO NOT USE FOR: Single-shot tasks, exploratory work where the next step depends on judgment, or when steps could run in parallel.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT003",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT003-least-to-most.md",
+      "description": "Solve the simplest sub-problem first, then use its solution as scaffolding for the next harder one. USE FOR: Problems with clear difficulty gradient where later steps build on earlier ones (algorithms, proofs, layered systems). DO NOT USE FOR: Independent parallel tasks, problems without natural ordering.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT004",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT004-spike-then-build.md",
+      "description": "Run a quick throwaway exploration to de-risk unknowns before committing to the real implementation. USE FOR: Tasks with significant unknowns (unfamiliar API, unclear data shape, uncertain feasibility). DO NOT USE FOR: Well-understood problems, tight deadlines on known territory.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT005",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT005-context-pruning.md",
+      "description": "Actively remove irrelevant content from context before the next reasoning step. USE FOR: Long-running agent sessions, tasks where earlier exploration produced large dead-end outputs, multi-turn workflows accumulating tool noise. DO NOT USE FOR: Short tasks, when full history is needed for audit/correctness.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT006",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT006-scratchpad-externalization.md",
+      "description": "Write intermediate state to a file/note instead of carrying it in context. USE FOR: Long tasks with reusable intermediate artifacts (plans, todo lists, findings, decisions). DO NOT USE FOR: One-shot tasks, ephemeral reasoning that won't be referenced again.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT007",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT007-just-in-time-retrieval.md",
+      "description": "Load context only when needed, not preemptively. USE FOR: Tasks operating over large codebases/docs where only a fraction is relevant per step. DO NOT USE FOR: Small projects where reading everything is cheap, tasks needing global view.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT008",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT008-adversarial-review.md",
+      "description": "A second agent (or fresh instance) reviews the first agent's output with the explicit job of finding flaws. USE FOR: High-stakes outputs (production code, security-sensitive logic, public-facing content), final deliverables. DO NOT USE FOR: Drafts, exploratory work, low-stakes throwaway code.",
+      "recommended-tier": "standard-agent"
+    },
+    {
+      "name": "PT009",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT009-test-before-trust.md",
+      "description": "Require the agent to verify its output by execution (run tests, compile, lint, query) before declaring done. USE FOR: Code, queries, scripts, configurations — anything executable. DO NOT USE FOR: Pure prose, design discussions, opinion-based content.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT010",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT010-acceptance-criteria-first.md",
+      "description": "Define the checklist of 'done' before starting the work. USE FOR: Any task with multiple requirements, deliverables that will be reviewed, work where 'done' is ambiguous. DO NOT USE FOR: Trivial single-step tasks, exploratory work without a defined endpoint.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT011",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT011-chain-of-thought.md",
+      "description": "Instruct the agent to show step-by-step reasoning before answering. USE FOR: Multi-step logic, math, planning, debugging, any task where the answer depends on a chain of inferences. DO NOT USE FOR: Single-fact lookups, simple transformations, tasks already handled by reasoning models (which do this internally).",
+      "recommended-tier": "fast-agent, standard-agent"
+    },
+    {
+      "name": "PT012",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT012-react.md",
+      "description": "Interleave reasoning ('Thought') with tool use ('Action') and observation in a loop. USE FOR: Tasks requiring external information or environment interaction (search, file ops, API calls). DO NOT USE FOR: Pure reasoning with all info already in context, single-tool one-shot calls.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT013",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT013-hypothesis-driven.md",
+      "description": "Force the agent to state a falsifiable hypothesis before investigating, then design actions to confirm or refute it. USE FOR: Debugging, root cause analysis, performance investigation, any 'why is this happening' question. DO NOT USE FOR: Implementation tasks, well-defined feature work, anything where the answer isn't an explanation.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT014",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT014-structured-output.md",
+      "description": "Specify the exact output schema (JSON, XML, markdown headers, function call) the agent must produce. USE FOR: Outputs consumed by other code/agents, repeatable workflows, anything that needs parsing. DO NOT USE FOR: Open-ended creative work, conversational responses, tasks where format is the user's choice.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT015",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT015-length-budget.md",
+      "description": "State explicit length limits (word count, line count, section count). USE FOR: Outputs that tend to bloat (summaries, reviews, explanations), workflows where downstream context is constrained. DO NOT USE FOR: Tasks where completeness matters more than brevity (full implementations, comprehensive docs).",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT016",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT016-negative-constraints.md",
+      "description": "Explicitly state what the output must NOT contain or do. USE FOR: Outputs with consistent failure modes (preamble, apologies, hedging, forbidden patterns), high-precision contexts. DO NOT USE FOR: Open creative tasks where constraints stifle quality.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT019",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT019-specialist-dispatch.md",
+      "description": "Orchestrator delegates each sub-task to a sub-agent with a narrow, role-specific system prompt. USE FOR: Tasks crossing distinct domains (research + code + review), workflows benefiting from clean context per role. DO NOT USE FOR: Single-domain tasks, tasks too small to justify dispatch overhead.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT023",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT023-parallelization.md",
+      "description": "Identify independent sub-tasks and dispatch them concurrently rather than sequentially. USE FOR: Workflows where multiple sub-tasks have no data dependencies and combined sequential latency is the bottleneck. DO NOT USE FOR: Dependent tasks with ordering requirements, tasks sharing mutable state, tasks too small to offset dispatch overhead.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT025",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT025-self-correction.md",
+      "description": "When the agent detects a failure, contradiction, or conflicting signal, explicitly re-examine the current approach and verify the correction before continuing. USE FOR: Long tasks with intermediate failures, tasks where early assumptions may prove wrong, multi-step work where an incorrect early step compounds downstream. DO NOT USE FOR: Short tasks, tasks with already-verified outputs where only PT009 is needed.",
+      "recommended-tier": "all"
+    },
+    {
+      "name": "PT026",
+      "type": "file",
+      "path": "spek-fu/ai/plugins/skf/patterns/PT026-fallback-chain.md",
+      "description": "Define an ordered list of approaches; if the primary approach fails, try the next in sequence rather than stopping. USE FOR: Tasks with known alternative solution paths, integration tasks with unreliable components, any workflow where failure of one approach should not terminate execution. DO NOT USE FOR: Tasks with only one valid approach, tasks where retrying a failed approach is harmful, tasks where each attempt has destructive side effects.",
+      "recommended-tier": "all"
+    }
+  ]
+}

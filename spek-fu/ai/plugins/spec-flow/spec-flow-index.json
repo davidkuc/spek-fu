@@ -1,0 +1,28 @@
+{
+  "name": "spec-flow-index.json",
+  "description": "Index of ai/plugins/spec-flow — spec-flow plugin",
+  "path": "ai/plugins/spec-flow/",
+  "children": [
+    {
+      "name": "knowledge",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/",
+      "index": "spek-fu/ai/plugins/spec-flow/knowledge/knowledge-index.json"
+    },
+    {
+      "name": "skills",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/skills/",
+      "index": "spek-fu/ai/plugins/spec-flow/skills/skills-index.json"
+    },
+    {
+      "name": "templates",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/",
+      "index": "spek-fu/ai/plugins/spec-flow/templates/templates-index.json"
+    }
+  ]
+}

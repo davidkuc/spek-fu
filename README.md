@@ -28,8 +28,8 @@ Two complementary databases feed the orchestration cycle:
 
 | Database | Purpose | Example |
 |----------|---------|----------|
-| **Knowledge** `ai/plugins/skf/knowledge/` | Operation-specific lessons (project-scoped) | "Always read devcontainer-guidelines.md before writing" |
-| **Patterns** `ai/plugins/skf/patterns/` | Reusable behavioral strategies (PT0xx files) | PT007: Just-in-Time Retrieval, PT023: Parallelization |
+| **Knowledge** `spek-fu/ai/plugins/skf/knowledge/` | Operation-specific lessons (project-scoped) | "Always read devcontainer-guidelines.md before writing" |
+| **Patterns** `spek-fu/ai/plugins/skf/patterns/` | Reusable behavioral strategies (PT0xx files) | PT007: Just-in-Time Retrieval, PT023: Parallelization |
 
 **Key distinction:** Lessons are specific & operational (stay local) • Patterns are general & structural (travel across projects)
 
@@ -37,7 +37,7 @@ Two complementary databases feed the orchestration cycle:
 ### Self-Learning Loop
 
 1. **Lessons accumulate** in `knowledge-database.md` through normal operation.
-2. **Threshold check**: When the lesson count reaches the configured threshold (`knowledgeDistillationThreshold` in `ai/plugins/skf/skills/config.json`), `meta-knowledge-manage` emits a `distillation-recommended: true` signal.
+2. **Threshold check**: When the lesson count reaches the configured threshold (`knowledgeDistillationThreshold` in `spek-fu/ai/plugins/skf/skills/config.json`), `meta-knowledge-manage` emits a `distillation-recommended: true` signal.
 3. **Signal detection**: The orchestrator's close runbook detects this signal and dispatches `meta-knowledge-distillation`.
 4. **Classification**: Lessons are classified as project-specific (kept) or general-recurring (promoted).
 5. **Pattern generation**: Clusters of 3+ related general-recurring lessons are generalized into new PT0xx pattern files.
@@ -110,7 +110,7 @@ The orchestrator decomposes the request into ordered waves, selects skills, and 
 
 1. **Clone** this repository into your project root
 2. **Open** in VS Code with GitHub Copilot Chat enabled
-3. **Configure** `constitution/` and `project/` with your own content
+3. **Configure** `spek-fu/constitution/` and `spek-fu/project/` with your own content
 4. **Use** `@skf-general-orchestrator` for free-form requests, or invoke `/` commands for scoped operations
 5. *(Optional)* **Extend** with a custom plugin — see [Creating a Custom Plugin](#creating-a-custom-plugin)
 
@@ -150,18 +150,18 @@ Syncs all `*-index.json` files with the actual filesystem state:
 - Extracts frontmatter data
 - Preserves existing descriptions
 
-Recommended pre-commit check: `python3 ai/scripts/python/sync-index-files.py --check`.
+Recommended pre-commit check: `python3 spek-fu/ai/scripts/python/sync-index-files.py --check`.
 
 Run after adding, renaming, or removing any indexed framework artifact.
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/sync-index-files.py
+python3 spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/sync-index-files.py
+python spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 ---
@@ -173,20 +173,20 @@ Run after creating or modifying any user-facing skill, or after adding a new plu
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/generate-prompt-files.py
+python3 spek-fu/ai/scripts/python/generate-prompt-files.py
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/generate-prompt-files.py
+python spek-fu/ai/scripts/python/generate-prompt-files.py
 ```
 
 ---
 
 **`create-plugin.py`**  
-Scaffolds a new custom plugin folder under `ai/plugins/` with standard structure:
+Scaffolds a new custom plugin folder under `spek-fu/ai/plugins/` with standard structure:
 ```
-ai/plugins/<plugin-name>/
+spek-fu/ai/plugins/<plugin-name>/
 ├── <plugin-name>-index.json
 ├── knowledge/
 ├── skills/
@@ -199,14 +199,14 @@ ai/plugins/<plugin-name>/
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/create-plugin.py --name <plugin-name>
-python3 ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
+python3 spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name>
+python3 spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/create-plugin.py --name <plugin-name>
-python ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
+python spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name>
+python spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
 ```
 
 
@@ -219,7 +219,7 @@ Plugins are the primary **extension point** of the framework. The scaffolding sc
 ### What the scaffold creates
 
 ```
-ai/plugins/<plugin-name>/
+spek-fu/ai/plugins/<plugin-name>/
 ├── <plugin-name>-index.json    # Plugin-level index, registered in plugins-index.json
 ├── knowledge/
 │   └── knowledge-index.json   # Ready for domain-specific knowledge files
@@ -229,23 +229,23 @@ ai/plugins/<plugin-name>/
     └── templates-index.json   # Ready for scaffolding templates
 ```
 
-The plugin is automatically registered in `ai/plugins/plugins-index.json` so the orchestrator can traverse into it from the root index chain.
+The plugin is automatically registered in `spek-fu/ai/plugins/plugins-index.json` so the orchestrator can traverse into it from the root index chain.
 
 
 ### Step-by-step
 
 ```bash
 # 1. Preview the scaffold (no files written)
-python3 ai/scripts/python/create-plugin.py --name my-plugin --dry-run
+python3 spek-fu/ai/scripts/python/create-plugin.py --name my-plugin --dry-run
 
 # 2. Scaffold the plugin
-python3 ai/scripts/python/create-plugin.py --name my-plugin
+python3 spek-fu/ai/scripts/python/create-plugin.py --name my-plugin
 
-# 3. Add skill files to ai/plugins/my-plugin/skills/
+# 3. Add skill files to spek-fu/ai/plugins/my-plugin/skills/
 #    Use /meta-skill-manage to create them following the standard format.
 
 # 4. Register new skills in the index chain
-python3 ai/scripts/python/sync-index-files.py
+python3 spek-fu/ai/scripts/python/sync-index-files.py
 #    Or: run /gov-update — it calls sync automatically.
 ```
 
@@ -253,16 +253,16 @@ python3 ai/scripts/python/sync-index-files.py
 
 ```powershell
 # 1. Preview the scaffold (no files written)
-python ai/scripts/python/create-plugin.py --name my-plugin --dry-run
+python spek-fu/ai/scripts/python/create-plugin.py --name my-plugin --dry-run
 
 # 2. Scaffold the plugin
-python ai/scripts/python/create-plugin.py --name my-plugin
+python spek-fu/ai/scripts/python/create-plugin.py --name my-plugin
 
-# 3. Add skill files to ai/plugins/my-plugin/skills/
+# 3. Add skill files to spek-fu/ai/plugins/my-plugin/skills/
 #    Use /meta-skill-manage to create them following the standard format.
 
 # 4. Register new skills in the index chain
-python ai/scripts/python/sync-index-files.py
+python spek-fu/ai/scripts/python/sync-index-files.py
 #    Or: run /gov-update — it calls sync automatically.
 ```
 
@@ -409,7 +409,7 @@ Skills marked **Interactive skill** at the top of their file call `vscode_askQue
 | `/gov-update` | Apply governance file updates; always runs index sync at the end | Yes |
 | `/meta-knowledge-manage` | Record lessons, surface advisory lessons, or search the knowledge database | Yes |
 | `/meta-knowledge-distillation` | Distill general-recurring lessons into PT0xx patterns, or merge duplicate/similar lessons | Yes |
-| `/meta-script-manage` | Scaffold and validate framework scripts in `ai/scripts/` | Yes |
+| `/meta-script-manage` | Scaffold and validate framework scripts in `spek-fu/ai/scripts/` | Yes |
 | `/meta-skill-manage` | Create, evaluate, and refine skill files | Yes |
 | `/spec-feature-draft` | Generate initial feature spec from raw idea | Yes |
 | `/spec-clarification` | Resolve ambiguities in a spec through structured Q&A | Yes |
@@ -429,7 +429,7 @@ Skills marked **Interactive skill** at the top of their file call `vscode_askQue
 /meta-knowledge-distillation distill
 /meta-knowledge-distillation merge
 /meta-skill-manage create "A skill that validates ADR structure against the ADR template"
-/meta-script-manage validate ai/scripts/python/sync-index-files.py
+/meta-script-manage validate spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 
@@ -504,11 +504,11 @@ Example traversal chain:
 
 ```text
 skf-root-index.json
-  -> ai/ai-index.json
-    -> ai/plugins/plugins-index.json
-      -> ai/plugins/skf/skf-index.json
-        -> ai/plugins/skf/skills/skills-index.json
-          -> ai/plugins/skf/skills/meta-knowledge-distillation.md
+   -> spek-fu/ai/ai-index.json
+      -> spek-fu/ai/plugins/plugins-index.json
+         -> spek-fu/ai/plugins/skf/skf-index.json
+            -> spek-fu/ai/plugins/skf/skills/skills-index.json
+               -> spek-fu/ai/plugins/skf/skills/meta-knowledge-distillation.md
 ```
 
 Loads each index only when needed to navigate into that layer. Stops as soon as the file or folder needed is found.
@@ -524,26 +524,28 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ├── skf-root-index.json              # Root index — entry point for the index-driven loading chain
 ├── context.md                       # Working context artifact for session management
 ├── skf-config.json                  # Runtime environment mode (auto | devcontainer | host)
-├── constitution/                    # Project governance
-│   └── constitution.md              # Consolidated governance: principles, standards, guidelines
-├── project/                         # Project documentation
-│   └── project.md                   # Consolidated specification: business requirements and technical design
-├── ai/                              # AI framework
-│   ├── ai-index.json                # AI-level index — links scripts and plugins
-│   ├── scripts/
-│   │   └── python/                  # Python automation and validation scripts
-│   └── plugins/
-│       ├── skf/                     # Built-in plugin — skills, runbooks, knowledge, patterns, and support assets
-│       │   ├── knowledge/           # Reference databases and guidance files
-│       │   ├── patterns/            # Behavioral patterns and tag vocabularies
-│       │   ├── runbooks/            # Dispatch contract and phase procedures
-│       │   ├── skills/              # Skill definitions across 4 groups
-│       │   └── templates/           # Framework authoring and orchestration templates
-│       └── <custom-plugin>/         # Your own plugin (scaffolded via create-plugin.py)
-│           ├── knowledge/           # Domain-specific knowledge files
-│           ├── skills/              # Custom skill definitions (auto-discovered via index chain)
-│           └── templates/           # Custom scaffolding templates
-├── reports/                         # Analysis output (auto-generated, git-tracked)
+├── spek-fu/
+│   ├── constitution/                # Project governance
+│   │   └── constitution.md          # Consolidated governance: principles, standards, guidelines
+│   ├── project/                     # Project documentation
+│   │   └── project.md               # Consolidated specification: business requirements and technical design
+│   ├── ai/                          # AI framework
+│   │   ├── ai-index.json            # AI-level index — links scripts and plugins
+│   │   ├── scripts/
+│   │   │   └── python/              # Python automation and validation scripts
+│   │   └── plugins/
+│   │       ├── skf/                 # Built-in plugin — skills, runbooks, knowledge, patterns, and support assets
+│   │       │   ├── knowledge/       # Reference databases and guidance files
+│   │       │   ├── patterns/        # Behavioral patterns and tag vocabularies
+│   │       │   ├── runbooks/        # Dispatch contract and phase procedures
+│   │       │   ├── skills/          # Skill definitions across 4 groups
+│   │       │   └── templates/       # Framework authoring and orchestration templates
+│   │       └── <custom-plugin>/     # Your own plugin (scaffolded via create-plugin.py)
+│   │           ├── knowledge/       # Domain-specific knowledge files
+│   │           ├── skills/          # Custom skill definitions (auto-discovered via index chain)
+│   │           └── templates/       # Custom scaffolding templates
+│   ├── features/                    # Spec-flow feature workspaces
+│   └── reports/                     # Analysis output (auto-generated, git-tracked)
 ├── .github/
 │   ├── copilot-instructions.md      # Bootstrap Copilot context — SSOT pointers only
 │   ├── agents/                      # Canonical agent definitions used by VS Code chat
@@ -581,15 +583,15 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 - Selected & bundled by the orchestration layer
 - Created automatically via self-learning distillation loop
 - Promoted manually via `meta-knowledge-distillation`
-- Stored as **PT0xx** files in `ai/plugins/skf/patterns/`
+- Stored as **PT0xx** files in `spek-fu/ai/plugins/skf/patterns/`
 
-📌 **Authoritative inventory:** `ai/plugins/skf/patterns/patterns-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/patterns/patterns-index.json`
 
 
 ### Runbooks
 
 **Runbooks** are per-phase orchestrator execution guides:
-- **Shared rules:** `ai/plugins/skf/runbooks/runbook-shared.md`
+- **Shared rules:** `spek-fu/ai/plugins/skf/runbooks/runbook-shared.md`
 - **Phase-specific rules:** co-located in same folder
 
 
@@ -597,24 +599,24 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 
 **Knowledge base** — collection of reference databases, taxonomies, and advisory documents used by skills and orchestrators via just-in-time retrieval.
 
-📌 **Authoritative inventory:** `ai/plugins/skf/knowledge/knowledge-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/knowledge/knowledge-index.json`
 
 
 ### Templates
 
 **Templates** scaffold framework components and orchestration artifacts.
 
-📌 **Authoritative inventory:** `ai/plugins/skf/templates/templates-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/templates/templates-index.json`
 
 
 ### Scripts
 
-**Python helper scripts** under `ai/scripts/python/` support:
+**Python helper scripts** under `spek-fu/ai/scripts/python/` support:
 - Index traversal
 - Validation
 - Frontmatter-driven discovery
 
-📌 **Authoritative inventory:** `ai/scripts/python/python-index.json`  
+📌 **Authoritative inventory:** `spek-fu/ai/scripts/python/python-index.json`  
 📌 **Quick reference:** [Scripts Cheat Sheet](#scripts-cheat-sheet)
 
 
@@ -638,14 +640,14 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 - Verification gates
 
 **Defined in:**
-- `ai/plugins/skf/runbooks/`
-- `ai/plugins/skf/templates/`
+- `spek-fu/ai/plugins/skf/runbooks/`
+- `spek-fu/ai/plugins/skf/templates/`
 
 
 ### Plugins
 
 **Plugins** are the extension unit of the framework:
-- Built-in plugin (`skf`) at `ai/plugins/skf/`
+- Built-in plugin (`skf`) at `spek-fu/ai/plugins/skf/`
 - Add unlimited custom plugins with `skills/`, `knowledge/`, `templates/` sub-folders
 - Each plugin is independently discoverable
 
@@ -663,9 +665,9 @@ Framework documentation is organized into **three branches**:
 
 | Branch | Location | Contains |
 |--------|----------|----------|
-| **Constitution** | `constitution/` | Governance principles, project constraints, coding standards, non-negotiable rules |
-| **Project** | `project/` | Project specs, business requirements, technical decisions, ADRs |
-| **Framework** | `ai/`, `reports/`, roots | Skills, agents, templates, runbooks, indexes, generated reports |
+| **Constitution** | `spek-fu/constitution/` | Governance principles, project constraints, coding standards, non-negotiable rules |
+| **Project** | `spek-fu/project/` | Project specs, business requirements, technical decisions, ADRs |
+| **Framework** | `spek-fu/ai/`, `spek-fu/reports/`, roots | Skills, agents, templates, runbooks, indexes, generated reports |
 
 ---
 
