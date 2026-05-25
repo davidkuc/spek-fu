@@ -23,7 +23,8 @@ spec-tasks-draft
       ↓
 spec-feature-analysis
       ↓
-spec-implement
+@skf-general-orchestrator
+  (dispatches → spec-implement)
 ```
 
 ---
@@ -95,7 +96,7 @@ spec-implement
 - **Input**: `feature-dir` — resolved via Branch Detection if not supplied.
 - **Output**: `feature-dir/feature-analysis-report.md` — overwritten on each invocation.
 - **Template**: `ai/plugins/spec-flow/templates/feature-analysis-template.md`
-- **Status**: Recommended — surfaces staleness, unresolved clarifications, and coverage gaps before the implementation phase commits to them.
+- **Status**: Required — surfaces staleness, unresolved clarifications, and coverage gaps before the orchestrator touches any code. A `BLOCKED` verdict halts implementation until underlying issues are resolved.
 
 ---
 

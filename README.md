@@ -5,10 +5,9 @@
 Spek-Fu is an **AI agentic development framework** built around a general-purpose orchestrator that:
 - Decomposes requests into **subagent waves**
 - Routes each wave through a **tiered agent pool**
+- Keeps **humans in control during specification** while AI drives implementation
 - Progressively distills operational experience into **reusable behavioral patterns**
 - Compounds gained knowledge with **every session**
-
-
 
 ## Framework Architecture
 
@@ -62,6 +61,51 @@ Two complementary databases feed the orchestration cycle:
 
 
 
+## ⚡ Workflow Modes
+
+Spek-Fu supports two primary workflow paths. Both are driven by the same orchestrator and benefit from the same self-learning engine.
+
+---
+
+### Spec-Flow: Spec-Driven Feature Development
+
+Use the **Spec-Flow path** when building a new feature from a raw idea. You drive specification interactively with AI assistance — the orchestrator does not touch code until the full spec package is complete and passes the readiness gate.
+
+```
+Human-driven, AI-assisted                  AI-driven, orchestrated
+──────────────────────────────────────     ──────────────────────────────────────────
+ /spec-feature-draft                        @skf-general-orchestrator
+ /spec-clarification                            dispatches → spec-implement
+ /spec-devils-advocate                          (phase by phase)
+ /spec-testability-draft
+ /spec-technical-draft
+ /spec-tdd-draft
+ /spec-tasks-draft
+ /spec-feature-analysis  ← readiness gate ─►  implementation begins
+```
+
+**When to use:** Building new features, multi-component or multi-phase work, or any task where upfront clarity prevents costly downstream rework.
+
+See [Spec-Flow Plugin](#-spec-flow-plugin) for the full step-by-step reference.
+
+---
+
+### General Purpose: Direct Orchestration
+
+Use the **general-purpose path** for any request where scope is already clear — refactoring, bug fixes, framework maintenance, exploratory tasks, or anything that does not warrant a full spec pipeline.
+
+```
+User request  →  @skf-general-orchestrator  →  wave decomposition  →  impl-implement
+```
+
+The orchestrator decomposes the request into ordered waves, selects skills, and dispatches subagents with verification gates — no spec pipeline required.
+
+**When to use:** Scope is clear, refactoring, debugging, framework changes, or exploratory work.
+
+---
+
+
+
 ## 📋 Quickstart
 
 1. **Clone** this repository into your project root
@@ -75,7 +119,8 @@ Two complementary databases feed the orchestration cycle:
 
 | Workflow | Approach | Details |
 |----------|----------|----------|
-| **Free-form requests** | `@skf-general-orchestrator` | Analyzes request, selects skills, sequences work end-to-end |
+| **Spec-driven feature** | Spec-Flow pipeline → `@skf-general-orchestrator` | Step through spec skills interactively; orchestrator drives implementation phase |
+| **General-purpose work** | `@skf-general-orchestrator` | Analyzes request, selects skills, sequences work end-to-end |
 | **Direct commands** | `/` slash commands | Use when operation is already well-defined |
 | **Framework changes** | `/gov-update` | Run after adding/renaming/removing artifacts |
 | **Custom plugin** | `create-plugin.py` + `/gov-update` | Scaffold plugin, add skills, sync index |
@@ -232,7 +277,7 @@ The `--name` slug must be lowercase alphanumeric with hyphens (e.g. `dotnet`, `d
 
 ## � Spec-Flow Plugin
 
-**Spec-Flow** is a built-in plugin that implements a **ten-step feature specification pipeline**, transforming raw ideas into a fully orchestrated implementation through structured, adversarial review, test-driven design, and spec-driven orchestration.
+**Spec-Flow** is a built-in plugin that implements an **eight-step specification pipeline** followed by an orchestrator-driven implementation phase. You drive specification interactively with AI assistance — the orchestrator does not touch code until every artifact is complete and the feature-analysis readiness gate passes. This separation keeps humans in control of *what* gets built while the AI handles *how* to build it.
 
 ### Workflow Chain
 
@@ -270,13 +315,13 @@ spec-feature-analysis
 | 5 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
 | 6 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
 | 7 | **spec-tasks-draft** | Decompose design into phased, ordered task list | `FEATURE_DIR/tasks.md` | ✅ Required |
-| 8 | **spec-feature-analysis** | Surface staleness, unresolved clarifications, and coverage gaps | `FEATURE_DIR/feature-analysis-report.md` | 🔶 Recommended |
+| 8 | **spec-feature-analysis** | Surface staleness, unresolved clarifications, and coverage gaps | `FEATURE_DIR/feature-analysis-report.md` | ✅ Required |
 | 9 | **spec-implement** | Execute a single task plan phase (dispatched by the orchestrator) | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
 | 10 | **@skf-general-orchestrator** | Orchestrate full implementation by dispatching `spec-implement` phase by phase, using all spec artifacts as context | All phases completed; `FEATURE_DIR/tasks.md` fully resolved | ✅ Required |
 
 ### Invocation Pattern
 
-The spec-flow pipeline is best invoked manually using prompt slash commands like `/spec-devils-advocate`, since there is a lot of user interaction involved in this flow.
+The spec-flow pipeline is invoked step by step using slash commands (e.g. `/spec-feature-draft`, `/spec-devils-advocate`). Each step is interactive — you review the output, ask follow-up questions, and iterate before moving to the next step. Once all eight spec steps are complete and the feature-analysis verdict is `READY`, hand off to `@skf-general-orchestrator` for implementation.
 
 ### Key Design Principles
 
@@ -287,7 +332,11 @@ The spec-flow pipeline is best invoked manually using prompt slash commands like
 
 ### Required Execution
 
-All ten steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy. In particular, step 10 (`@skf-general-orchestrator`) is the integration point that uses the completed spec artifacts to drive `spec-implement` phase by phase — invoking `spec-implement` directly is appropriate for single-phase execution, but the orchestrator is required for full end-to-end delivery.
+All eight specification steps are required. Skipping any step introduces uncompensated risk into specification quality and therefore into implementation accuracy — the orchestrator's output is only as good as the spec it receives.
+
+`spec-feature-analysis` (step 8) is the readiness gate: it surfaces staleness, unresolved clarifications, and coverage gaps before the orchestrator touches any code. A `BLOCKED` verdict halts progress until the underlying issues are resolved.
+
+Once the full spec package is ready, `@skf-general-orchestrator` drives implementation by dispatching `spec-implement` phase by phase. Invoking `spec-implement` directly is valid for single-phase execution, but the orchestrator is required for full end-to-end delivery.
 
 ### Example: Generating a Feature Spec
 
@@ -350,7 +399,7 @@ This separation ensures the management layer stays accessible while keeping orch
 
 ### Interactive Skills
 
-Skills marked **Interactive skill** at the top of their file call `vscode_askQuestions` to collect decisions during execution. All four user-facing skills are interactive. When the orchestrator dispatches any of these as a stateless subagent, the approval and decision steps are bypassed and the skill runs non-interactively. When you invoke them directly as slash commands in VS Code Chat, they run fully interactively.
+Skills marked **Interactive skill** at the top of their file call `vscode_askQuestions` to collect decisions during execution. All user-facing skills — including all `spec-` pipeline skills — are interactive. When the orchestrator dispatches any of these as a stateless subagent, the approval and decision steps are bypassed and the skill runs non-interactively. When you invoke them directly as slash commands in VS Code Chat, they run fully interactively.
 
 
 ### Commands
@@ -362,6 +411,15 @@ Skills marked **Interactive skill** at the top of their file call `vscode_askQue
 | `/meta-knowledge-distillation` | Distill general-recurring lessons into PT0xx patterns, or merge duplicate/similar lessons | Yes |
 | `/meta-script-manage` | Scaffold and validate framework scripts in `ai/scripts/` | Yes |
 | `/meta-skill-manage` | Create, evaluate, and refine skill files | Yes |
+| `/spec-feature-draft` | Generate initial feature spec from raw idea | Yes |
+| `/spec-clarification` | Resolve ambiguities in a spec through structured Q&A | Yes |
+| `/spec-devils-advocate` | Red-team spec to surface failure modes and assumptions | Yes |
+| `/spec-testability-draft` | Evaluate spec from a test-engineering perspective | Yes |
+| `/spec-technical-draft` | Produce technical design, contracts, and data model | Yes |
+| `/spec-tdd-draft` | Convert testability findings into a TDD implementation design | Yes |
+| `/spec-tasks-draft` | Decompose design into phased, dependency-ordered task list | Yes |
+| `/spec-feature-analysis` | Validate all spec artifacts and produce readiness verdict | Yes |
+| `/spec-implement` | Execute a single implementation phase (single-phase use; full delivery requires orchestrator) | Yes |
 
 ### Usage Examples
 
