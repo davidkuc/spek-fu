@@ -1,7 +1,7 @@
 {
   "name": "templates-index.json",
-  "description": "Index of ai/plugins/skf/templates — scaffolding templates for iteration artifacts and framework authoring",
-  "path": "ai/plugins/skf/templates/",
+  "description": "Index of spek-fu/ai/plugins/skf/templates — scaffolding templates for iteration artifacts and framework authoring",
+  "path": "spek-fu/ai/plugins/skf/templates/",
   "children": [
     {
       "name": "constitution-subfile-template.md",

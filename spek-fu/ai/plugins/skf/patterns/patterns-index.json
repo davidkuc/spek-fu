@@ -1,8 +1,8 @@
 {
   "name": "patterns-index.json",
-  "description": "Index of ai/plugins/skf/patterns — behavioral patterns for AI agent orchestration with full audit metadata",
-  "path": "ai/plugins/skf/patterns/",
-  "tag-library": "ai/plugins/skf/patterns/pattern-tags.md",
+  "description": "Index of spek-fu/ai/plugins/skf/patterns — behavioral patterns for AI agent orchestration with full audit metadata",
+  "path": "spek-fu/ai/plugins/skf/patterns/",
+  "tag-library": "spek-fu/ai/plugins/skf/patterns/pattern-tags.md",
   "children": [
     {
       "name": "PT001",

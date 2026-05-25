@@ -1,7 +1,7 @@
 {
   "name": "spec-flow-index.json",
-  "description": "Index of ai/plugins/spec-flow — spec-flow plugin",
-  "path": "ai/plugins/spec-flow/",
+  "description": "Index of spek-fu/ai/plugins/spec-flow — spec-flow plugin",
+  "path": "spek-fu/ai/plugins/spec-flow/",
   "children": [
     {
       "name": "knowledge",

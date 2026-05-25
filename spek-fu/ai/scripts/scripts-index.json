@@ -1,7 +1,7 @@
 {
   "name": "scripts-index.json",
-  "description": "Index of ai/scripts — framework automation scripts; Python-primary scripting policy in effect",
-  "path": "ai/scripts/",
+  "description": "Index of spek-fu/ai/scripts — framework automation scripts; Python-primary scripting policy in effect",
+  "path": "spek-fu/ai/scripts/",
   "children": [
     {
       "name": "python",

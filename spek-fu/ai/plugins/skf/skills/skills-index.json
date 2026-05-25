@@ -1,8 +1,8 @@
 {
   "name": "skills-index.json",
-  "description": "Index of ai/plugins/skf/skills — distilled skill metadata for routing and discovery",
-  "path": "ai/plugins/skf/skills/",
-  "tag-library": "ai/plugins/skf/knowledge/skill-tags.md",
+  "description": "Index of spek-fu/ai/plugins/skf/skills — distilled skill metadata for routing and discovery",
+  "path": "spek-fu/ai/plugins/skf/skills/",
+  "tag-library": "spek-fu/ai/plugins/skf/knowledge/skill-tags.md",
   "children": [
     {
       "id": "gov-update",

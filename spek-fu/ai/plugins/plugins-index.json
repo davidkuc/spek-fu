@@ -1,7 +1,7 @@
 {
   "name": "plugins-index.json",
-  "description": "Index of ai/plugins — plugin container",
-  "path": "ai/plugins/",
+  "description": "Index of spek-fu/ai/plugins — plugin container",
+  "path": "spek-fu/ai/plugins/",
   "children": [
     {
       "name": "skf",

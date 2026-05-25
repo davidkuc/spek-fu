@@ -1,7 +1,7 @@
 {
   "name": "skills-index.json",
-  "description": "Index of ai/plugins/spec-flow/skills — skill metadata for routing and discovery",
-  "path": "ai/plugins/spec-flow/skills/",
+  "description": "Index of spek-fu/ai/plugins/spec-flow/skills — skill metadata for routing and discovery",
+  "path": "spek-fu/ai/plugins/spec-flow/skills/",
   "children": [
     {
       "id": "spec-clarification",

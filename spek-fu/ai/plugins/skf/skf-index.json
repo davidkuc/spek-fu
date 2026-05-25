@@ -1,7 +1,7 @@
 {
   "name": "skf-index.json",
-  "description": "Index of ai/plugins/skf — Spek-Fu plugin, all framework capabilities",
-  "path": "ai/plugins/skf/",
+  "description": "Index of spek-fu/ai/plugins/skf — Spek-Fu plugin, all framework capabilities",
+  "path": "spek-fu/ai/plugins/skf/",
   "children": [
     {
       "name": "knowledge",

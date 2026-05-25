@@ -1,7 +1,7 @@
 {
   "name": "python-index.json",
-  "description": "Index of ai/scripts/python — retained Python utilities for SKF index traversal and frontmatter search",
-  "path": "ai/scripts/python/",
+  "description": "Index of spek-fu/ai/scripts/python — retained Python utilities for SKF index traversal and frontmatter search",
+  "path": "spek-fu/ai/scripts/python/",
   "children": [
     {
       "name": "common",
@@ -62,12 +62,6 @@
       "type": "file",
       "description": "",
       "path": "spek-fu/ai/scripts/python/resolve-skf-index-chain.py"
-    },
-    {
-      "name": "scripts-index.json",
-      "type": "file",
-      "description": "",
-      "path": "spek-fu/ai/scripts/python/scripts-index.json"
     },
     {
       "name": "search-by-frontmatter",

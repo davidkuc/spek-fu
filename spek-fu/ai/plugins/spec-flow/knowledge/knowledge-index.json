@@ -1,7 +1,7 @@
 {
   "name": "knowledge-index.json",
-  "description": "Index of ai/plugins/spec-flow/knowledge",
-  "path": "ai/plugins/spec-flow/knowledge/",
+  "description": "Index of spek-fu/ai/plugins/spec-flow/knowledge",
+  "path": "spek-fu/ai/plugins/spec-flow/knowledge/",
   "children": [
     {
       "name": "branch-detection.md",

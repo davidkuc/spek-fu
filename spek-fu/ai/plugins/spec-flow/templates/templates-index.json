@@ -1,7 +1,7 @@
 {
   "name": "templates-index.json",
-  "description": "Index of ai/plugins/spec-flow/templates — scaffolding templates",
-  "path": "ai/plugins/spec-flow/templates/",
+  "description": "Index of spek-fu/ai/plugins/spec-flow/templates — scaffolding templates",
+  "path": "spek-fu/ai/plugins/spec-flow/templates/",
   "children": [
     {
       "name": "devils-advocate-template.md",

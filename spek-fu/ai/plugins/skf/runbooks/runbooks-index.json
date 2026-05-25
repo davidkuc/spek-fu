@@ -1,7 +1,7 @@
 {
   "name": "runbooks-index.json",
-  "description": "Index of ai/plugins/skf/runbooks — per-phase orchestrator runbooks with shared dispatch, escalation, and retry protocols",
-  "path": "ai/plugins/skf/runbooks/",
+  "description": "Index of spek-fu/ai/plugins/skf/runbooks — per-phase orchestrator runbooks with shared dispatch, escalation, and retry protocols",
+  "path": "spek-fu/ai/plugins/skf/runbooks/",
   "children": [
     {
       "name": "runbook-close.md",

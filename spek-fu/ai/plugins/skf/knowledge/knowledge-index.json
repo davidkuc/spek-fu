@@ -1,7 +1,7 @@
 {
   "name": "knowledge-index.json",
-  "description": "Index of ai/plugins/skf/knowledge — reference databases and taxonomies",
-  "path": "ai/plugins/skf/knowledge/",
+  "description": "Index of spek-fu/ai/plugins/skf/knowledge — reference databases and taxonomies",
+  "path": "spek-fu/ai/plugins/skf/knowledge/",
   "children": [
     {
       "name": "devcontainer-guidelines.md",
