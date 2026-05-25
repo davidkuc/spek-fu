@@ -11,6 +11,15 @@
       "description": "Reads skills-index.json and generates one .prompt.md file per skill entry in .github/prompts/",
       "usage": "python3 ai/scripts/python/generate-prompt-files.py",
       "run_from": "workspace root"
+    },
+    {
+      "id": "gather-skills",
+      "filename": "gather-skills.py",
+      "path": "ai/scripts/python/gather-skills.py",
+      "language": "python3",
+      "description": "Traverses all plugin indexes, merges skill entries, applies the ignoredSkills filter from config.json, and outputs the pre-filtered skill catalog as JSON or a table",
+      "usage": "python3 ai/scripts/python/gather-skills.py [--format json|table] [--config PATH] [--plugins-index PATH]",
+      "run_from": "workspace root"
     }
   ]
 }

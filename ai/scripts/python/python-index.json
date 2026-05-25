@@ -58,6 +58,12 @@
       "path": "ai/scripts/python/sync-index-files.py"
     },
     {
+      "name": "gather-skills",
+      "type": "file",
+      "description": "Traverses all plugin indexes to collect skill entries, applies the ignoredSkills filter from config.json, and outputs the pre-filtered skill catalog as JSON or a table. Used by orch-skill-resolve to obtain the available skill catalog in one step.",
+      "path": "ai/scripts/python/gather-skills.py"
+    },
+    {
       "name": "generate-prompt-files",
       "type": "file",
       "description": "",

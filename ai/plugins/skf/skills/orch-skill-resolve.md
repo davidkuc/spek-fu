@@ -32,10 +32,10 @@ Active skill-selection utility. Takes accumulated orchestration context and sele
 <!-- SECTION 2: Constraints (non-negotiable) -->
 <constraints>
 IMPORTANT: These rules override all other instructions.
-1. NEVER return all skills from the index indiscriminately — always select based on the problem context. WHY: a curated selection is the entire value of this skill; a full dump defeats the purpose.
-2. NEVER read individual skill files — only read skills-index.json for the catalog. WHY: pure selection utility.
+1. NEVER return all skills from the catalog indiscriminately — always select based on the problem context. WHY: a curated selection is the entire value of this skill; a full dump defeats the purpose.
+2. NEVER read individual skill files or skills-index.json directly — always obtain the catalog by running `gather-skills.py`. WHY: the script handles merging, deduplication, and ignore-list filtering in one step.
 3. NEVER skip reading the intake context — it is the primary input for selection reasoning. WHY: selection without context is arbitrary.
-4. If no plugin skill catalog is readable, return blocked immediately. WHY: cannot select without a catalog.
+4. If `gather-skills.py` fails or returns zero available skills, return blocked immediately. WHY: cannot select without a catalog.
 5. Include a `selection_rationale` entry for every selected skill explaining why it was chosen. WHY: rationale enables the orchestrator to validate selections and pass them to orch-orchestration-plan with confidence.
 </constraints>
 
@@ -67,7 +67,6 @@ Before reading any context files or the skills catalog, check whether a prior sk
 ## Preflight
 
 - Confirm `intake-context-path` is provided and readable. If absent, return blocked with reason: "intake-context-path missing".
-- Confirm `ai/plugins/plugins-index.json` exists and is readable. If absent or malformed, return blocked with reason: "plugins-index.json missing or malformed".
 
 ## Step 1 — Read gathered context
 
@@ -88,13 +87,23 @@ If `knowledge-result-path` is provided:
 
 ## Step 2 — Read the skill catalog
 
-1. Use `read_file` to read `ai/plugins/plugins-index.json` and collect all plugin entries from its `children` array.
-2. For each plugin entry, follow its `index` pointer to read the plugin's root index (e.g. `ai/plugins/skf/skf-index.json`); within that index locate the child whose `name` is `"skills"` and read its `index` field to get the path to the plugin's `skills-index.json`.
-3. Use `read_file` to read each `skills-index.json` and collect its `children` array.
-4. Merge all collected `children` arrays into a single unified skill catalog. Note the source plugin name in the selection rationale for any skill selected from a non-skf plugin.
-5. If no plugin's `skills-index.json` could be read: return blocked status with reason: "no plugin skill catalog is readable".
-- Confirm that each entry in the merged catalog contains `id`, `description`, `anti-scope`, `dispatch-variant` fields.
-6. **Load the ignore list**: Use `read_file` to read `ai/plugins/skf/skills/config.json`. Extract the `skillSelection.ignoredSkills` array. If the file cannot be read or the key is absent, treat the ignore list as empty and continue. Remove any skill from the merged catalog whose `path` field exactly matches an entry in `ignoredSkills`. Log the count of ignored skills in the output summary.
+Run the gather-skills script from the repo root:
+
+```
+python3 ai/scripts/python/gather-skills.py --format json
+```
+
+Use `run_in_terminal` with the command above.
+
+- If the script exits with a non-zero code or produces no parseable output: return blocked status with reason: "skill catalog unavailable — gather-skills.py failed".
+- Parse the JSON output. The result has the shape:
+  ```json
+  { "total": N, "ignored": N, "available": N, "skills": [...] }
+  ```
+- Use `result.skills` as the unified skill catalog — it is already merged across all plugins and filtered against the ignore list from `ai/plugins/skf/skills/config.json`.
+- If `result.available` is 0: return blocked status with reason: "no plugin skill catalog is readable".
+- Log `result.total`, `result.ignored`, and `result.available` in the output summary.
+- Confirm that each entry in the catalog contains `id`, `description`, `anti-scope`, `dispatch-variant` fields.
 
 ## Step 3 — Select relevant skills
 
@@ -106,10 +115,11 @@ For each skill entry in the `children` array, reason:
 
 **Group reasoning by work type**:
 
-- **Implementation work** → include `impl-*` skills matching the specific implementation pattern (impl-implement, impl-implement, etc.)
+- **Implementation work** → include `impl-*` skills matching the specific implementation pattern
 - **Governance/docs** → include `gov-*` skills for governance tier updates or documentation changes
-- **Orchestration utilities** (always include core ones needed by orchestration flow): `orch-orchestration-plan`, `orch-wave-decompose`, `orch-wave-verification`, `orch-wave-pattern-bundle`, `orch-artifact-coherence-check`, `orch-pre-execution-validation`, `orch-resume-detect`, `orch-orchestration-summary`
 - **Meta/index management** → include only if the problem involves framework changes
+
+Note: orchestration utility skills (`orch-*`) are excluded from the catalog by the ignore list; do not attempt to select them.
 
 ## Step 4 — Build and write the inventory
 
@@ -158,10 +168,10 @@ Return the report in the format defined in `<output_format>`.
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Steps 1 and 2 — context files and skills-index.json.
+- **read_file**: Step 1 only — context files (intake context, traversal results, knowledge output).
+- **run_in_terminal**: Step 2 only — run `python3 ai/scripts/python/gather-skills.py --format json` to obtain the pre-filtered skill catalog.
 - **create_file**: Step 4 only — write .orchestration-temp/skill-inventory.md.
 - **replace_string_in_file**: Only if skill-inventory.md already exists and needs updating.
-- **run_in_terminal**: Prohibited.
 - **All search tools** (file_search, grep_search, semantic_search): Prohibited.
 </tools>
 
@@ -243,21 +253,20 @@ Input:
 
 Process:
 1. Synthesize: "Multi-module implementation work requiring implementation, orchestration, and governance skills"
-2. Read skills-index.json (24 skills)
-3. Select skills:
+2. Run `python3 ai/scripts/python/gather-skills.py --format json`; parse JSON output (e.g. total=30, ignored=23, available=7)
+3. Select skills from the 7 available:
    - Include `impl-implement` (core implementation executor)
-   - Include `orch-final-orchestration-validation` (post-implementation validation)
-   - Include `orch-wave-verification` (wave-level verification)
    - Include `gov-update` (update governance tier with changes)
-   - Include core utility skills: `orch-orchestration-plan`, `orch-wave-decompose`, `orch-wave-verification`, `orch-artifact-coherence-check`, `orch-pre-execution-validation`
-   - Exclude all meta-* skills (no framework changes)
-4. Write inventory with ~8-10 selected skills
+   - Exclude all `meta-*` skills (no framework changes)
+   - Note: `orch-*` skills are pre-filtered out by the script; do not attempt to select them
+4. Write inventory with selected skills
 5. Return:
 ```
 Skill selection complete:
   Problem context: Multi-module implementation work with verification and governance coordination
-  Catalog size: 24
-  Selected: 9 skills
+  Catalog size: 7
+  Ignored: 23 skills (pre-filtered by gather-skills.py)
+  Selected: 2 skills
   Output: .orchestration-temp/skill-inventory.md
 ```
 
@@ -266,14 +275,14 @@ Markdown output file:
 # Skill Inventory
 
 Problem context: Multi-module implementation work with verification and governance coordination  
-Catalog size: 24  
-Selected: 9 skills  
+Catalog size: 7  
+Ignored: 23 (pre-filtered by gather-skills.py)  
+Selected: 2 skills  
 
 | ID | Path | Description | Recommended Tier | Dispatch Variant | Anti-scope |
 |----|------|-------------|------------------|-----------\u200b---|------------|
 | gov-update | ai/plugins/skf/skills/gov-update.md | Applies targeted changes to a governance tier with per-change user approval | fast-agent | full | It does NOT perform analysis, modify source code, or touch iteration in-progress files |
 | impl-implement | ai/plugins/skf/skills/impl-implement.md | ... | fast-agent | full | ... |
-| ... | ... | ... | ... | ... | ... |
 
 ## Selection Rationale
 
@@ -319,21 +328,19 @@ Expected behavior:
 </example>
 
 <example name="counter2">
-Input: intake-context-path points to valid intake-context.md. skills-index.json is missing or malformed.
+Input: intake-context-path points to valid intake-context.md. `gather-skills.py` fails (plugins-index.json is missing or malformed).
 
 Expected behavior:
 1. Step 1: reads intake context successfully.
-2. Step 2 preflight: attempts to read skills-index.json, file not found or invalid JSON.
+2. Step 2: runs `python3 ai/scripts/python/gather-skills.py --format json`; script exits with code 1.
 3. Return blocked (markdown format):
 ```markdown
 # Skill Inventory
 
 **Status**: Blocked  
-**Reason**: skills-index.json missing or malformed  
+**Reason**: skill catalog unavailable — gather-skills.py failed  
 **Count**: 0  
 **Output path**: .orchestration-temp/skill-inventory.md
-```
-}
 ```
 
 **Why**: Cannot select skills without a catalog.
