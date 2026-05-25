@@ -1,6 +1,7 @@
 # spek-fu
 export-framework.py
 export.md
+uninstall-framework.py
 
 ## Python
 __pycache__/
