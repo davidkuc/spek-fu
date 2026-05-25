@@ -658,7 +658,6 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 4. **Any registered skill is immediately available for dispatch** — no manual wiring needed
 
 
-
 ## 📚 Documentation Philosophy
 
 Framework documentation is organized into **three branches**:
@@ -666,13 +665,9 @@ Framework documentation is organized into **three branches**:
 | Branch | Location | Contains |
 |--------|----------|----------|
 | **Constitution** | `spek-fu/constitution/` | Governance principles, project constraints, coding standards, non-negotiable rules |
-| **Project** | `spek-fu/project/` | Project specs, business requirements, technical decisions, ADRs |
+| **Project** | `spek-fu/project/` | Project specs, documentation, business requirements, technical decisions, ADRs |
 | **Framework** | `spek-fu/ai/`, `spek-fu/reports/`, roots | Skills, agents, templates, runbooks, indexes, generated reports |
 
----
-
-**Navigation SSOT:** Co-located `*-index.json` files own folder inventories and machine-readable traversal.  
-**Human-facing guide:** This `README.md` serves as overview, quickstart, and workflow reference.
 
 
 
