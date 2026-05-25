@@ -6,7 +6,7 @@ Use `@skf-general-orchestrator` for free-form requests or multi-step framework w
 
 ## Project Constitution
 
-This project is governed by a Constitution at `constitution/constitution.md`. Load the main file first, then load relevant sub-files based on your current task. Constitution rules take precedence over skill rules when they conflict.
+This project is governed by a Constitution at `constitution/constitution.md`. Load the main file first, then load relevant sections based on your current task. Constitution rules take precedence over skill rules when they conflict.
 
 ## AI Framework
 

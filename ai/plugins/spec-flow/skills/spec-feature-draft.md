@@ -23,9 +23,9 @@ dispatch-variant: "full"
 # Skill: spec-feature-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
-Generates a feature specification from a natural language feature description. The skill creates a numbered git branch, populates all required spec sections (functional requirements, user scenarios, success criteria, acceptance criteria, assumptions), and resolves critical ambiguities before reporting completion.
+Generates a feature specification from a natural language description. Creates a numbered git branch, populates all required spec sections, and resolves ambiguities before reporting completion.
 
-**Scope boundary**: This skill creates a feature specification only. It does NOT produce implementation plans, execute clarification sessions on existing specs, apply code changes, or run quality validation on the completed spec.
+**Scope boundary**: Creates feature specs only. Does NOT produce implementation plans, execute clarification sessions, apply code changes, or validate completed specs.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -45,13 +45,11 @@ If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelin
 If `env` is `host`: no additional action required.
 
 ## Shared Knowledge
-- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
-- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading config, templates, or existing specs.
-- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever placing or resolving `[NEEDS CLARIFICATION]` markers.
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md`, `paginated-read.md`, and `needs-clarification-protocol.md` before acting.
 
 ## Operational Anchors
-- If the feature description is empty or ambiguous, call `vscode_askQuestions` rather than guessing.
-- Detect run state before acting: if a spec file already exists at the expected path, read and update it rather than recreating; if a branch already exists for this feature number and short name, resume from the current spec content.
+- Call `vscode_askQuestions` for empty or ambiguous descriptions instead of guessing.
+- Detect run state: if spec or branch exists, resume from current content; otherwise proceed as new.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -73,10 +71,10 @@ If `env` is `host`: no additional action required.
   ```
   > **If `vscode_askQuestions` is unavailable (non-interactive context)**: stop, report `blocked — feature description required; re-run interactively or pass the description as an argument`.
 
-- **Detect run state** — this check runs AFTER Step 2 (feature number is required to locate the spec file):
-  - Branch and `spec-file` already exist, spec content present WITH `[NEEDS CLARIFICATION]` markers → **resume**: read existing spec, re-run Step 6 to resolve remaining markers only.
-  - Branch and `spec-file` already exist, spec content present WITH NO `[NEEDS CLARIFICATION]` markers → **already complete**: report `ok — spec already complete at <spec-file>` and stop.
-  - No existing branch or spec file → **new**: proceed through all steps.
+- **Detect run state** — runs AFTER Step 2:
+  - Spec with `[NEEDS CLARIFICATION]` markers → **resume**: re-run Step 6 only
+  - Spec with no markers → **complete**: report ok and stop
+  - No existing spec → **new**: proceed through all steps
 
 ## Done conditions
 
@@ -86,10 +84,8 @@ If `env` is `host`: no additional action required.
 
 ## Step 1 — Generate short name
 
-Analyze the feature description and extract the most meaningful keywords. Create a 2–4 word hyphenated short name that captures the essence of the feature. Use action-noun format when possible. Preserve technical terms and acronyms. Examples:
-- "Add user authentication" → `user-auth`
-- "Implement OAuth2 integration for the API" → `oauth2-api-integration`
-- "Create a dashboard for analytics" → `analytics-dashboard`
+Extract meaningful keywords from the feature description. Create a 2–4 word hyphenated short name using action-noun format. Preserve technical terms and acronyms.
+Examples: "Add user auth" → `user-auth`, "OAuth2 API" → `oauth2-api-integration`.
 
 ## Step 2 — Find highest existing feature number
 
@@ -131,31 +127,13 @@ Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `ai/plugins/spe
 
 ## Step 5 — Generate specification content
 
-Parse the feature description and extract actors, actions, data, constraints, and success conditions. Apply these rules:
-
-- Make informed guesses using context and industry standards for unspecified details.
-- Document assumptions in the Assumptions section.
-- Use `[NEEDS CLARIFICATION: <specific question>]` only when the choice significantly impacts scope or user experience, multiple reasonable interpretations exist with different implications, and no reasonable default exists.
-- **Hard limit**: maximum `maxNeedsClariMarkers` (from config) `[NEEDS CLARIFICATION]` markers. Prioritize: scope > security/privacy > user experience > technical details.
-
-**Success criteria** must be measurable (specific metrics), technology-agnostic (no frameworks or tools), user-focused (business/user outcomes), and verifiable without implementation details.
-
-For every informed guess or default applied during content generation, add a corresponding `[ASSUMPTION: <what was assumed and why>]` entry to the `## Assumptions` section. No silent guesses — every assumption must be documented.
-
-Write the specification to **`spec-file`** using the template structure. Preserve all section headings and order. Do NOT embed checklists inside the spec body.
+Extract actors, actions, data, constraints, and success conditions from the feature description. Document all assumptions. Use `[NEEDS CLARIFICATION]` only when choice significantly impacts scope and no reasonable default exists. Enforce hard limit of `maxNeedsClariMarkers` markers (default: 10). Success criteria must be measurable, technology-agnostic, and user-focused. Write spec to **`spec-file`** using template structure; do NOT embed checklists.
 
 > **If `create_file` fails** (permission error, path conflict, or disk error): stop, report `fail — could not write spec to <spec-file>: <error>`, and do not report completion.
 
 ## Step 6 — Resolve clarifications (if any)
 
-If `[NEEDS CLARIFICATION]` markers remain in the spec:
-
-Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` for marker prioritization, placement, and resolution.
-
-> **If `vscode_askQuestions` is unavailable (non-interactive context)**: leave all remaining markers in the spec, report `blocked — N [NEEDS CLARIFICATION] markers unresolved; re-run interactively to resolve them`, and stop. Do not attempt to guess answers.
-
-1. Extract all markers. If more than `maxNeedsClariMarkers` exist, keep the `maxNeedsClariMarkers` most critical and make informed guesses for the rest (recording each guess as an assumption in `## Assumptions`).
-2. Ask all clarification questions in one `vscode_askQuestions` call, one question per marker:
+If `[NEEDS CLARIFICATION]` markers remain, apply `needs-clarification-protocol.md`. If non-interactive, leave markers and report blocked. Extract all markers. If more than `maxNeedsClariMarkers` exist, keep critical ones and guess the rest (recording as assumptions). Ask all questions in one `vscode_askQuestions` call:
    ```json
    {
      "header": "clarification_N",
@@ -204,18 +182,18 @@ Clarifications:     N resolved | 0 remaining
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: Feature description: "Add the ability for users to export their transaction history as a CSV file."
-Expected behavior: Skill reads config (`maxNeedsClariMarkers: 10`), generates short name `export-transaction-csv`, checks remote and local branches and spec directories for existing entries — finds none — assigns number 1, runs create-new-feature script once, reads spec template, writes a complete spec with functional requirements (export trigger, column selection, file format), technology-agnostic success criteria ("Users can download a complete transaction history file within 5 seconds"), user scenarios, and documented assumptions. Reports: branch `1-export-transaction-csv`, spec at `features/001-export-transaction-csv/spec.md`, 0 clarifications.
+Input: "Add ability to export transaction history as CSV."
+Expected behavior: Generates short name, checks branches (finds none, assigns number 1), runs script, writes spec with functional requirements and success criteria. Reports: branch `1-export-transaction-csv`, spec at `features/001-export-transaction-csv/spec.md`, 0 clarifications.
 </example>
 
 <example>
-Input: Feature description: "Users should be able to collaborate on documents in real time with other team members."
-Expected behavior: Skill reads config (`maxNeedsClariMarkers: 10`), generates short name `realtime-doc-collaboration`, determines next number from branch/directory scan, runs script, writes spec. Identifies 2 critical ambiguities (conflict resolution strategy, presence/cursor visibility) and adds `[NEEDS CLARIFICATION]` markers. Presents 2 clarification questions to the user in one `vscode_askQuestions` call. After user responds, replaces both markers in the spec and reports completion with 2 clarifications resolved.
+Input: "Users collaborate on documents in real time."
+Expected behavior: Generates short name, identifies 2 ambiguities (conflict resolution, cursor visibility), adds markers, asks 2 questions in one call, replaces markers after responses. Reports 2 clarifications resolved.
 </example>
 
 <example type="counter">
-Input: Feature description: "Add OAuth2 login using Node.js and PostgreSQL."
-Expected behavior: Skill writes spec with `[ASSUMPTION: authentication follows standard OAuth2 authorization code flow]` in Assumptions. Does NOT include "Node.js" or "PostgreSQL" in functional requirements or success criteria — those are implementation details. The skill produces a spec focused on user value: "Users can authenticate using their existing accounts" rather than naming the underlying protocol implementation.
+Input: "Add OAuth2 login using Node.js and PostgreSQL."
+Expected behavior: Writes spec with `[ASSUMPTION]` for OAuth2 flow. Excludes "Node.js" and "PostgreSQL" from requirements — those are implementation details. Focuses on user value.
 </example>
 </examples>
 

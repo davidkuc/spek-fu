@@ -36,7 +36,7 @@ Scaffolds new framework scripts (**create**) and audits existing scripts against
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
 1. NEVER write to disk without explicit user approval — the write gate in create Step 5 and validate Step 4 is mandatory. WHY: unapproved writes to framework scripts can corrupt automation pipelines.
-2. NEVER create a framework automation script in PowerShell — Python is mandatory for all cross-platform utility scripts. WHY: `constitution/project-constraints.md` mandates Python for utility scripting; PowerShell cannot run in GitHub Actions (Ubuntu).
+2. NEVER create a framework automation script in PowerShell — Python is mandatory for all cross-platform utility scripts. WHY: `constitution/constitution.md` mandates Python for utility scripting; PowerShell cannot run in GitHub Actions (Ubuntu).
 3. NEVER use `run_in_terminal` — script execution is out of scope.
 4. Resolve `operation` before loading any files — if absent, ask via `vscode_askQuestions`.
 </constraints>
@@ -178,7 +178,7 @@ Mark each ✅ / ⚠️ / ❌ / N/A.
 **Policy** (SCR-030):
 - SCR-030: Framework automation script in PowerShell → ❌ CRITICAL
 
-If SCR-030 is violated, prepend `⛔ CRITICAL VIOLATION: Framework automation script in PowerShell — rewrite as Python per constitution/project-constraints.md.` and stop.
+If SCR-030 is violated, prepend `⛔ CRITICAL VIOLATION: Framework automation script in PowerShell — rewrite as Python per constitution/constitution.md.` and stop.
 
 ### Step 4 — Report and optional header fix
 
@@ -258,13 +258,13 @@ Expected behavior: Heuristics rule 3 → PowerShell (Windows registry). Reads Po
 
 <example type="counter">
 Input: operation=create, purpose="Validate all skill index JSON files." User then requests PowerShell.
-Expected behavior: Heuristics rule 1 → Python (framework automation/validation). Constraint 2 overrides user request. Reports: "Framework automation scripts must be Python per constitution/project-constraints.md — overriding to Python." Scaffolds Python only.
+Expected behavior: Heuristics rule 1 → Python (framework automation/validation). Constraint 2 overrides user request. Reports: "Framework automation scripts must be Python per constitution/constitution.md — overriding to Python." Scaffolds Python only.
 </example>
 </examples>
 
 <!-- SECTION 9: Critical reminders (recency position) -->
 <reminders>
-- **NEVER create a framework automation script in PowerShell** — Python mandatory per `constitution/project-constraints.md`.
+- **NEVER create a framework automation script in PowerShell** — Python mandatory per `constitution/constitution.md`.
 - **NEVER write to disk without explicit user approval** — write gate in create Step 5 and validate Step 4 is mandatory.
 - **Read ONLY the relevant guide** after determining language — do not pre-load both guides.
 </reminders>

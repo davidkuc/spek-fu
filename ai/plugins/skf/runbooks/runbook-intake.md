@@ -30,6 +30,7 @@ Dispatch `ai/plugins/skf/skills/orch-initialize.md` (compact) with `workspace-ro
   - `maxPlanRevisions`, `maxWaveRetries`, `maxSubagentRetries`
   - `complexityThresholds` (`simpleMaxFiles`, `standardMaxFiles`, `complexMinFiles`)
   - `approvalTimeoutBehavior`
+  - `spec-context` (true | false | unknown) and `spec-feature-dir` (path or none)
 - Pass `env` = returned `environment` value in all subsequent skill dispatches.
 
 > `complexityThresholds` drives Step 4, `maxClarificationLoops` caps Step 8 loops, `maxWaveRetries`/`maxSubagentRetries` cap execution retries, `approvalTimeoutBehavior` governs plan approval.
@@ -77,6 +78,7 @@ Key points to define:
 - **Estimated file count** from context and research
 - **Skill mapping** clarity or ambiguity
 - **Whether Step 4 complexity gate affects scope**
+- **Spec-context routing**: When `spec-context: true` (from Step 1), treat the request as a spec-flow execution — set skill hint to `spec-implement` and include `spec-feature-dir` in the intake context. When `spec-context: false`, use `impl-implement` as the implementation skill default. When `spec-context: unknown`, flag ambiguity for clarification at Step 8.
 
 If scope undeterminable from context → skip to Step 8 (clarification) before continuing. If deeper research needed after Step 4, delegate targeted research via compact dispatch.
 
@@ -122,6 +124,8 @@ Gather framework guidance and tools relevant to the problem (not problem analysi
   - Branch 1: `ai/` (skills, scripts, patterns, knowledge) with `output-path: .orchestration-temp/traversal-report-ai.md`
   - Branch 2: `constitution/` (rules, constraints) with `output-path: .orchestration-temp/traversal-report-constitution.md`
   - Branch 3: `project/` (context, readme, configs) with `output-path: .orchestration-temp/traversal-report-project.md`
+
+  > **Spec-context priority**: When `spec-context: true`, the `spec-flow` plugin branch (`ai/plugins/spec-flow/`) should be a priority traversal target within Branch 1 to ensure spec-flow skills and artifacts are surfaced for routing.
 
 Each branch dispatch targets the sub-section of `skf-root-index.json` relevant to that branch and produces its own traversal result.
 

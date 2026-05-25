@@ -232,7 +232,7 @@ The `--name` slug must be lowercase alphanumeric with hyphens (e.g. `dotnet`, `d
 
 ## � Spec-Flow Plugin
 
-**Spec-Flow** is a built-in plugin that implements an **eight-step feature specification pipeline**, transforming raw ideas into implementation-ready task lists through structured, adversarial review and test-driven design.
+**Spec-Flow** is a built-in plugin that implements a **ten-step feature specification pipeline**, transforming raw ideas into a fully orchestrated implementation through structured, adversarial review, test-driven design, and spec-driven orchestration.
 
 ### Workflow Chain
 
@@ -247,16 +247,19 @@ spec-devils-advocate
       ↓
 spec-testability-draft
       ↓
-spec-tdd-draft
-      ↓
 spec-technical-draft
       ↓
+spec-tdd-draft
+      ↓
 spec-tasks-draft
-   ↓
-spec-implement
+      ↓
+spec-feature-analysis
+      ↓
+@skf-general-orchestrator
+  (dispatches → spec-implement)
 ```
 
-### Eight Steps
+### Ten Steps
 
 | # | Step | Purpose | Output Artifact | Required |
 |----|------|---------|-----------------|----------|
@@ -264,10 +267,12 @@ spec-implement
 | 2 | **spec-clarification** | Resolve ambiguities through structured Q&A | `FEATURE_DIR/spec.md` (amended) | ✅ Required |
 | 3 | **spec-devils-advocate** | Red-team spec to surface failure modes | `FEATURE_DIR/devils-advocate/devils-advocate-report.md` | 🔶 Strongly recommended |
 | 4 | **spec-testability-draft** | Evaluate from test-engineering perspective | `FEATURE_DIR/test-expert/testability-assessment.md` | ✅ Required |
-| 5 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
-| 6 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
+| 5 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
+| 6 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
 | 7 | **spec-tasks-draft** | Decompose design into phased, ordered task list | `FEATURE_DIR/tasks.md` | ✅ Required |
-| 8 | **spec-implement** | Execute the task plan phase by phase | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
+| 8 | **spec-feature-analysis** | Surface staleness, unresolved clarifications, and coverage gaps | `FEATURE_DIR/feature-analysis-report.md` | 🔶 Recommended |
+| 9 | **spec-implement** | Execute a single task plan phase (dispatched by the orchestrator) | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
+| 10 | **@skf-general-orchestrator** | Orchestrate full implementation by dispatching `spec-implement` phase by phase, using all spec artifacts as context | All phases completed; `FEATURE_DIR/tasks.md` fully resolved | ✅ Required |
 
 ### Invocation Pattern
 
@@ -282,7 +287,7 @@ The spec-flow pipeline is best invoked manually using prompt slash commands like
 
 ### Required Execution
 
-All eight steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy.
+All ten steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy. In particular, step 10 (`@skf-general-orchestrator`) is the integration point that uses the completed spec artifacts to drive `spec-implement` phase by phase — invoking `spec-implement` directly is appropriate for single-phase execution, but the orchestrator is required for full end-to-end delivery.
 
 ### Example: Generating a Feature Spec
 
@@ -295,7 +300,7 @@ For an **API Rate Limiting** feature, you would work through the pipeline manual
 
 2. /spec-clarification
    Input: FEATURE_DIR/spec.md
-   Output: Amended spec.md with clarifications
+   Output: FEATURE_DIR/spec.md (amended with clarifications)
    
 3. /spec-devils-advocate
    Input: FEATURE_DIR/spec.md
@@ -305,24 +310,32 @@ For an **API Rate Limiting** feature, you would work through the pipeline manual
    Input: FEATURE_DIR with spec.md and devils-advocate report
    Output: FEATURE_DIR/test-expert/testability-assessment.md
    
-5. /spec-tdd-draft
-   Input: FEATURE_DIR with testability assessment
-   Output: FEATURE_DIR/tdd-designer/report.md
-   
-6. /spec-technical-draft
+5. /spec-technical-draft
    Input: FEATURE_DIR with upstream artifacts
    Output: FEATURE_DIR/research.md, FEATURE_DIR/data-model.md, FEATURE_DIR/contracts/, FEATURE_DIR/quickstart.md
+   
+6. /spec-tdd-draft
+   Input: FEATURE_DIR with technical design artifacts
+   Output: FEATURE_DIR/tdd-designer/report.md
    
 7. /spec-tasks-draft
    Input: FEATURE_DIR with research.md, data-model.md, contracts/, quickstart.md, and spec.md
    Output: FEATURE_DIR/tasks.md
 
-8. /spec-implement
-   Input: FEATURE_DIR with tasks.md and optional upstream design artifacts
-   Output: implementation changes in the feature branch and completed tasks marked in FEATURE_DIR/tasks.md
+8. /spec-feature-analysis
+   Input: FEATURE_DIR with all pipeline artifacts
+   Output: FEATURE_DIR/feature-analysis-report.md
+
+9. /spec-implement  (dispatched by orchestrator — not invoked directly for full delivery)
+   Input: FEATURE_DIR with tasks.md and design artifacts
+   Output: implementation changes for the targeted phase; completed tasks marked in FEATURE_DIR/tasks.md
+
+10. @skf-general-orchestrator
+    Input: FEATURE_DIR with tasks.md and all spec artifacts
+    Output: all phases implemented end-to-end; FEATURE_DIR/tasks.md fully resolved
 ```
 
-Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is then executed by `spec-implement`.
+Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is consumed by `@skf-general-orchestrator`, which drives `spec-implement` phase by phase to deliver the full implementation.
 
 
 
@@ -453,19 +466,10 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ├── skf-root-index.json              # Root index — entry point for the index-driven loading chain
 ├── context.md                       # Working context artifact for session management
 ├── skf-config.json                  # Runtime environment mode (auto | devcontainer | host)
-├── constitution/                    # Project governance (sub-file structure)
-│   ├── constitution.md              # Main file — sub-file table, loading rules
-│   ├── governance.md                # Project governance rules
-│   ├── company-principles.md        # Organization values and culture
-│   ├── project-constraints.md       # Tech stack and architecture boundaries
-│   ├── coding-standards.md          # Principles-level coding standards
-│   ├── testing-guidelines.md        # Test strategy, coverage, naming
-│   └── ai-behavior.md               # Agent constraints and scope limits
+├── constitution/                    # Project governance
+│   └── constitution.md              # Consolidated governance: principles, standards, guidelines
 ├── project/                         # Project documentation
-│   ├── project-spec.md              # High-level project specification
-│   ├── business-requirements.md     # Business goals, stakeholders, use cases
-│   ├── technical-spec.md            # Technical architecture and design decisions
-│   └── adrs/                        # Architectural decision records
+│   └── project.md                   # Consolidated specification: business requirements and technical design
 ├── ai/                              # AI framework
 │   ├── ai-index.json                # AI-level index — links scripts and plugins
 │   ├── scripts/

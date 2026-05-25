@@ -26,9 +26,9 @@ dispatch-variant: "full"
 # Skill: spec-technical-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
-Executes the technical planning workflow for a validated feature spec, producing a phased set of technical design artifacts: resolved technical research, a data model, typed API contracts, a quickstart guide, and a synthesized technical plan. The workflow runs in two phases — Phase 0 resolves all ambiguities in the technical context via targeted research before any design work begins; Phase 1 generates the design artifacts from confirmed decisions and consolidates them into `technical-plan.md`. The skill stops and reports after Phase 1 is complete.
+Executes technical planning workflow for a validated feature spec, producing research.md, data-model.md, typed API contracts, quickstart.md, and technical-plan.md. The workflow runs in two phases: Phase 0 resolves ambiguities via targeted research; Phase 1 generates design artifacts and consolidates them into technical-plan.md.
 
-**Scope boundary**: This skill translates an existing, validated feature spec into technical planning artifacts only. It does NOT author or modify the feature spec itself, run tests, or execute implementation work.
+**Scope boundary**: Translates existing, validated specs into technical planning artifacts only. Does NOT author or modify the feature spec, run tests, or execute implementation.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -47,14 +47,12 @@ If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelin
 If `env` is `host`: no additional action required.
 
 ## Shared Knowledge
-- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
-- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading artifacts, templates, or constitution files.
-- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever creating or carrying `[NEEDS CLARIFICATION]` markers.
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md`, `paginated-read.md`, and `needs-clarification-protocol.md` as needed.
 
 ## Operational Anchors
-- If user arguments are ambiguous or contradictory, apply them narrowly and do not expand scope.
-- Before creating any output file, check whether it already exists: if `research.md` is complete → skip Phase 0; if `data-model.md` partially exists → read and update in place rather than recreate; if `technical-plan.md` already exists → skip Step 8 unless upstream artifacts changed.
-- **Interactive skill**: this skill calls `vscode_askQuestions` for Branch Detection when `feature-dir` is absent and cannot interact with the user when dispatched as a stateless subagent.
+- Apply arguments narrowly; do not expand scope.
+- Before creating output files, check if they exist: skip Phase 0 if research.md is complete; update data-model.md in place if partial; skip technical-plan.md if unchanged.
+- **Interactive skill**: calls `vscode_askQuestions` for Branch Detection when feature-dir is absent.
 
 ## Branch Detection
 
@@ -66,158 +64,130 @@ If `env` is `host`: no additional action required.
 <workflow>
 
 ## Preflight
-- Inspect user arguments — empty arguments are valid and require no action.
-- Check disk for `research.md`, `data-model.md`, `contracts/`, and `technical-plan.md` to determine run state: not started / Phase 0 in progress / Phase 0 complete / Phase 1 in progress / complete.
-- Declare the detected run state before proceeding.
+- Inspect user arguments — empty is valid, no action needed.
+- Check disk for research.md, data-model.md, contracts/, technical-plan.md to determine state: not started / Phase 0 in progress / Phase 0 complete / Phase 1 in progress / complete.
+- Declare detected state before proceeding.
 
 ## Done conditions
-- **Phase 0 complete**: `{feature-dir}/research.md` exists and any unresolved markers are recorded visibly under `## Carried Clarifications`.
-- **Phase 1 complete**: `{feature-dir}/data-model.md`, at least one file in `{feature-dir}/contracts/`, `{feature-dir}/quickstart.md`, and `{feature-dir}/technical-plan.md` exist; constitution gate categories pass.
-- **Blocked**: required `spec` is missing, branch detection cannot resolve `feature-dir`, or constitution gate violations are found — report blockers and stop.
+- **Phase 0 complete**: `research.md` exists; any unresolved markers recorded under `## Carried Clarifications`.
+- **Phase 1 complete**: `data-model.md`, contracts/, `quickstart.md`, `technical-plan.md` exist; constitution gate passes.
+- **Blocked**: spec missing, feature-dir cannot be resolved, or constitution violations found.
 
 ## Step 1 — Resolve paths
 
-Resolve required paths:
-- Resolve `feature-dir` via **Branch Detection** first: apply the core procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md`. If the user provides a path, use it as `feature-dir`. If the user declines, stop and report `blocked`.
+- Resolve `feature-dir` via **Branch Detection** (see `ai/plugins/spec-flow/knowledge/branch-detection.md`). If user provides path, use it. If user declines, report `blocked`.
+- If Branch Detection returns zero candidates: ask user via `vscode_askQuestions` for path; if none provided, report `blocked`.
+- If multiple candidates: present list via `vscode_askQuestions` and ask which feature to operate on.
+- Derive spec = `{feature-dir}/spec.md` and testability-report = `{feature-dir}/test-expert/testability-assessment.md`.
+- Use absolute paths for all subsequent operations.
 
-  > **If Branch Detection returns zero candidates** (not on a feature branch, no matching directory found): ask the user to provide `feature-dir` via `vscode_askQuestions`; if no path provided, stop and report `blocked`.
-  > **If Branch Detection returns multiple candidates**: present the list of candidates to the user via `vscode_askQuestions` and ask which feature to operate on before continuing.
-
-Derive:
-- **`spec`** = `{feature-dir}/spec.md`
-- **`testability-report`** = `{feature-dir}/test-expert/testability-assessment.md`
-
-Use absolute paths for all subsequent file operations.
-
-> **If **`spec`** does not exist at `{feature-dir}/spec.md`**: stop and report the missing path — do not continue with a non-existent spec.
+> **If spec does not exist**: stop and report the missing path.
 
 ## Step 2 — Load context
 
-Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load the following files fully:
-1. **`spec`** — the feature spec
-2. **`testability-report`** — load only if it exists on disk
+Apply paginated-read to load:
+1. **spec** — the feature spec
+2. **testability-report** — load only if it exists on disk
 
-> **If **`testability-report`** does not exist**: note its absence and continue with structural testing guidance treated as incomplete.
+> **If testability-report does not exist**: note absence and continue; test scope treated as incomplete.
 
 ## Step 3 — Technical context and constitution gate evaluation
 
-Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load the constitution files when present:
-- `constitution/constitution.md`
-- `constitution/ai-behavior.md`
-- `constitution/coding-standards.md`
-- `constitution/testing-guidelines.md`
-- `constitution/governance.md`
-- `constitution/project-constraints.md`
+Load constitution/constitution.md when present using paginated-read. If missing or unreadable, note and skip gate evaluation with warning in Step 9.
 
-If one or more constitution files are missing or unreadable, note the missing paths, skip the gate evaluation, and carry a warning into Step 9 rather than failing.
-
-Build the technical context from the loaded **`spec`** and any available testability artifacts:
-- For each unknown or ambiguous technical detail: insert `[NEEDS CLARIFICATION: <specific question>]` at the exact point of uncertainty in `research.md`.
+Build technical context from spec and testability artifacts:
+- For unknown/ambiguous details: insert `[NEEDS CLARIFICATION: <specific question>]`.
 - Do NOT invent values for unknown fields.
-- If **`testability-report`** exists, incorporate its structural testing risks into the technical context and later design artifacts.
+- Incorporate structural testing risks from testability artifacts if available.
 
-Evaluate the planned work against the constitution gate using the loaded constitution files that were successfully read. **Deterministic check**: for each constitution sub-file, extract every rule expressed as a MUST / MUST NOT / ALWAYS / NEVER statement. For each extracted rule:
-- Flag any planned design decision that contradicts the rule.
-- Flag any MUST / ALWAYS rule that has no corresponding design decision addressing it.
+Evaluate work against constitution gate: extract every MUST/MUST NOT/ALWAYS/NEVER rule. For each rule, flag any conflicting design decision or missing design coverage.
 
-If any gate is violated: stop with ERROR, report the specific violations with the rule text and the conflicting decision, surface a `BLOCKED` gate state, and do not proceed.
-
-If no violations are found: surface a `CLEAR` gate state and proceed to Phase 0 (Step 4).
+If violations found: stop with ERROR, report violations with rule text, surface `BLOCKED` gate state. Otherwise: surface `CLEAR` gate state and proceed.
 
 ## Step 4 — Phase 0: Research
 
-**Prerequisites**: Constitution gate categories pass.
+**Prerequisites**: Constitution gate passes.
 
-**Skip condition**: If `{feature-dir}/research.md` already exists with zero `[NEEDS CLARIFICATION]` markers, skip this step and proceed to Step 5.
+**Skip condition**: If research.md exists with zero `[NEEDS CLARIFICATION]` markers, skip to Step 5.
 
-**Phase 0 in progress**: If `{feature-dir}/research.md` exists AND still contains one or more `[NEEDS CLARIFICATION]` markers: enumerate all remaining markers in the file, dispatch research agents ONLY for those unresolved markers (skip markers that already have a decision entry below them), then merge each new finding into the existing `research.md` by replacing the `[NEEDS CLARIFICATION: ...]` marker with the resolved `## [Decision topic]` block via `replace_string_in_file`. Do not recreate the file.
+**Phase 0 in progress**: If research.md exists but has unresolved markers: enumerate remaining markers, dispatch agents only for unresolved items, then merge findings into research.md via replace_string_in_file.
 
-1. **Extract research tasks**: For each `[NEEDS CLARIFICATION]` marker in the technical context → one research task. For each dependency → one best-practices research task. For each integration point → one patterns research task.
-2. **Dispatch research agents**: Launch one subagent per research task (or batch closely related tasks). Each task prompt MUST use this structure:
+1. **Extract research tasks**: One per unresolved marker, plus best-practices tasks per dependency, plus patterns tasks per integration point.
+2. **Dispatch research agents**: One subagent per task (or batch related tasks). Prompt structure:
+   ```
+   IDENTITY: Technical research specialist for spec-flow planning.
+   TASK: Research {unknown} and produce decision recommendation.
+   FEATURE CONTEXT: 1-3 sentence summary.
+   CONSTRAINTS: Match schema exactly; if out-of-scope, return {"status":"blocked","reason":"<why>"}. Do NOT invent figures.
+   OUTPUT FORMAT (JSON): { status, decision, rationale, alternatives_considered, confidence, open_questions }
+   ```
+3. **Consolidate findings** into research.md:
+   ```
+   ## [Decision topic]
+   **Decision**: [what chosen]
+   **Rationale**: [why chosen]
+   **Alternatives considered**: [evaluated]
+   ```
 
-```
-IDENTITY: Technical research specialist for spec-flow planning. Never writes implementation code, design decisions outside topic, or speculation about business requirements.
-TASK: Research {unknown} and produce a decision recommendation.
-FEATURE CONTEXT: 1-3 sentence summary.
-CONSTRAINTS:
-  - Output MUST match the schema below exactly.
-  - If the question is outside scope, return {"status":"blocked","reason":"<why>"}.
-  - Do NOT invent figures, version numbers, or benchmarks. Cite uncertainty.
-OUTPUT FORMAT (JSON):
-  { status, decision, rationale, alternatives_considered, confidence, open_questions }
-```
-3. **Consolidate findings** into `{feature-dir}/research.md` using this format per decision:
+> **If conflicting results**: document all options and insert `[NEEDS CLARIFICATION]` — do not choose arbitrarily.
+> **If markers remain**: add `## Carried Clarifications` section and continue to Phase 1 with grounded context only.
 
-```
-## [Decision topic]
-**Decision**: [what was chosen]
-**Rationale**: [why chosen]
-**Alternatives considered**: [what else was evaluated]
-```
-
-> **If research agents return conflicting results on a decision**: document all options in `research.md` under that decision and insert `[NEEDS CLARIFICATION: <specific question for user>]` — do not choose arbitrarily.
-
-> **If any `[NEEDS CLARIFICATION]` markers remain in `research.md` after consolidation**: add a `## Carried Clarifications` section to `research.md`, list each unresolved marker, and continue to Phase 1 using only grounded context.
-
-**Output**: `{feature-dir}/research.md` with resolved decisions and any carried clarifications listed explicitly.
+**Output**: research.md with resolved decisions and carried clarifications.
 
 ## Step 5 — Phase 1: Data model
 
-**Prerequisites**: `{feature-dir}/research.md` complete with zero unresolved markers.
+**Prerequisites**: research.md complete with zero unresolved markers.
 
-Extract entities from the feature spec and `research.md`. Write `{feature-dir}/data-model.md` containing:
-- Entity name, fields, and field types
+Extract entities from spec and research.md. Write data-model.md containing:
+- Entity name, fields, field types
 - Relationships between entities
 - Validation rules derived from requirements
 - State transitions where applicable
 
-> **If an entity's field types or relationships cannot be determined from the spec and research**: insert `[NEEDS CLARIFICATION: <question>]` in `data-model.md` at the ambiguous point, record it for Step 9, and continue to contracts using only grounded entities and relationships.
+> **If field types or relationships cannot be determined**: insert `[NEEDS CLARIFICATION: <question>]`, record for Step 9, continue to contracts using grounded entities only.
 
 ## Step 6 — Phase 1: API contracts
 
-**Prerequisites**: `{feature-dir}/data-model.md` complete with zero unresolved markers.
+**Prerequisites**: data-model.md complete with zero unresolved markers.
 
-For each user action in the feature spec → define one endpoint. Use standard REST or GraphQL patterns as appropriate. Write schema files to `{feature-dir}/contracts/` (OpenAPI YAML or GraphQL SDL).
+For each user action in spec → define one endpoint using REST or GraphQL as appropriate. Write schema files to contracts/ (OpenAPI YAML or GraphQL SDL).
 
-> **If zero user actions or endpoints can be identified from the feature spec**: stop, report `blocked — no user actions found in spec; add explicit user flows before running this skill`.
+> **If zero user actions found**: stop, report `blocked — no user actions in spec; add explicit user flows before running`.
 
 ## Step 7 — Phase 1: Quickstart
 
-Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `ai/plugins/spec-flow/templates/quickstart-template.md`.
+Load quickstart-template.md using paginated-read.
 
-> **If `quickstart-template.md` cannot be read** (missing or permission error): produce `quickstart.md` manually using the following section headings in order: `## Setup`, `## Key Endpoints`, `## Example Requests`, `## Manual Verification`. Record the template read failure in a header comment in the generated file.
+> **If template cannot be read**: produce quickstart.md manually using headings in order: `## Setup`, `## Key Endpoints`, `## Example Requests`, `## Manual Verification`. Record template read failure in header.
 
-1. Use the loaded template as the scaffold (or the manual headings if the template was unavailable).
-2. Write `{feature-dir}/quickstart.md` — a developer onboarding guide covering setup steps, key endpoints, example requests, and manual verification instructions for the feature.
-3. Re-evaluate the constitution gate categories using the completed design artifacts. If new violations are found: ERROR, report them, surface `BLOCKED` gate state, and do not mark the skill complete.
+Use template as scaffold. Write quickstart.md covering setup, key endpoints, example requests, manual verification. Re-evaluate constitution gate. If new violations: ERROR, report, surface `BLOCKED` state. Otherwise proceed.
 
 ## Step 8 — Phase 1: Technical Plan
 
-**Prerequisites**: `{feature-dir}/quickstart.md` complete; constitution gate categories pass.
+**Prerequisites**: quickstart.md complete; constitution gate passes.
 
-**Skip condition**: If `{feature-dir}/technical-plan.md` already exists and none of `research.md`, `data-model.md`, `contracts/`, or `quickstart.md` have been updated in this run, skip this step and proceed to Step 9.
+**Skip condition**: If technical-plan.md exists and no upstream artifacts changed in this run, skip to Step 9.
 
-Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` to load `ai/plugins/spec-flow/templates/spec-technical-plan-template.md`.
+Load spec-technical-plan-template.md using paginated-read.
 
-> **If `spec-technical-plan-template.md` cannot be read** (missing or permission error): produce `technical-plan.md` manually using these section headings in order: `## Summary`, `## Input Artifacts`, `## Technical Context`, `## Constitution Check`, `## Project Structure`. Record the template read failure in a header comment in the generated file.
+> **If template cannot be read**: produce technical-plan.md manually using headings in order: `## Summary`, `## Input Artifacts`, `## Technical Context`, `## Constitution Check`, `## Project Structure`. Record template read failure in header.
 
-Using the loaded template as the scaffold, synthesize `{feature-dir}/technical-plan.md` by populating each section from the artifacts generated in this skill run:
+Populate using template scaffold, derived from artifacts generated in this run:
+1. **Header metadata**: Branch name, date, link to spec.md.
+2. **Summary**: Extract from spec — primary requirement + technical approach from research.md.
+3. **Input Artifacts**: Reference table of artifacts:
+   - spec.md (required)
+   - research.md (Phase 0)
+   - data-model.md (Phase 1)
+   - contracts/ files (Phase 1)
+   - quickstart.md (Phase 1)
+   - test-expert/testability-assessment.md (present/absent)
+4. **Technical Context**: Language, dependencies, storage, testing, target platform, project type, performance goals, constraints, scale from research.md. If any field cannot be determined, insert `[NEEDS CLARIFICATION]` and do not invent.
+5. **Constitution Check**: Gate result from Step 3 — CLEAR or BLOCKED, violations list.
+6. **Project Structure**: Documentation tree and source layout from research.md and data-model.md; select and fill correct template Option; remove unused.
+7. **Complexity Tracking**: Fill only if constitution violations required justification; otherwise omit.
 
-1. **Header metadata**: Fill branch name, date, and link to `spec.md`.
-2. **Summary**: Extract from `spec.md` — primary requirement + technical approach distilled from `research.md`.
-3. **Input Artifacts**: List every artifact that contributed to this plan as a reference table:
-   - `{feature-dir}/spec.md` — feature spec (required)
-   - `{feature-dir}/research.md` — Phase 0 technical research
-   - `{feature-dir}/data-model.md` — Phase 1 data model
-   - `{feature-dir}/contracts/` — Phase 1 API contracts (list each file)
-   - `{feature-dir}/quickstart.md` — Phase 1 quickstart guide
-   - `{feature-dir}/test-expert/testability-assessment.md` — present or absent
-4. **Technical Context**: Extract language, dependencies, storage, testing framework, target platform, project type, performance goals, constraints, and scale from `research.md`. If any field cannot be determined from the artifacts, insert `[NEEDS CLARIFICATION: <question>]`, carry it into `technical-plan.md`, and do not invent values.
-5. **Constitution Check**: Summarise the gate evaluation result from Step 3 — state CLEAR or BLOCKED, and list any violations found.
-6. **Project Structure**: Populate the documentation tree (including `technical-plan.md` itself) and the resolved source code layout from `research.md` and `data-model.md`, selecting and filling in the correct Option from the template (remove unused options).
-7. **Complexity Tracking**: Fill only if constitution violations required justification; otherwise omit the table.
-
-Write the completed document to `{feature-dir}/technical-plan.md`. If the file already exists (resuming a partial run), replace its content.
+Write to technical-plan.md (replace if exists).
 
 ## Step 9 — Report
 

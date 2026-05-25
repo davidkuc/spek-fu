@@ -20,14 +20,14 @@
       "type": "folder",
       "description": "Project governance — versioned, immutable guardrails; non-negotiable principles for both framework and project",
       "path": "constitution/",
-      "index": "constitution/constitution-index.json"
+      "index": "constitution/constitution.md"
     },
     {
       "name": "project",
       "type": "folder",
       "description": "Project-level documentation — business requirements, technical spec, and architectural decision records",
       "path": "project/",
-      "index": "project/project-index.json"
+      "index": "project/project.md"
     },
     {
       "name": "ai",
@@ -66,24 +66,6 @@
       "type": "folder",
       "description": "",
       "path": "features/"
-    },
-    {
-      "name": "spec-flow-consolidated-plan.md",
-      "type": "file",
-      "description": "",
-      "path": "spec-flow-consolidated-plan.md"
-    },
-    {
-      "name": "spec-flow-remediation-report.md",
-      "type": "file",
-      "description": "",
-      "path": "spec-flow-remediation-report.md"
-    },
-    {
-      "name": "speckit.analyze.agent.md",
-      "type": "file",
-      "description": "",
-      "path": "speckit.analyze.agent.md"
     }
   ]
 }

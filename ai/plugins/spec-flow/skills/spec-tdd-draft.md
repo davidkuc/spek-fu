@@ -24,9 +24,9 @@ dispatch-variant: "full"
 # Skill: spec-tdd-draft
 
 <!-- SECTION 1: Identity (primacy position) -->
-Analyzes the testability-assessment.md artifact and the feature spec.md to generate a strict, risk-aware TDD implementation design report. The report formalizes each test case into BDD (Given–When–Then) format, validates red-phase integrity, identifies structural weaknesses and coverage gaps, maps requirements to test coverage, and sequences tests into incremental TDD implementation waves. The output is the implementation contract developers use before writing any production code.
+Analyzes testability-assessment.md and spec.md to produce a strict, risk-aware TDD design report. The report formalizes test cases into BDD format, validates red-phase integrity, identifies structural risks, maps coverage, and sequences incremental implementation waves.
 
-**Scope boundary**: This skill reads upstream artifacts and writes one report file. It does NOT modify test-expert output, run tests, implement any code, or alter spec.md. For generation of testability-assessment.md, consult the **spec-testability-draft** test-expert skill.
+**Scope boundary**: This skill reads upstream artifacts and writes one report file only. It does NOT modify test-expert output, run tests, or alter spec.md. For testability-assessment.md generation, use **spec-testability-draft**.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -47,14 +47,12 @@ If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelin
 If `env` is `host`: no additional action required.
 
 ## Shared Knowledge
-- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
-- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading upstream artifacts or templates.
-- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever creating or carrying `[NEEDS CLARIFICATION]` markers.
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md`, `paginated-read.md`, and `needs-clarification-protocol.md` as needed.
 
 ## Operational Anchors
-- Apply a cold, pragmatic analytical posture: identify weak tests, expose ambiguity, flag architectural risk, demand measurability — do not soften language or interpret generously.
-- If testability-assessment.md or spec.md is missing, stop immediately with a clear error — do not proceed with partial context.
-- Every test must be independently classifiable — if classification is unclear, flag the ambiguity rather than guessing.
+- Use cold, pragmatic analysis: identify weak tests, flag risk, demand measurability — no softening.
+- Abort if testability-assessment.md or spec.md is missing.
+- Flag ambiguous classifications rather than guessing.
 
 ## Branch Detection
 
@@ -68,15 +66,13 @@ If `env` is `host`: no additional action required.
 ## Preflight
 
 - Resolve `feature-dir`: if not provided as input, apply the **Branch Detection** procedure from `ai/plugins/spec-flow/knowledge/branch-detection.md` (core procedure). If the user provides a path, use it. If the user declines, stop and report `blocked`.
-- Confirm all required artifacts exist:
+- Confirm required artifacts:
   - `{feature-dir}/test-expert/testability-assessment.md`
   - `{feature-dir}/spec.md`
   - `{feature-dir}/research.md`
   - `{feature-dir}/data-model.md`
-  - At least one file under `{feature-dir}/contracts/`
-- If `testability-assessment.md` or `spec.md` is missing, stop and report: "Required artifact missing: `<path>`. This skill requires both testability-assessment.md and spec.md. Ensure the test-expert workflow has completed first."
-- If `research.md` or `data-model.md` is missing, stop and report: "Required artifact missing: `<path>`. This skill requires research.md and data-model.md. Ensure spec-technical-draft has completed Phase 1 first."
-- If `contracts/` is empty or does not exist, stop and report: "Required artifact missing: `{feature-dir}/contracts/`. This skill requires at least one contract file. Ensure spec-technical-draft has completed Phase 1 first."
+  - At least one `{feature-dir}/contracts/` file
+- Abort with error if any are missing, reporting the exact path and prerequisite workflow.
 - Check whether prior reports exist using `file_search` to find any `report*.md` files in the `{feature-dir}/tdd-designer/` directory.
   - No prior reports → use base filename `report.md`.
   - Prior reports exist → generate a timestamped filename: `report-<YYYY-MM-DDTHH-mm-ss>.md` to avoid overwriting existing reports.
@@ -98,15 +94,7 @@ If `env` is `host`: no additional action required.
 
 If any upstream artifact already contains `[NEEDS CLARIFICATION]` markers, record them for a `## Carried Clarifications` section in the report and continue on a best-effort basis.
 
-> **If testability-assessment.md is absent**: stop. Report the exact missing path and instruct the user to run the test-expert workflow first.
-
-> **If spec.md is absent**: stop. Report the exact missing path and instruct the user to provide the feature specification.
-
-> **If research.md is absent**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
-
-> **If data-model.md is absent**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
-
-> **If contracts/ is absent or empty**: stop. Report the exact missing path and instruct the user to run spec-technical-draft first.
+> **If any artifact is missing**: stop with error, report the path and prerequisite.
 
 ## Step 2 — Extract Raw Test Inventory
 
@@ -129,61 +117,45 @@ For each entry in the **Raw Test Inventory**:
 
 ### A. Classify behavior target
 
-Assign one of: `domain`, `use-case`, `adapter`, `ui`, `integration`, `contract`.
-
-If classification is ambiguous, insert `[NEEDS CLARIFICATION: classify this test as domain / use-case / adapter / ui / integration / contract]` in the test entry.
+Assign: `domain`, `use-case`, `adapter`, `ui`, `integration`, or `contract`. If ambiguous, insert `[NEEDS CLARIFICATION: classify this test]`.
 
 ### B. Rewrite as explicit BDD
 
-Convert each test to this exact format:
+Convert each test to:
 
 ```
 Test ID: TDD-###
 Name: Given_<context>_When_<action>_Then_<outcome>
 
-Given:
-- Explicit preconditions, dependencies, and inputs
-- Entity names and field names resolved from data-model.md
-- Endpoint paths and request shapes resolved from contracts/
-
-When:
-- Single behavior trigger
-
-Then:
-- Observable outcome
-- Measurable assertion (no implementation detail)
+Given: preconditions, dependencies, inputs
+When: single trigger
+Then: observable, measurable outcome
 ```
 
-If the outcome is vague, mark: `[NEEDS CLARIFICATION: define measurable outcome]`.
-If the assertion cannot be verified from externally observable state, mark: `UNTESTABLE — <reason>`.
+Mark vague outcomes as `[NEEDS CLARIFICATION]`. Mark unverifiable assertions as `UNTESTABLE — <reason>`.
 
 ### C. Validate red-phase integrity
 
-For each TDD unit, assess:
-- Would this test fail before any implementation exists?
-- Does it fail for the correct reason?
-- Does it define a precise micro-definition-of-done?
-
-Assign `Strong` or `Weak (<reason>)` to the Red-Phase Integrity field.
+Assess: Would this test fail before implementation? For the right reason? Define precise done? Assign `Strong` or `Weak (<reason>)`.
 
 ## Step 4 — Identify Risks and Ambiguities
 
 Run each pass independently against the full TDD unit set. Each unique issue must appear exactly once in Section 4 of the report with one primary `Type`: `AMBIGUITY` | `GLOBAL_STATE` | `STATIC_DEPENDENCY` | `MOCK_EXPLOSION` | `TEST_FRAGILITY`.
 
 ### A. Ambiguity Pass
-Flag tests containing "fast", "secure", "robust", "should handle errors", or any constraint without an explicit measurable threshold. Flag missing edge cases and unspecified error types.
+Flag unmeasurable constraints ("fast", "secure"), missing edge cases, unspecified error types.
 
 ### B. Dependency Smell Pass
-Flag tests requiring deep object graphs, global state, implicit static calls, or infrastructure inside domain-layer tests. Explain the architectural risk for each.
+Flag deep object graphs, global state, implicit statics, infrastructure in domain-layer tests.
 
 ### C. Coverage Gaps
-Using `spec.md` as the primary requirement source, `data-model.md` entities as the data-layer requirement source, and `contracts/` endpoints as the API-layer requirement source, map each requirement to covering tests. Identify: requirements with zero test coverage, non-functional requirements without measurable tests, missing edge cases, and absent failure scenarios.
+Map spec.md, data-model.md, and contracts/ to tests. Identify uncovered requirements, non-functional gaps, missing edge cases.
 
 ### D. Interaction Over-Mocking
-Identify collaboration-heavy tests. Flag mock explosion risk and note where state-based verification would be more stable.
+Flag mock explosion risk; note where state-based verification is more stable.
 
 ### E. Order Dependency Risk
-Detect tests implying execution sequence, shared mutable state, or non-isolated data assumptions. Mark each as `CRITICAL`.
+Detect sequence dependencies, shared state, or isolation violations. Mark as `CRITICAL`.
 
 Use the following row-type mapping when writing Section 4:
 - Ambiguity Pass -> `AMBIGUITY`
@@ -194,17 +166,11 @@ Use the following row-type mapping when writing Section 4:
 
 ## Step 5 — Build TDD Implementation Plan
 
-Group TDD units into incremental waves. Each wave must:
-- Be independently greenable without forward dependencies
-- Preserve minimal implementation discipline
-
-Standard wave structure:
+Group TDD units into incremental waves (each independently greenable):
 - **Wave 1** — Core Domain Logic
 - **Wave 2** — Use Case / Application Layer
 - **Wave 3** — Infrastructure Adapters
 - **Wave 4** — Integration and Non-Functional Guarantees
-
-List TDD-### IDs assigned to each wave.
 
 ## Step 6 — Assign Risk Severity
 

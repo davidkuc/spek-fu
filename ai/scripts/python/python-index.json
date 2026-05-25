@@ -74,6 +74,12 @@
       "type": "file",
       "description": "",
       "path": "ai/scripts/python/create-new-feature.py"
+    },
+    {
+      "name": "detect-spec-context",
+      "type": "file",
+      "description": "Detects whether the workspace is in an active spec-flow context by checking the current git branch against the spec-flow branch pattern and verifying that features/<branch>/spec.md exists. Outputs JSON: {spec-context, feature-dir, branch}. Exit 0 always; non-zero only on fatal subprocess errors.",
+      "path": "ai/scripts/python/detect-spec-context.py"
     }
   ]
 }

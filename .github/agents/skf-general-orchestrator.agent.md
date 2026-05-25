@@ -59,9 +59,10 @@ Tool visibility is not authorization. If a tool appears in the VS Code platform,
 2. **Verification**: Always verify subagent outputs with `read_file` on the expected path.
 3. **Approval gate**: Phase 3 is blocked until all pre-action gate items (see list below) are satisfied.
 4. **Dispatch contract**: Every `runSubagent` call follows the phase runbook dispatch contract.
-5. **Environment resolution**: Step 1 of Intake Phase dispatches `orch-initialize`; read `.orchestration-temp/init-result.md` (subagent output — allowlisted) for config values and env; if `status: hard-fail` → STOP; pass `env` in all downstream skill dispatches.
-6. **Always-on execution policies**: tool-whitelisting, dry-run-first, bounded-retry, and escalation are loaded from the phase runbooks.
-7. **Prior session data is only advisory**: Always run Phase 1–2 before executing.
+5. **Environment resolution**: Step 1 of Intake Phase dispatches `orch-initialize`; read `.orchestration-temp/init-result.md` (subagent output — allowlisted) for config values, env, `spec-context`, and `spec-feature-dir`; if `status: hard-fail` → STOP; pass `env` in all downstream skill dispatches.
+6. **Spec-context routing**: When `spec-context: true` is present in `init-result.md`, surface the active spec-flow context (including `spec-feature-dir`) to Steps 3 and 6 for skill routing — use `spec-implement` for implementation tasks. When `spec-context: false`, use `impl-implement` for implementation tasks. When `spec-context: unknown`, default to asking the user which skill to use.
+7. **Always-on execution policies**: tool-whitelisting, dry-run-first, bounded-retry, and escalation are loaded from the phase runbooks.
+8. **Prior session data is only advisory**: Always run Phase 1–2 before executing.
 
 </constraints>
 
@@ -96,7 +97,7 @@ All must be satisfied before Phase 3 (Execution). If any is missing, STOP and re
 | Step | Action | Runbook |
 |------|--------|--------|
 | **GATE** | Load runbook | `read_file ai/plugins/skf/runbooks/runbook-intake.md` → confirm loaded |
-| 1 | Initialize via orch-initialize | Dispatch `ai/plugins/skf/skills/orch-initialize.md` (compact) with workspace-root; if status = hard-fail → STOP; read `.orchestration-temp/init-result.md` for config values and env; pass `env` value in all downstream skill dispatches |
+| 1 | Initialize via orch-initialize | Dispatch `ai/plugins/skf/skills/orch-initialize.md` (compact) with workspace-root; if status = hard-fail → STOP; read `.orchestration-temp/init-result.md` for config values, env, `spec-context`, and `spec-feature-dir`; pass `env` value in all downstream skill dispatches |
 | 2 | Receive request | Capture user intent. Ask if vague |
 | 3 | Analyze request | Problem analysis from context and delegated research |
 | 4 | Complexity gate | Simple → fast-path to `fast-agent` after confirm, stop. Standard/Complex → full orchestration |
@@ -172,6 +173,15 @@ Next action: {what the user or caller should do}
 </output_format>
 
 <examples>
+
+<example>
+
+### Routing: spec-context dispatch
+
+Request: "Implement the next phase of the feature."
+Orchestrator: Reads `init-result.md` from `.orchestration-temp/` after Step 1. Detects `spec-context: true` and `spec-feature-dir: features/42-my-feature/`. Surfaces the spec-flow context in Steps 3 and 6. At Phase 3, dispatches `ai/plugins/spec-flow/skills/spec-implement.md` via `runSubagent` with `feature-dir: features/42-my-feature/`. NEVER dispatches `impl-implement` when `spec-context: true`.
+
+</example>
 
 <example>
 

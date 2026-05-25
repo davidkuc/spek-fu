@@ -35,7 +35,7 @@
     {
       "id": "impl-implement",
       "type": "file",
-      "description": "Executes implementation tasks from an orchestrator-supplied plan, returning a structured Result block. USE FOR: applying a task, task list, or plan against the codebase. DO NOT USE FOR: multi-task orchestration, architectural changes, or updating tracking files.",
+      "description": "Executes implementation tasks from an orchestrator-supplied plan, returning a structured Result block. For general orchestration tasks that do not have a spec-flow artifact pipeline (no tasks.md, spec.md, or feature-dir). USE FOR: applying a task, task list, or plan against the codebase when there is no active spec-flow context. DO NOT USE FOR: multi-task orchestration, architectural changes, updating tracking files, or feature work with a spec-flow tasks.md — for feature work with an active spec-flow tasks.md, use spec-implement instead.",
       "path": "ai/plugins/skf/skills/impl-implement.md",
       "version": 1.0,
       "tags": [

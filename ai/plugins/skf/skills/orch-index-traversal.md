@@ -89,8 +89,8 @@ skf-root-index.json (Level 0)
 Constitution, project, and report resources branch from Level 0 directly:
 ```
 skf-root-index.json (Level 0)
-├─ constitution/constitution-index.json → constitution/{name}.md (Terminal)
-├─ project/project-index.json → project/{name}.md (Terminal)
+├─ constitution/constitution.md (Terminal)
+├─ project/project.md (Terminal)
 └─ reports/ (direct folder scan for report files)
 ```
 
@@ -114,8 +114,8 @@ If the query signals more than one branch, traverse all relevant branches and me
 For each relevant branch identified in Step 1:
 
 - **`ai/` branch**: Read `ai/ai-index.json` → find the `plugins/` child → read `ai/plugins/plugins-index.json` → iterate over all plugin children; for each plugin read its root index (`ai/plugins/{name}/{name}-index.json`). Within each plugin index, identify only sub-folders relevant to the query and read only those.
-- **`constitution/`**: Read `constitution/constitution-index.json` directly.
-- **`project/`**: Read `project/project-index.json` directly.
+- **`constitution/`**: Read `constitution/constitution.md` directly.
+- **`project/`**: Read `project/project.md` directly.
 - **`reports/`**: Inspect the `reports/` folder directly and evaluate report filenames for relevance.
 
 **Progressive disclosure**: within each index, read only entries whose names or descriptions are relevant to the query. Do not follow all children.
@@ -217,7 +217,7 @@ Expected output: Starts at `skf-root-index.json`, traverses only the `ai/` branc
 
 <example>
 Input: query=`show constitution files relevant to SSOT policy`.
-Expected output: Traverses the `constitution/` branch, reads only `constitution-index.json`, and returns the governance-related constitution files with the index path taken. No framework skill or project files are included.
+Expected output: Traverses the `constitution/` branch, reads the constitution document, and returns the governance-related constitution content. No framework skill or project files are included.
 </example>
 
 <example type="counter">

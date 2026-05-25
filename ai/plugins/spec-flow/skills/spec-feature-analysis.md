@@ -24,9 +24,9 @@ dispatch-variant: "full"
 # Skill: spec-feature-analysis
 
 <!-- SECTION 1: Identity (primacy position) -->
-Inspects the complete set of spec-flow pipeline artifacts in a feature directory and produces a single-file **Feature Analysis Report** at `{feature-dir}/feature-analysis-report.md`. The report covers artifact existence and last-modification timestamps, `[NEEDS CLARIFICATION]` marker totals per artifact, tasks.md phase inventory and state counts, cross-artifact consistency findings (coverage gaps, terminology drift, and constitution alignment), and a three-tier **Readiness Verdict** (`READY` / `READY WITH WARNINGS` / `BLOCKED`). Re-invocations overwrite the prior report — this is a current-state snapshot, not a historical record.
+Inspects spec-flow pipeline artifacts in a feature directory and produces a **Feature Analysis Report** at `{feature-dir}/feature-analysis-report.md`. Covers artifact inventory, last-modification timestamps, `[NEEDS CLARIFICATION]` marker counts, tasks.md state, cross-artifact consistency findings, and a three-tier **Readiness Verdict** (`READY` / `READY WITH WARNINGS` / `BLOCKED`). Re-invocations overwrite the prior report.
 
-**Scope boundary**: This skill reads and reports only — it does NOT modify spec.md, tasks.md, or any upstream pipeline artifact. It does NOT re-run any upstream skill or dispatch any pipeline step. For implementing the task plan, consult the **spec-implement** skill. For resolving clarification markers in spec.md, consult the **spec-clarification** skill.
+**Scope boundary**: Reads and reports only. Does NOT modify specs, tasks, or any artifact. Does NOT re-run upstream skills. For implementation, consult **spec-implement**. For resolving markers, consult **spec-clarification**.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -46,16 +46,16 @@ If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelin
 If `env` is `host`: no additional action required.
 
 ## Shared Knowledge
-- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
-- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading any artifact that may exceed a single `read_file` response.
-- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` when counting and categorizing `[NEEDS CLARIFICATION]` markers.
+- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md`.
+- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` for multi-read artifacts.
+- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` for markers.
 
 ## Operational Anchors
-- Before producing any output, verify it complies with all rules in `<constraints>` above.
-- Implement EXACTLY and ONLY what this skill defines — no extra features, no unrequested changes.
-- This skill is read-only. Any impulse to edit spec.md, tasks.md, or any other pipeline artifact must be refused immediately.
-- Re-invocations overwrite the prior report at the same fixed path — no timestamped variants.
-- If `feature-dir` is not supplied, apply the **Branch Detection** procedure — do not guess paths.
+- Verify output complies with all constraints before producing.
+- Implement EXACTLY what this skill defines — no extras.
+- This skill is read-only. Refuse impulses to edit artifacts.
+- Re-invocations overwrite prior report at same fixed path — no timestamped variants.
+- If `feature-dir` not supplied, apply **Branch Detection** — do not guess paths.
 
 ## Branch Detection
 
@@ -68,11 +68,9 @@ If `env` is `host`: no additional action required.
 
 ## Preflight
 
-- Resolve `feature-dir`: if not provided as input, read `ai/plugins/spec-flow/knowledge/branch-detection.md` via `read_file` and apply the core procedure. If the user provides a path manually, use it. If the user declines to provide one, stop and report `blocked`.
-
-  > **If `branch-detection.md` cannot be read**: apply the fallback — run `git branch --show-current`, extract the numeric prefix and feature name, and construct `feature-dir` as `features/<branch-name>`. If the command fails, stop and report `blocked — branch detection failed; supply feature-dir explicitly`.
-
-- Verify that at least `{feature-dir}/spec.md` or `{feature-dir}/tasks.md` is present before continuing. If neither exists, stop and report `blocked — no analyzable artifacts found at <feature-dir>; run spec-feature-draft first`.
+- Resolve `feature-dir`: if not provided, apply **Branch Detection**. If user declines, stop and report `blocked`.
+  > **If branch-detection.md unreadable**: fallback — run `git branch --show-current`, extract prefix and name, construct `features/<branch-name>`. Fail if command fails.
+- Verify at least `{feature-dir}/spec.md` or `{feature-dir}/tasks.md` present. If neither, stop and report `blocked`.
 
 ## Done conditions
 
@@ -104,13 +102,9 @@ For each artifact slot in the path table, check existence:
 - Files: use `file_search` with the exact relative path.
 - Directories (`devils-advocate-dir`, `contracts-dir`): use `list_dir`; record file count if present (e.g., `present — 2 files`).
 
-For each **present** artifact, retrieve the last modification timestamp by running:
-```
-git log --format="%ai" -1 -- <path>
-```
-Fall back to `stat -c "%y" <path>` if the file is untracked.
+For each **present** artifact, retrieve last modification timestamp: `git log --format="%ai" -1 -- <path>` or fallback to `stat -c "%y" <path>` if untracked.
 
-> **If a timestamp command fails for an artifact**: record its timestamp as `unknown` and continue.
+> **If timestamp command fails**: record as `unknown`, continue.
 
 For `spec-file` specifically: use `grep_search` to record whether a `## Clarifications` section and a `## Assumptions` section are present.
 
@@ -118,114 +112,97 @@ Record all results in the **Artifact Inventory Table**.
 
 ## Step 3 — Detect staleness
 
-Compare timestamps across these upstream→downstream pairs when both are present:
-
+Compare timestamps across upstream→downstream pairs when both present:
 ```
 spec.md → devils-advocate/ → testability-assessment.md → tdd-designer/report.md
 spec.md → research.md → data-model.md → contracts/
 research.md → quickstart.md
-All of the above → tasks.md
+All above → tasks.md
 ```
 
-A **staleness signal** is triggered when: timestamp of upstream artifact < timestamp of downstream artifact. This means the downstream was generated before the upstream was last changed.
+Staleness signal: upstream timestamp < downstream timestamp (downstream generated before upstream changed).
 
-Record all signals in the **Staleness Signals Table**. If none exist, record `none detected`.
+Record signals in table. If none exist, record `none detected`.
 
-> **If timestamps are `unknown` for both artifacts in a pair**: skip the pair and record `indeterminate — timestamps unavailable`.
+> **If timestamps unknown for both**: record `indeterminate`.
 
 ## Step 4 — Count `[NEEDS CLARIFICATION]` markers
 
-For each present artifact (excluding directories), use `grep_search` with the pattern `[NEEDS CLARIFICATION:` to count occurrences. For `devils-advocate-dir` and `contracts-dir`, enumerate their files via `list_dir` and count across all contained files.
+Use `grep_search` with pattern `[NEEDS CLARIFICATION:` to count per artifact. Enumerate directories and count across files.
 
-Record per-artifact counts and a grand total in the **Marker Count Table**. Record zero as `0`.
+Record per-artifact counts and grand total in table. Record zero as `0`.
 
-> **If `grep_search` fails for an artifact**: record the count as `unknown` for that artifact and continue.
+> **If `grep_search` fails**: record as `unknown`.
 
 ## Step 5 — Analyze tasks.md state
 
-If `tasks-file` is present, load it using the paginated-read procedure and parse:
+If `tasks-file` present, load and parse:
+- **Phase inventory**: all `## Phase` headings with title and per-phase task count.
+- **Task state**: global counts of `[ ]` (pending), `[X]` (complete), `[!]` (blocked).
+- **Subtask count**: indented sub-items.
+- **BDD tasks**: tasks matching `Implement TDD-` or BDD ID references.
 
-- **Phase inventory**: all `## Phase` headings with their title and per-phase task count.
-- **Task state counts**: global counts of `[ ]` (pending), `[X]` (complete), and `[!]` (blocked) markers.
-- **Subtask count**: indented sub-items (lines starting with two or more spaces followed by `- [ ]`, `- [X]`, or `- [!]`).
-- **BDD test task count**: tasks whose description matches `Implement TDD-` or references a BDD test ID.
+Record in **Tasks Summary**.
 
-Record in the **Tasks Summary**.
-
-> **If `tasks-file` cannot be loaded or parsed**: record all task state counts as `unknown` and continue.
+> **If `tasks-file` unreadable/unparseable**: record counts as `unknown`.
 
 ## Step 6 — Cross-artifact consistency analysis
 
-Load the following using the paginated-read procedure:
+Load using paginated-read:
+- **From spec**: Functional Requirements, Non-Functional Requirements, User Stories only.
+- **From tasks**: all task descriptions and IDs.
 
-**From `spec-file`** (if present): Functional Requirements, Non-Functional Requirements, and User Stories sections only.
-
-**From `tasks-file`** (if present): all task descriptions and their IDs.
-
-Perform these detection passes. Cap total findings at 50 rows; summarize any overflow in a single line.
+Run detection passes (cap at 50 rows; overflow summarized in one line).
 
 ### Pass A — Coverage gaps
-For each user story in spec.md, check whether at least one task in tasks.md references it by user story number or a key noun phrase from its goal. Record stories with zero associated tasks as `UNCOVERED` (severity: `HIGH`).
+For each user story in spec, check if ≥1 task in tasks.md references it by story number or key phrase. Record unreferenced as `UNCOVERED` (HIGH severity).
 
 ### Pass B — Marker context
-For each `[NEEDS CLARIFICATION:` marker found in Step 4, record the artifact, approximate line context, and the question text. Severity: `HIGH` if in `spec-file` or `tasks-file`; `MEDIUM` for other artifacts.
+For each `[NEEDS CLARIFICATION:` marker, record artifact, line context, question text. Severity: `HIGH` in spec/tasks; `MEDIUM` otherwise.
 
 ### Pass C — Inconsistency detection
-- **Terminology drift**: identify the same concept named differently across spec.md and tasks.md (e.g., `user profile` vs `member account`). Severity: `MEDIUM`.
-- **Missing data entities**: entities prominently named in spec.md Functional Requirements but absent from tasks.md. Severity: `HIGH`.
-- **Conflicting requirements**: two requirements within spec.md that contradict each other. Severity: `CRITICAL`.
+- **Terminology drift**: same concept named differently across spec/tasks (e.g., `user profile` vs `member account`). MEDIUM.
+- **Missing data entities**: entities in spec but not in tasks. HIGH.
+- **Conflicting requirements**: contradictions in spec. CRITICAL.
 
-Assign a finding ID using the prefix of its category (`A1`, `B1`, `C1`, …).
-
-> **If spec.md is absent**: skip passes A and C; record `spec.md absent — coverage and consistency analysis skipped` in the findings section.
+> **If spec absent**: skip A and C; record `spec absent — coverage and consistency skipped`.
 
 ## Step 7 — Compute readiness verdict
 
-Apply in order — the first matching condition determines the verdict:
+Apply in order — first match determines verdict:
 
-1. **`BLOCKED`** — if any of the following:
-   - `spec-file` absent.
-   - `tasks-file` absent.
-   - Any `CRITICAL` finding from Pass C.
+1. **`BLOCKED`** — if any:
+   - spec or tasks missing, OR
+   - Any CRITICAL finding.
 
-2. **`READY WITH WARNINGS`** — if not BLOCKED and any of the following:
-   - Total `[NEEDS CLARIFICATION]` marker count > 0.
-   - Any staleness signal detected.
-   - Any `HIGH` finding from passes A, B, or C.
-   - Any intermediate pipeline artifact absent (`devils-advocate-dir`, `testability-report`, `tdd-report`, `research-file`, `data-model-file`, `contracts-dir`, `quickstart-file`).
+2. **`READY WITH WARNINGS`** — if not BLOCKED and any:
+   - Markers > 0, OR
+   - Staleness detected, OR
+   - HIGH findings, OR
+   - Intermediate artifact missing.
 
-3. **`READY`** — otherwise: all required and intermediate artifacts present, zero markers, no staleness, no HIGH or CRITICAL findings.
+3. **`READY`** — otherwise: all artifacts present, zero markers, no staleness, no HIGH/CRITICAL.
 
 ## Step 8 — Write report
 
-Load `ai/plugins/spec-flow/templates/feature-analysis-template.md` using the paginated-read procedure.
+Load template at `ai/plugins/spec-flow/templates/feature-analysis-template.md`.
 
-> **If `feature-analysis-template.md` cannot be read**: compose the **Feature Analysis Report** using this hardcoded section order — Readiness Verdict, Artifact Inventory, Staleness Signals, Marker Counts, Tasks Summary, Consistency Findings, Next Actions. Record the template read failure in the report header.
+> **If template missing**: use hardcoded order — Readiness Verdict, Artifact Inventory, Staleness Signals, Marker Counts, Tasks Summary, Consistency Findings, Next Actions.
 
-Check whether `{feature-dir}/feature-analysis-report.md` already exists using `file_search`.
-- **If absent**: use `create_file` to write the report.
-- **If present**: use `run_in_terminal` to run `rm "{feature-dir}/feature-analysis-report.md"`, then use `create_file` to write the fresh report.
+Check if report exists; if yes, delete it first. Then write fresh report.
 
-> **If the write fails**: report `status: fail` with the exact error message; do not attempt a retry.
-
-After writing, state in chat:
-> "**Feature Analysis Report** written to `{feature-dir}/feature-analysis-report.md`. Verdict: `<verdict>`."
-
-The skill is complete when `{feature-dir}/feature-analysis-report.md` exists on disk and the completion message has been shown.
+> **If write fails**: report `fail` with error; do not retry.
 
 </workflow>
 
 <!-- SECTION 5: Tool usage policies -->
 <tools>
-- **read_file**: Load spec.md, tasks.md, templates, knowledge files, and any present artifact. Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` for any file that may span multiple reads.
-- **file_search**: Verify artifact existence and locate the feature directory before loading.
-- **list_dir**: Enumerate `devils-advocate/` and `contracts/` directory contents to detect presence and file counts.
-- **grep_search**: Count `[NEEDS CLARIFICATION:` markers per artifact; detect section headings in spec.md; detect terminology and entity references across artifacts for Pass C.
-- **run_in_terminal**: Retrieve modification timestamps (`git log`, `stat`); remove a prior report before overwriting in Step 8.
-- **vscode_askQuestions**: Collect `feature-dir` via Branch Detection when not supplied as input.
-- **create_file**: Write `feature-analysis-report.md` in Step 8 only, after any prior version has been removed.
-- Do NOT use tools not listed here unless the skill explicitly escalates.
-- Do NOT use any write tool on spec.md, tasks.md, or any artifact outside `{feature-dir}/feature-analysis-report.md`.
+- **read_file**: Load artifacts, templates, knowledge. Apply paginated-read for multi-read files.
+- **file_search**: Verify artifact existence.
+- **list_dir**: Enumerate directories.
+- **grep_search**: Count markers, detect section headings, detect terminology/entities.
+- **run_in_terminal**: Retrieve modification timestamps.
+- **create_file**: Write report after removing any prior version.
 </tools>
 
 <!-- SECTION 6: Output format -->
@@ -241,7 +218,7 @@ The skill is complete when `{feature-dir}/feature-analysis-report.md` exists on 
 Feature Analysis Report written to `{feature-dir}/feature-analysis-report.md`. Verdict: <READY | READY WITH WARNINGS | BLOCKED>.
 ```
 
-**Blocked message** (shown when blocked):
+**BLOCKED message**:
 ```
 BLOCKED: spec-feature-analysis requires <missing input or artifact>. <Corrective action>.
 ```
@@ -329,13 +306,13 @@ BLOCKED: spec-feature-analysis requires <missing input or artifact>. <Corrective
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: `feature-dir` = `features/005-user-auth`; all 9 artifact slots present; no `[NEEDS CLARIFICATION]` markers; no staleness signals; every user story in spec.md has a corresponding task in tasks.md.
-Expected behavior: Skill builds the full artifact inventory, records zero markers and zero staleness signals, finds no uncovered user stories, computes verdict `READY`, writes the report to `features/005-user-auth/feature-analysis-report.md`, states: "Feature Analysis Report written to `features/005-user-auth/feature-analysis-report.md`. Verdict: `READY`."
+Input: `feature-dir` = `features/005-user-auth`; all artifacts present, no markers, no staleness, all stories covered.
+Expected: Verdict `READY`, report written to feature dir, chat: "Feature Analysis Report written to `features/005-user-auth/feature-analysis-report.md`. Verdict: `READY`."
 </example>
 
 <example>
-Input: `feature-dir` = `features/003-payment-flow`; spec.md present with 2 `[NEEDS CLARIFICATION]` markers; tasks.md present but its git timestamp predates the last commit to spec.md (staleness signal); all intermediate artifacts present.
-Expected behavior: Skill counts 2 markers in spec.md, detects tasks.md staleness relative to spec.md, computes verdict `READY WITH WARNINGS`, writes report documenting both warnings, suggests "Re-run `/spec-tasks-draft` — spec.md was modified after tasks.md was generated." Reports in chat: "Feature Analysis Report written to `features/003-payment-flow/feature-analysis-report.md`. Verdict: `READY WITH WARNINGS`."
+Input: `feature-dir` = `features/003-payment-flow`; spec has 2 markers, tasks.md older than spec (staleness), intermediates present.
+Expected: Verdict `READY WITH WARNINGS`, report documents warnings, suggests "Re-run `/spec-tasks-draft`."
 </example>
 
 <example>
@@ -344,8 +321,8 @@ Expected behavior: Skill applies Branch Detection, derives `feature-dir = featur
 </example>
 
 <example>
-Input: `feature-dir` = `features/002-reporting`; spec.md present; tasks.md absent; all other intermediate artifacts present.
-Expected behavior: Skill detects tasks.md as absent, computes verdict `BLOCKED`, writes the report documenting the blocker with suggestion "Run `/spec-tasks-draft` to generate tasks.md before proceeding to implementation." Reports in chat: "BLOCKED: tasks.md is absent — run /spec-tasks-draft first."
+Input: `feature-dir` = `features/002-reporting`; tasks.md missing.
+Expected: Verdict `BLOCKED`, report documents blocker, suggests "Run `/spec-tasks-draft`."
 </example>
 
 <example type="counter">
@@ -360,10 +337,10 @@ Expected behavior: Skill counts markers and documents them in the report. Refuse
 ## Rules
 
 - Constraint 1 — write ONLY to `{feature-dir}/feature-analysis-report.md`; never modify any upstream artifact.
-- Constraint 2 — do NOT invoke any other skill, runbook, or pipeline step.
-- Constraint 3 — prose suggestions are informational only; never phrase them as automated or imperative actions.
-- Constraint 4 — **Readiness Verdict** must be the first substantive line of the written report.
-- Constraint 5 — stop and report `blocked` if `feature-dir` cannot be resolved.
-- Never act on a partially read knowledge file, template, or artifact — read to end of file before using content.
+- Constraint 2 — do NOT invoke other skills, runbooks, or steps.
+- Constraint 3 — prose suggestions informational only; never phrase as automated actions.
+- Constraint 4 — **Readiness Verdict** is first substantive line of report.
+- Constraint 5 — stop and report `blocked` if `feature-dir` unresolvable.
+- Never act on partially read files — read to EOF before using content.
 
 </reminders>

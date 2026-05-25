@@ -165,3 +165,27 @@ Verified lessons captured from framework operations.
 **Solution**: Remove skf-config.json from orchestrator read_file allowlist once orch-initialize is verified. Config values are accessible via `.orchestration-temp/init-result.md`.
 
 ---
+
+## L-013: Intentional Populate-Note Comments Are Exempt From Zero-Reference Verification
+
+**Tags**: `verification`, `spec`, `documentation`, `placeholders`
+
+**Trigger**: Zero-reference grep scans flagged HTML placeholder comments (like `<!-- Populate with project-spec.md content -->`) as stale references, but these comments were required by the feature spec and acceptance criteria.
+
+**Context**: Feature specification explicitly required placeholder comments that include original filenames as markers for future content population.
+
+**Solution**: When spec explicitly requires placeholder comments that include original filenames, exclude the file from zero-reference grep scans or treat HTML comment references as non-navigational and acceptable. Always check if flagged "references" are intentional placeholder markers before reporting as errors.
+
+---
+
+## L-014: Wave Verification False Positives On Prior-Wave Modifications
+
+**Tags**: `verification`, `waves`, `git`, `orchestration`
+
+**Trigger**: Wave verification flagged a file as unexpectedly modified, but the modification happened in a prior wave as an intentional and correct change. The verifier compared against git HEAD state without context about which wave made the change.
+
+**Context**: Unexpected modifications are typically blocker conditions in wave verification, but prior-wave modifications are expected and correct.
+
+**Solution**: When wave verification reports unexpected file modifications, cross-check whether the file was an intentional target of a prior wave before treating it as a blocker. Document expected prior-wave modifications in the wave context or result summary to help downstream verifiers.
+
+---

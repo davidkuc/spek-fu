@@ -69,29 +69,8 @@ CATALOG: list[dict[str, Any]] = [
         "builder": "standard",
         "preserve_top": [],
     },
-    # ── constitution/ ──────────────────────────────────────────────────────────
-    {
-        "index_file": "constitution/constitution-index.json",
-        "folder": "constitution",
-        "excluded": [],
-        "builder": "standard",
-        "preserve_top": [],
-    },
-    # ── project/ ──────────────────────────────────────────────────────────────
-    {
-        "index_file": "project/project-index.json",
-        "folder": "project",
-        "excluded": [],
-        "builder": "standard",
-        "preserve_top": [],
-    },
-    {
-        "index_file": "project/adrs/adrs-index.json",
-        "folder": "project/adrs",
-        "excluded": [],
-        "builder": "standard",
-        "preserve_top": [],
-    },
+
+
     # ── .github/ ──────────────────────────────────────────────────────────────
     {
         "index_file": ".github/github-index.json",

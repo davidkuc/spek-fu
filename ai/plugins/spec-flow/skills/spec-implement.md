@@ -2,7 +2,7 @@
 id: "spec-implement"
 recommended-tier: "standard-agent"
 version: 1.1
-description: "Executes a targeted phase (or explicit set of phases) from tasks.md, using lazy context loading, progress tracking, and bounded task-failure escalation. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, or making architectural changes outside the task plan."
+description: "Executes a targeted phase (or explicit set of phases) from tasks.md within a spec-flow feature directory, using lazy context loading, progress tracking, and bounded task-failure escalation. Requires spec-flow artifacts: tasks.md, spec.md, and a resolved feature-dir. This is the implementation skill for the spec-flow pipeline. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed; feature work with an active spec-flow branch and spec.md present. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, making architectural changes outside the task plan, or implementation without spec-flow artifacts — for non-spec-flow implementation, use impl-implement."
 anti-scope: "Does not generate tasks, draft specs, modify design artifacts, or make architectural decisions beyond what tasks.md specifies. For task plan generation, use spec-tasks-draft. For implementation of a single task without orchestration, use impl-implement."
 tags:
   - "implementation"
@@ -25,9 +25,9 @@ dispatch-variant: "full"
 # Skill: spec-implement
 
 <!-- SECTION 1: Identity (primacy position) -->
-Executes a **targeted phase** from `tasks.md` in `feature-dir` — defaulting to the next single incomplete phase unless the user explicitly requests a different scope. The skill loads the plan first, scans for upstream `[NEEDS CLARIFICATION]` markers before implementation, manages project setup from shared **tech-stack patterns** when the first phase is in scope, lazy-loads only the design artifacts needed for each task, marks completed tasks as `[X]`, marks unrecoverable continued failures as `[!]`, and produces a structured **Implementation Summary** including remaining phases.
+Executes a **targeted phase** from `tasks.md` in `feature-dir`. Defaults to the next single incomplete phase unless otherwise specified. Loads the plan, scans for upstream markers, manages project setup, lazy-loads design artifacts, marks tasks as `[X]` or `[!]`, and produces an **Implementation Summary** with remaining phases.
 
-**Scope boundary**: This skill executes the task plan in `tasks.md` only. It does NOT generate tasks, draft or modify spec files, or make design decisions beyond what `tasks.md` specifies. For task plan generation, use **spec-tasks-draft**. For single-task execution without orchestration, use **impl-implement**.
+**Scope boundary**: Executes task plans from `tasks.md` only. Does NOT generate tasks, draft specs, or make design decisions beyond what `tasks.md` specifies.
 
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
@@ -50,16 +50,13 @@ If `env` is `devcontainer`: read `ai/plugins/skf/knowledge/devcontainer-guidelin
 If `env` is `host`: no additional action required.
 
 ## Shared Knowledge
-- Apply `ai/plugins/spec-flow/knowledge/skill-meta-rules.md` before acting.
-- Apply `ai/plugins/spec-flow/knowledge/paginated-read.md` whenever reading tasks, design artifacts, or checklists.
-- Apply `ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md` whenever creating or carrying `[NEEDS CLARIFICATION]` markers.
-- Apply `ai/plugins/spec-flow/knowledge/tech-stack-patterns.md` whenever verifying ignore files or selecting build/test commands.
+- Apply `skill-meta-rules.md`, `paginated-read.md`, `needs-clarification-protocol.md`, and `tech-stack-patterns.md` before acting.
 
 ## Operational Anchors
-- If a task detail is ambiguous and cannot be resolved from the lazily loaded artifacts, place `[NEEDS CLARIFICATION: <specific question>]` in the task description or implementation summary — do not guess.
-- Detect run state before acting: scan `tasks.md` for `[X]`, `[ ]`, and `[!]` tasks; identify the first phase containing runnable `[ ]` tasks as the default execution scope — do not re-execute completed tasks and do not automatically retry blocked tasks.
-- Before implementation begins, scan `tasks.md` and every loaded design artifact for carried `[NEEDS CLARIFICATION]` markers. If any exist and `vscode_askQuestions` is available, warn and confirm before continuing. If interactive confirmation is unavailable, stop with `blocked (upstream clarifications)`.
-- Anti-drift: if executing a task reveals adjacent work not covered by any existing task, append it under `## Discovered Subtasks` in `tasks.md` as `- [ ] D### <description>` — do not fix it inline.
+- Place `[NEEDS CLARIFICATION]` when task details are ambiguous; do not guess.
+- Detect run state: scan `tasks.md` for `[X]` and `[!]` tasks; identify first phase with runnable `[ ]` tasks as default scope.
+- Surface upstream markers before implementation begins; warn and confirm before continuing if interactive.
+- Anti-drift: append undocumented work as subtasks; do not fix inline.
 
 ## Branch Detection
 
@@ -127,19 +124,12 @@ Identify the first phase containing runnable `[ ]` tasks (ignoring `[X]` and alr
 
 ## Step 3 — Resolve execution scope
 
-Determine which phase(s) to execute in this run:
-
-1. Parse all phases from `tasks.md` and build a phase inventory:
-  - For each phase: name, task count, completed `[X]` count, blocked `[!]` count, runnable `[ ]` count, and status (`complete`, `in-progress`, `blocked`, or `not-started`)
-2. Identify the **default scope**: the first phase that contains runnable `[ ]` tasks after excluding already-complete `[X]` tasks and already-blocked `[!]` tasks.
-3. Apply the `scope` input (if provided):
-   - `"all"` or `"all remaining"` → scope = all phases that are not fully complete, executed sequentially
-   - Phase name or number (e.g., `"Phase 1"`, `"Setup"`, `"2"`) → scope = that specific phase only
-   - Task ID range (e.g., `"T005-T012"`) → scope = only those tasks, regardless of phase boundaries
-  - If the specified scope is already fully complete or only contains `[!]` tasks → report `ok` (already done) or `ok (partial, blocked tasks)` as appropriate and stop
-4. If no `scope` input and user arguments do not mention quantity or phase → use the default scope (next single incomplete phase). Do NOT ask the user — just apply the default and state it clearly in the output.
-5. If user arguments mention multiple phases or an ambiguous quantity, and no explicit `scope` input is set → ask via `vscode_askQuestions` using the `execution_scope` payload before proceeding.
-6. Once the scope is known, load from `spec.md` only the acceptance scenarios for the user story phases in scope (via `grep_search` or equivalent targeted reads). Do not load unrelated story sections.
+1. Parse phases from `tasks.md` and build inventory (name, task count, `[X]` count, `[!]` count, runnable `[ ]` count, status).
+2. Identify **default scope**: first phase with runnable `[ ]` tasks.
+3. Apply `scope` input (if provided): `all`/`all remaining` for all incomplete phases, phase name/number for one phase, task ID range for specific tasks.
+4. Use default scope (next incomplete phase) without asking if no explicit input provided. Do NOT ask the user—state it clearly in output.
+5. If ambiguous quantity without explicit scope, ask via `vscode_askQuestions` using `execution_scope` payload before proceeding.
+6. Once scope is known, load from `spec.md` only acceptance scenarios for in-scope user story phases (via targeted reads).
 
 **Display a scope confirmation** before executing:
 ```
@@ -150,56 +140,29 @@ Remaining after this run: <list of phase names not in scope>
 
 ## Step 4 — Project setup verification
 
-Project setup runs only when the resolved scope from Step 3 is the first phase or includes Phase 1 (Setup). For mid-plan runs, skip this step.
-
-When setup is in scope:
-1. Read `ai/plugins/spec-flow/knowledge/tech-stack-patterns.md` via `read_file` (multi-pass if needed).
-2. Detect the stack from `research.md` when it exists, using the existing stack-detection logic.
-3. If `research.md` is absent, apply **Universal** patterns only.
-4. Verify or create ignore files using the patterns from `tech-stack-patterns.md`:
-  - `.gitignore`
-  - `.dockerignore` when Docker is detected
-  - `.eslintignore` or `eslint.config.*` ignore entries when ESLint is present
-  - `.prettierignore` when Prettier is present
-5. If an ignore file already exists, append only missing required patterns for the detected stack.
-6. If an ignore file is missing, create it from the shared pattern set.
+Project setup runs only when resolved scope includes Phase 1 (Setup). When in scope:
+1. Read `tech-stack-patterns.md` via `read_file` (multi-pass if needed).
+2. Detect stack from `research.md` when available; otherwise apply Universal patterns.
+3. Verify/create ignore files (`.gitignore`, `.dockerignore` for Docker, `.eslintignore` for ESLint, `.prettierignore` for Prettier).
+4. For existing files, append missing patterns; for missing files, create from pattern set.
 
 ## Step 5 — Execute implementation
 
-Execute only the tasks within the resolved scope from Step 3:
-
 **Phase execution rules**:
-1. Execute only phases within the resolved scope — stop after the last in-scope phase even if more phases remain in `tasks.md`.
-2. Within a phase, execute tasks without `[P]` sequentially in listed order.
-3. Tasks marked `[P]` that operate on different files with no incomplete dependencies may proceed concurrently or in close sequence.
-4. Follow TDD: execute test tasks before their corresponding implementation tasks within the same phase.
-5. Before starting each task, lazy-load only the design context that task needs:
-  - Always load the relevant acceptance scenarios for the task's user story from `spec.md` when the task belongs to a user story phase.
-  - For contract test or endpoint tasks, load only the referenced contract file from `contracts/`.
-  - For model or entity tasks, load only the relevant section of `data-model.md`.
-  - For BDD test tasks, load only the matching `TDD-XXX` block from `tdd-designer/report.md`.
-  - When a task description includes an `@ref:` hint, treat that hint as the authoritative artifact fragment to load.
-  - Load `test-expert/testability-assessment.md` or `quickstart.md` only when the task explicitly depends on those expectations.
-6. After completing each task:
-   - Apply the change (create or modify the target file per the task description).
-   - Update `tasks.md`: replace `- [ ]` with `- [X]` for the completed task ID.
-   - Report the task ID and one-line completion note.
-7. If a task fails:
-  - Attempt up to `config["spec-implement"].maxFixCycles` fix cycles (fix the error, re-run, verify). *(default: 3 — loaded during Preflight from `ai/plugins/spec-flow/skills/config.json`)*
-  - If the task still fails after `maxFixCycles` cycles and `vscode_askQuestions` is available, present the `task_failure_escalation` payload.
-  - If the user chooses **Mark blocked and continue phase (skip dependents)**: mark the task as `[!]`, skip downstream tasks in the same phase that depend on it, continue runnable parallel or independent tasks, and record the block for Step 6.
-  - If the user chooses **Mark blocked and stop this run**: stop with `blocked (task failure)`.
-  - If the user chooses **Manually edit and retry the task**: re-read the task context, reset the fix-cycle counter, and retry.
-  - If the task still fails and the run is non-interactive: stop with `blocked (task failure)` and report the task ID plus the one-line error summary.
-8. If executing a task reveals new required work outside the current task list, append a new discovered subtask under `## Discovered Subtasks` at the end of `tasks.md` using the next `D###` ID.
-
-**Build and test after each phase** (when a build manifest is present):
-- Use `ai/plugins/spec-flow/knowledge/tech-stack-patterns.md` to discover build manifests and the matching build/test command family for the detected stack.
-- Prefer repository-defined commands over generic defaults when the manifest exposes them.
-- If no stack-specific manifest is found, skip build/test and note the reason.
-- Report build and test results in the phase completion note
-
-> **If no build manifest is found**: skip build/test steps and note "No build manifest detected" in the phase summary.
+1. Execute phases within resolved scope only; stop after last in-scope phase.
+2. Execute non-`[P]` tasks sequentially in listed order.
+3. `[P]` tasks on different files with no dependencies may proceed concurrently.
+4. Follow TDD: test tasks before implementation tasks within a phase.
+5. Before each task, lazy-load only needed design context:
+   - Acceptance scenarios from `spec.md` for user story phases
+   - Relevant contract file from `contracts/`
+   - Relevant section of `data-model.md`
+   - Matching `TDD-XXX` block from `tdd-designer/report.md`
+   - Fragment named in `@ref:` hint
+   - `test-expert/testability-assessment.md` or `quickstart.md` only when task explicitly requires it
+6. After each completed task: apply change, update `tasks.md` (`[ ]` → `[X]`), report task ID and one-line note.
+7. If task fails: attempt up to `maxFixCycles` fix attempts (default: 3). If still failing and interactive: present `task_failure_escalation` payload. If non-interactive: stop with `blocked (task failure)`.
+8. If task execution reveals undocumented work: append under `## Discovered Subtasks` with next `D###` ID.
 
 ## Step 6 — Report
 
@@ -282,18 +245,18 @@ Blocker (if any): <task ID, error summary, or "None">
 <!-- SECTION 7: Examples -->
 <examples>
 <example>
-Input: No arguments; current git branch is `003-payment-flow`; `feature-dir` resolves to `features/003-payment-flow/`; tasks.md has 3 phases (Setup 3 tasks, User Story 1 5 tasks, Polish 4 tasks), 0 already completed.
-Expected behavior: Step 1 resolves `feature-dir` via branch detection. Step 2 loads `tasks.md`, `spec.md`, and `research.md`, scans for upstream markers, and records any optional artifacts not present. Step 3 resolves scope: no explicit scope input → default = Phase 1 (Setup, 3 tasks); displays scope confirmation. Step 4 reads `tech-stack-patterns.md` and verifies ignore files because Setup is in scope. Step 5 executes Setup only, lazy-loads only the task-specific context needed, marks T001–T003 as [X], and runs build/test using the stack-specific manifest rules. Step 6 returns an **Implementation Summary** showing 3/12 tasks completed this run and the remaining phases. Status: ok.
+Input: No arguments; git branch: `003-payment-flow`; tasks.md has 3 phases (Setup 3, US1 5, Polish 4), 0 completed.
+Expected: Step 1 resolves `feature-dir`. Step 2 loads baseline context, records optional artifacts missing. Step 3 → default scope = Phase 1 (Setup). Step 4 reads patterns, verifies ignore files. Step 5 executes Setup, marks T001–T003 as `[X]`, runs build/test. Step 6 reports 3/12 tasks completed, remaining phases. Status: ok.
 </example>
 
 <example>
-Input: `feature-dir=features/007-notifications/`; scope="all remaining"; some tasks in tasks.md already marked `[X]`; `research.md` contains `[NEEDS CLARIFICATION: confirm notification provider]`.
-Expected behavior: Step 1 uses the provided `feature-dir` path directly. Step 2 loads baseline context, detects the upstream clarification marker, and calls `vscode_askQuestions` using `upstream_clarifications`. If the user confirms yes, Step 3 resolves scope: `all remaining` → all phases with runnable `[ ]` tasks. Step 4 skips project setup when Phase 1 is already complete. Step 5 executes the remaining phases sequentially while carrying the clarification count into the final report.
+Input: `feature-dir=features/007-notifications/`; scope="all remaining"; some tasks marked `[X]`; `research.md` contains `[NEEDS CLARIFICATION]`.
+Expected: Step 1 uses provided path. Step 2 detects upstream marker, calls `vscode_askQuestions`. If confirmed, Step 3 → scope = all remaining. Step 4 skips setup. Step 5 executes sequentially, carrying clarification count to final report. Status: ok.
 </example>
 
 <example type="counter">
-Input: User says "implement everything" without specifying a scope or phase.
-Expected behavior: The word "everything" is treated as equivalent to `all`. Step 3 resolves scope = all remaining incomplete phases and displays the scope confirmation listing every pending phase before executing. Skill does NOT silently execute all phases without first showing the scope confirmation.
+Input: "implement everything" without scope or phase.
+Expected: "everything" treated as `all`. Step 3 → scope = all remaining phases; displays confirmation listing every pending phase before executing. Does NOT silently execute all phases.
 </example>
 </examples>
 

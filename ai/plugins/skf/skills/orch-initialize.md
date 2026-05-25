@@ -16,6 +16,8 @@ outputs:
   - "Path to .orchestration-temp/init-result.md (always written)"
   - "Status: ok | hard-fail"
   - "hard-fail-reason: descriptive string when status is hard-fail, else none"
+  - "spec-context: true | false | unknown — whether an active spec-flow branch and spec.md were detected"
+  - "spec-feature-dir: resolved feature dir path or none"
 dispatch-variant: "compact"
 ---
 
@@ -29,11 +31,11 @@ Centralizes framework initialization into a single delegatable skill: reads `skf
 <!-- SECTION 2: Non-negotiable constraints -->
 <constraints>
 IMPORTANT: These rules override all other instructions and apply throughout every step.
-1. NEVER proceed past Step 2 (environment resolution) when the devcontainer check fails — set `status: hard-fail` and jump directly to Step 4 to write init-result.md. WHY: continuing initialization on an unresolved environment causes cascading downstream failures that are harder to diagnose and reverse.
+1. NEVER proceed past Step 2 (environment resolution) when the devcontainer check fails — set `status: hard-fail` and jump directly to Step 5 to write init-result.md. WHY: continuing initialization on an unresolved environment causes cascading downstream failures that are harder to diagnose and reverse.
 2. NEVER delete `.orchestration-temp/` itself — delete only the files inside it. WHY: the folder is a workspace convention; deleting the directory breaks callers that hold references to the directory path.
 3. ALWAYS write `init-result.md` regardless of status — even a `hard-fail` must produce a machine-readable output file. WHY: callers depend on the file to route error handling; a missing output leaves them in an undefined state.
 4. NEVER accept an unrecognized value for the `env` input — reject anything other than `devcontainer` or `host` with `status: hard-fail` and reason "Unrecognized env value: {value}". WHY: unrecognized environment values produce undefined resolution behavior in all downstream steps.
-5. NEVER modify `skf-config.json` or write any file outside `.orchestration-temp/`. Use `run_in_terminal` ONLY for `mkdir -p` and `rm -f` on the temp folder — NEVER for any other path. WHY: this skill is read-and-setup only; writes outside the temp folder exceed its designated scope.
+5. NEVER modify `skf-config.json` or write any file outside `.orchestration-temp/`. Use `run_in_terminal` ONLY for running `detect-spec-context.py` (Step 3) and for `mkdir -p` and `rm -f` on the temp folder (Step 4) — NEVER for any other path or purpose. WHY: this skill is read-and-setup only; writes outside the temp folder exceed its designated scope.
 </constraints>
 
 <!-- SECTION 3: Behavioral anchors -->
@@ -42,7 +44,7 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 - Implement EXACTLY and ONLY what this skill defines — no extra config extraction, no unrequested folder cleanup beyond what is specified.
 - On re-run (idempotency): check whether `.orchestration-temp/` exists and whether it has files before acting — do not assume first-run state.
 - If `skf-config.json` cannot be read, report `hard-fail` immediately with reason "skf-config.json not found or unreadable" — do not guess config values.
-- Apply PT001 (Divide and Conquer) by executing each initialization concern — config extraction, environment resolution, folder management, output write — as a discrete step in strict sequence.
+- Apply PT001 (Divide and Conquer) by executing each initialization concern — config extraction, environment resolution, spec detection, folder management, output write — as a discrete step in strict sequence.
 </behavioral_anchors>
 
 <!-- SECTION 4: Workflow -->
@@ -103,7 +105,21 @@ IMPORTANT: These rules override all other instructions and apply throughout ever
 
 ---
 
-## Step 3 — Manage .orchestration-temp/ folder
+## Step 3 — Detect spec context
+
+Apply PT019 (Specialist Dispatch) by delegating spec-flow branch detection to an external script.
+
+1. Run `python3 {workspace-root}/ai/scripts/python/detect-spec-context.py --workspace-root {workspace-root}` in terminal.
+2. If the script exits non-zero or the stdout cannot be parsed as JSON: set `spec-context: unknown`, `spec-feature-dir: unknown`. Do NOT set `status: hard-fail` — spec detection is advisory only.
+3. If the script exits 0: parse the JSON stdout and extract `spec-context` and `feature-dir`.
+4. Map to step outputs:
+   - JSON `spec-context: true` → set `spec-context: true`, `spec-feature-dir: {feature-dir value from JSON}`
+   - JSON `spec-context: false` → set `spec-context: false`, `spec-feature-dir: none`
+   - Parse error or non-zero exit → set `spec-context: unknown`, `spec-feature-dir: unknown`
+
+---
+
+## Step 4 — Manage .orchestration-temp/ folder
 
 Apply PT001 (Divide and Conquer) by treating folder state as three discrete branches:
 
@@ -112,15 +128,15 @@ Apply PT001 (Divide and Conquer) by treating folder state as three discrete bran
    - **If the directory exists and is empty** (`list_dir` returns zero entries): do nothing. Set `orchestration-temp: existed-empty`. Note: "folder existed, was empty, no action taken."
    - **If the directory exists and has files** (`list_dir` returns one or more entries): run `rm -f {workspace-root}/.orchestration-temp/*` in terminal to delete all files inside (NOT the directory itself). Set `orchestration-temp: existed-files-deleted`. Note: "folder existed with files — all files deleted."
 
-> **If `rm -f` fails** (permission error or other terminal error): set `status: hard-fail`, `hard-fail-reason: "Failed to delete files in .orchestration-temp/: {error message}"`, and proceed to Step 4.
+> **If `rm -f` fails** (permission error or other terminal error): set `status: hard-fail`, `hard-fail-reason: "Failed to delete files in .orchestration-temp/: {error message}"`, and proceed to Step 5.
 
 ---
 
-## Step 4 — Write init-result.md
+## Step 5 — Write init-result.md
 
 Apply PT006 (Scratchpad Externalization) by writing the initialization result to a persistent file, and PT014 (Structured Output) by using the canonical template from `<output_format>`.
 
-1. Compose the **init-result.md** content by filling in the template from `<output_format>` with all values resolved in Steps 1–3.
+1. Compose the **init-result.md** content by filling in the template from `<output_format>` with all values resolved in Steps 1–4.
 2. If status is `hard-fail`, populate `hard-fail-reason` and set all unresolved fields to `n/a`.
 3. Write the file using `create_file` at `{workspace-root}/.orchestration-temp/init-result.md`.
 
@@ -128,7 +144,7 @@ Apply PT006 (Scratchpad Externalization) by writing the initialization result to
 
 ---
 
-## Step 5 — Return result
+## Step 6 — Return result
 
 Return the following inline:
 
@@ -148,8 +164,8 @@ The skill is complete when `init-result.md` exists at `{workspace-root}/.orchest
 - **read_file**: Use in Step 1 to read `skf-config.json` in full. Read from line 1; if the response fills the page, advance `startLine` and read again until confirmed complete.
 - **file_search**: Use in Step 2 only to check for `.devcontainer/devcontainer.json` existence. Do NOT use for directory listing.
 - **list_dir**: Use in Step 3 to inspect whether `.orchestration-temp/` exists and whether it contains files.
-- **run_in_terminal**: Use in Step 3 only for `mkdir -p` (create folder) and `rm -f` (delete files inside folder). NEVER use `rm -rf`. NEVER run commands against any path other than `.orchestration-temp/`.
-- **create_file**: Use in Step 4 to write `init-result.md`. Use only after the **config snapshot** and all step outputs are finalized.
+- **run_in_terminal**: Use in Step 3 to run `detect-spec-context.py`. Use in Step 4 only for `mkdir -p` (create folder) and `rm -f` (delete files inside folder). NEVER use `rm -rf`. NEVER run Step 4 commands against any path other than `.orchestration-temp/`.
+- **create_file**: Use in Step 5 to write `init-result.md`. Use only after the **config snapshot** and all step outputs are finalized.
 - Do NOT use tools not listed here unless the skill explicitly escalates to a sub-skill.
 </tools>
 
@@ -180,6 +196,8 @@ The skill is complete when `init-result.md` exists at `{workspace-root}/.orchest
 - config.approvalTimeoutBehavior: {value}
 - devcontainer-check: passed | skipped | hard-fail
 - orchestration-temp: created | existed-empty | existed-files-deleted
+- spec-context: true | false | unknown
+- spec-feature-dir: {path or none}
 - status: ok | hard-fail
 - hard-fail-reason: {reason or none}
 ```
@@ -203,9 +221,10 @@ Input: workspace-root = `/workspaces/spek-fu`, no env override. `skf-config.json
 Expected behavior:
 1. Reads `skf-config.json` in full; extracts all config values into the **config snapshot**.
 2. Effective environment is `devcontainer` (from config). `file_search` finds `.devcontainer/devcontainer.json`. Sets `devcontainer-check: passed`.
-3. `list_dir` on `.orchestration-temp/` fails (not found). Runs `mkdir -p .orchestration-temp/`. Sets `orchestration-temp: created`.
-4. Writes `init-result.md` with all extracted values, `devcontainer-check: passed`, `orchestration-temp: created`, `status: ok`, `hard-fail-reason: none`.
-5. Returns inline: `output-path: .orchestration-temp/init-result.md`, `status: ok`, `hard-fail-reason: none`.
+3. Runs `detect-spec-context.py`. Parses JSON stdout; sets `spec-context` and `spec-feature-dir` accordingly.
+4. `list_dir` on `.orchestration-temp/` fails (not found). Runs `mkdir -p .orchestration-temp/`. Sets `orchestration-temp: created`.
+5. Writes `init-result.md` with all extracted values, `devcontainer-check: passed`, `spec-context`, `spec-feature-dir`, `orchestration-temp: created`, `status: ok`, `hard-fail-reason: none`.
+6. Returns inline: `output-path: .orchestration-temp/init-result.md`, `status: ok`, `hard-fail-reason: none`.
 </example>
 
 <example>
@@ -214,15 +233,16 @@ Input: workspace-root = `/workspaces/spek-fu`, env = `host`. `.orchestration-tem
 Expected behavior:
 1. Reads `skf-config.json` in full; extracts all config values into the **config snapshot**.
 2. `env` input is `host` (validated in Preflight). Effective environment is `host`. Sets `devcontainer-check: skipped`.
-3. `list_dir` finds three entries in `.orchestration-temp/`. Runs `rm -f .orchestration-temp/*`. Sets `orchestration-temp: existed-files-deleted`.
-4. Writes `init-result.md` with all extracted values, `devcontainer-check: skipped`, `orchestration-temp: existed-files-deleted`, `status: ok`, `hard-fail-reason: none`.
-5. Returns inline: `output-path: .orchestration-temp/init-result.md`, `status: ok`, `hard-fail-reason: none`.
+3. Runs `detect-spec-context.py`. Parses JSON stdout; sets `spec-context` and `spec-feature-dir` accordingly.
+4. `list_dir` finds three entries in `.orchestration-temp/`. Runs `rm -f .orchestration-temp/*`. Sets `orchestration-temp: existed-files-deleted`.
+5. Writes `init-result.md` with all extracted values, `devcontainer-check: skipped`, `spec-context`, `spec-feature-dir`, `orchestration-temp: existed-files-deleted`, `status: ok`, `hard-fail-reason: none`.
+6. Returns inline: `output-path: .orchestration-temp/init-result.md`, `status: ok`, `hard-fail-reason: none`.
 </example>
 
 <example type="counter">
 Input: workspace-root = `/workspaces/spek-fu`, no env override. `skf-config.json` has `environment: "devcontainer"`. `.devcontainer/devcontainer.json` does NOT exist on disk.
 
-Expected behavior: Step 2 detects that `file_search` returns no result for `.devcontainer/devcontainer.json`. Sets `devcontainer-check: hard-fail`, `status: hard-fail`, `hard-fail-reason: "skf-config.json specifies devcontainer but .devcontainer/devcontainer.json not found."` Skips Step 3. Writes `init-result.md` with `status: hard-fail` and the reason (all unresolved fields set to `n/a`). Returns inline: `status: hard-fail`, `hard-fail-reason: "skf-config.json specifies devcontainer but .devcontainer/devcontainer.json not found."` Does NOT proceed to folder management or any further initialization.
+Expected behavior: Step 2 detects that `file_search` returns no result for `.devcontainer/devcontainer.json`. Sets `devcontainer-check: hard-fail`, `status: hard-fail`, `hard-fail-reason: "skf-config.json specifies devcontainer but .devcontainer/devcontainer.json not found."` Skips Steps 3–4. Writes `init-result.md` with `status: hard-fail` and the reason (all unresolved fields set to `n/a`). Returns inline: `status: hard-fail`, `hard-fail-reason: "skf-config.json specifies devcontainer but .devcontainer/devcontainer.json not found."` Does NOT proceed to spec detection, folder management, or any further initialization.
 </example>
 </examples>
 

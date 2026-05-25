@@ -2,7 +2,7 @@
 id: "impl-implement"
 recommended-tier: "fast-agent"
 version: 1.0
-description: "Executes implementation tasks from an orchestrator-supplied plan, returning a structured Result block. USE FOR: applying a task, task list, or plan against the codebase. DO NOT USE FOR: multi-task orchestration, architectural changes, or updating tracking files."
+description: "Executes implementation tasks from an orchestrator-supplied plan, returning a structured Result block. For general orchestration tasks that do not have a spec-flow artifact pipeline (no tasks.md, spec.md, or feature-dir). USE FOR: applying a task, task list, or plan against the codebase when there is no active spec-flow context. DO NOT USE FOR: multi-task orchestration, architectural changes, updating tracking files, or feature work with a spec-flow tasks.md — for feature work with an active spec-flow tasks.md, use spec-implement instead."
 anti-scope: "Does not update tracking files, invoke manage_todo_list, orchestrate tasks, or handle architectural changes."
 tags:
   - "implementation"
@@ -72,7 +72,7 @@ Classify current state before editing:
 
 ## Step 1 — Load standards
 
-Read `constitution/coding-standards.md` and `constitution/testing-guidelines.md` before editing any code.
+Read `constitution/constitution.md` to review coding standards and testing guidelines before editing any code.
 
 ## Step 2 — Verify state
 
@@ -166,12 +166,12 @@ Context-affecting: YES | NO
 <examples>
 <example type="single task">
 Input: task="1.2 — Create `src/Discount/DiscountService.cs` — implement ApplyDiscount method"; context=spec excerpt.
-Expected output: Reads coding-standards.md. Reads target directory. Creates `DiscountService.cs` with `ApplyDiscount`. Runs `dotnet build`. Runs `dotnet test`. Verifies file and method exist. Returns: "Status: SUCCESS / What changed: Created src/Discount/DiscountService.cs / Build: ✅ SUCCESS (0 errors) / Tests: ✅ PASSED (42 passed) / Verification: VERIFIED / Subtasks discovered: None / Context-affecting: NO"
+Expected output: Reads coding standards from constitution.md. Reads target directory. Creates `DiscountService.cs` with `ApplyDiscount`. Runs `dotnet build`. Runs `dotnet test`. Verifies file and method exist. Returns: "Status: SUCCESS / What changed: Created src/Discount/DiscountService.cs / Build: ✅ SUCCESS (0 errors) / Tests: ✅ PASSED (42 passed) / Verification: VERIFIED / Subtasks discovered: None / Context-affecting: NO"
 </example>
 
 <example type="multi-task plan">
 Input: plan with tasks 2.1 (modify `src/Auth/AuthService.cs`) and 2.2 (add test to `tests/Auth/AuthServiceTests.cs`).
-Expected output: Reads coding-standards.md and testing-guidelines.md. Reads both target files. Applies 2.1, then 2.2. Runs `dotnet build`. Runs `dotnet test`. Verifies both changes present. Returns Result block covering both tasks with status SUCCESS.
+Expected output: Reads coding and testing standards from constitution.md. Reads both target files. Applies 2.1, then 2.2. Runs `dotnet build`. Runs `dotnet test`. Verifies both changes present. Returns Result block covering both tasks with status SUCCESS.
 </example>
 
 <example type="counter">
