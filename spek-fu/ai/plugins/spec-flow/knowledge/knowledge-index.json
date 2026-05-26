@@ -28,12 +28,6 @@
       "path": "spek-fu/ai/plugins/spec-flow/knowledge/skill-meta-rules.md"
     },
     {
-      "name": "spec-flow-workflow.md",
-      "type": "file",
-      "description": "",
-      "path": "spek-fu/ai/plugins/spec-flow/knowledge/spec-flow-workflow.md"
-    },
-    {
       "name": "tech-stack-patterns.md",
       "type": "file",
       "description": "",

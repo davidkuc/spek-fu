@@ -46,21 +46,6 @@ Two complementary databases feed the orchestration cycle:
 8. **Pattern availability**: The new patterns immediately become available to future orchestration cycles.
 
 
-
-## Orchestration Flow
-
-1. **Request intake**: A request enters `@skf-general-orchestrator`.
-2. **Index traversal**: The orchestrator reads the intake runbook and traverses the index chain to locate applicable skills and patterns.
-3. **Plan production**: An orchestration plan is created and decomposed into ordered waves.
-4. **Wave dispatch**: Each wave is dispatched as a clean-slate subagent with a structured manifest (skill, inputs, agent tier, verification criteria).
-5. **Skill execution**: Subagents execute the skill protocol exactly and return structured output.
-6. **Output verification**: The orchestrator verifies each output against the wave's acceptance criteria before advancing.
-7. **Lesson capture**: After all waves complete, the close runbook captures lessons via `meta-knowledge-manage`.
-8. **Distillation check**: If the distillation threshold is crossed, `meta-knowledge-distillation` is dispatched to distill accumulated lessons into new patterns.
-9. **Pattern feedback**: New patterns feed back into future orchestration cycles, compounding the system's behavioral repertoire over time.
-
-
-
 ## ⚡ Workflow Modes
 
 Spek-Fu supports two primary workflow paths. Both are driven by the same orchestrator and benefit from the same self-learning engine.
@@ -106,7 +91,63 @@ The orchestrator decomposes the request into ordered waves, selects skills, and 
 
 
 
-## 📋 Quickstart
+## � How-To Guides
+
+### How to Run the Spec-Flow Pipeline
+
+Spec-Flow is a **manual, session-by-session workflow**. Each slash command runs in its own VS Code Chat session — review the output, iterate until satisfied, then open a new session for the next step. Do not chain multiple spec steps in a single session.
+
+**Step-by-step:**
+
+1. **Open a new chat session** for each spec step and run the commands in order:
+
+   | Session | Command | When to move on |
+   |---------|---------|------------------|
+   | 1 | `/spec-feature-draft` | Spec looks complete and captures your intent |
+   | 2 | `/spec-clarification` | All ambiguities resolved; no `[NEEDS CLARIFICATION]` markers remain |
+   | 3 | `/spec-devils-advocate` | Findings reviewed; if critical issues found, re-run `/spec-clarification` with report as context, then re-run this step |
+   | 4 | `/spec-testability-draft` | Findings reviewed; if non-testable requirements found, re-run `/spec-clarification` with report as context, then re-run this step |
+   | 5 | `/spec-technical-draft` | Technical design looks sound |
+   | 6 | `/spec-tdd-draft` | TDD contract reviewed |
+   | 7 | `/spec-tasks-draft` | Task list looks complete and correctly phased |
+   | 8 | `/spec-feature-analysis` | Verdict is `READY` or `READY WITH WARNINGS` |
+
+2. **After a `READY` verdict**, open a **new chat session**, select the orchestrator agent and provide instructions to implement the spec feature.
+
+   The orchestrator reads `tasks.md` and all spec artifacts from the feature directory, then drives `spec-implement` phase by phase until all tasks are complete.
+
+**Key rules:**
+- Each slash command is its own fresh chat session.
+- The feature directory path (e.g. `spek-fu/features/<feature-name>/`) is the primary input to the orchestrator — it locates `tasks.md`, `spec.md`, and all other artifacts automatically.
+- If `spec-feature-analysis` returns `BLOCKED`, resolve the flagged issues and re-run it before handing off.
+- You can re-run any step as many times as needed before moving on.
+
+---
+
+### How to Run General-Purpose Work
+
+For tasks with clear, bounded scope — bug fixes, refactoring, framework changes, exploratory tasks — skip the spec pipeline and go directly to the orchestrator.
+
+**Step-by-step:**
+
+1. **Open a new chat session** in VS Code Chat.
+
+2. **Invoke the orchestrator** with your request
+
+3. The orchestrator decomposes the request into ordered waves, selects the appropriate skills, and dispatches subagents to execute each wave with verification gates between them.
+
+4. **Review wave outputs** if the orchestrator pauses for confirmation between phases.
+
+**Key rules:**
+- Use this mode when scope is already clear and upfront specification would add no value. Best results are achieved with a pre-generated plan. The native Github /plan agent is highly recommended for this.
+- The orchestrator handles all decomposition — you do not need to break the work down manually.
+- For large, multi-component, or ambiguous requests, prefer the Spec-Flow pipeline to avoid costly downstream rework.
+
+---
+
+
+
+## �📋 Quickstart
 
 1. **Clone** this repository into your project root
 2. **Open** in VS Code with GitHub Copilot Chat enabled
@@ -325,16 +366,18 @@ The spec-flow pipeline is invoked step by step using slash commands (e.g. `/spec
 
 ### Key Design Principles
 
-- **Fail-fast adversarial review**: Step 3 (devils-advocate) surfaces architectural fragility before downstream planning, reducing rework.
-- **Test-first design**: Step 5 converts testability analysis into a TDD implementation contract that developers follow before writing code.
-- **Incremental clarity**: Step 2 (clarification) prevents ambiguities from cascading into every downstream artifact.
+- **Fail-fast adversarial review**: Step 3 (devils-advocate) surfaces architectural fragility before downstream planning, reducing rework. The report does not modify the spec — feed findings back through `/spec-clarification` if spec changes are needed.
+- **Test-first design**: Step 6 converts testability analysis into a TDD implementation contract that developers follow before writing code. If non-testable requirements are found in step 4, address them via `/spec-clarification` before continuing.
+- **Incremental clarity**: `/spec-clarification` is the **only approved mechanism** for modifying `spec.md` at any point in the pipeline — including after receiving adversarial or testability findings.
 - **Phased decomposition**: Step 7 produces implementation waves with explicit dependencies and verification criteria.
 
 ### Required Execution
 
 All eight specification steps are required. Skipping any step introduces uncompensated risk into specification quality and therefore into implementation accuracy — the orchestrator's output is only as good as the spec it receives.
 
-`spec-feature-analysis` (step 8) is the readiness gate: it surfaces staleness, unresolved clarifications, and coverage gaps before the orchestrator touches any code. A `BLOCKED` verdict halts progress until the underlying issues are resolved.
+**Spec amendment rule**: `spec-clarification` is the only step that writes to `spec.md`. Report steps (`spec-devils-advocate`, `spec-testability-draft`) never modify the spec. If either report surfaces issues that require spec changes, re-run `/spec-clarification` with the report as context, then re-run the report step to verify the spec was correctly updated before proceeding.
+
+`spec-feature-analysis` (step 8) is the readiness gate: it surfaces staleness, unresolved clarifications, and coverage gaps before the orchestrator touches any code. It will return `BLOCKED` if `spec.md` was not updated after a report that identified issues requiring spec changes. A `BLOCKED` verdict halts progress until the underlying issues are resolved.
 
 Once the full spec package is ready, `@skf-general-orchestrator` drives implementation by dispatching `spec-implement` phase by phase. Invoking `spec-implement` directly is valid for single-phase execution, but the orchestrator is required for full end-to-end delivery.
 
