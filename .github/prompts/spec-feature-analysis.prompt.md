@@ -4,4 +4,4 @@ description: "Inspects all spec-flow pipeline artifacts in a feature directory, 
 anti-scope: "Does not modify spec.md, tasks.md, or any upstream pipeline artifact. Does not invoke other skills or re-run any upstream pipeline step. The only file this skill writes is feature-analysis-report.md."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-feature-analysis.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-feature-analysis.md`. Execute its full protocol exactly as described.

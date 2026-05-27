@@ -6,7 +6,7 @@
     {
       "name": "gov-update.prompt.md",
       "type": "file",
-      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
+      "description": "Applies governance file updates based on changed files or an orchestration plan. Reasons about which governance files need updating, proposes each change for per-change user approval, applies approved changes, then always runs sync-index-files.py followed by sync-index-files.py --check. USE FOR: keeping constitution, project docs, and AI framework files aligned with implemented changes.",
       "path": ".github/prompts/gov-update.prompt.md"
     },
     {
@@ -18,7 +18,7 @@
     {
       "name": "meta-script-manage.prompt.md",
       "type": "file",
-      "description": "Scaffolds and validates framework scripts in `ai/scripts/`. USE FOR: authoring new scripts, auditing existing scripts against policy, fixing incomplete headers. DO NOT USE FOR: running scripts, managing skill/agent/knowledge files, or modifying files outside `ai/scripts/`.",
+      "description": "Scaffolds and validates framework scripts in `spek-fu/ai/scripts/`. USE FOR: authoring new scripts, auditing existing scripts against policy, fixing incomplete headers. DO NOT USE FOR: running scripts, managing skill/agent/knowledge files, or modifying files outside `spek-fu/ai/scripts/`.",
       "path": ".github/prompts/meta-script-manage.prompt.md"
     },
     {
@@ -42,7 +42,7 @@
     {
       "name": "spec-feature-draft.prompt.md",
       "type": "file",
-      "description": "Generates a feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, or applying code changes.",
+      "description": "Generates a feature specification file from a natural language feature description, creating a numbered git branch and populating all required spec sections. USE FOR: drafting a new feature spec from a user description, creating spec branches, producing specification artifacts ready for planning. DO NOT USE FOR: planning implementation tasks, executing clarification sessions on existing specs, applying code changes, or running quality validation.",
       "path": ".github/prompts/spec-feature-draft.prompt.md"
     },
     {
@@ -54,37 +54,37 @@
     {
       "name": "spec-tdd-draft.prompt.md",
       "type": "file",
-      "description": "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at FEATURE_DIR/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md.",
+      "description": "Analyzes testability-assessment.md and spec.md to produce a structured TDD implementation design report at {feature-dir}/tdd-designer/report.md. USE FOR: converting test-expert output into BDD-formatted test specifications with risk assessment, coverage mapping, and incremental TDD implementation waves. DO NOT USE FOR: running tests, implementing code, or modifying testability-assessment.md or spec.md.",
       "path": ".github/prompts/spec-tdd-draft.prompt.md"
     },
     {
       "name": "spec-technical-draft.prompt.md",
       "type": "file",
-      "description": "Executes the implementation planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, and quickstart.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities and typed API contracts. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work.",
+      "description": "Executes the technical planning workflow against a validated feature spec, producing research.md, data-model.md, typed API contracts, quickstart.md, and a synthesized technical-plan.md. USE FOR: translating an approved feature spec into a phased technical design plan with resolved ambiguities, typed API contracts, and a single consolidated plan document. DO NOT USE FOR: authoring the initial feature spec, running tests, or executing implementation work.",
       "path": ".github/prompts/spec-technical-draft.prompt.md"
     },
     {
       "name": "spec-testability-draft.prompt.md",
       "type": "file",
-      "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at FEATURE_DIR/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; use implementation skills for test execution.",
+      "description": "Analyzes spec.md and a prior devils-advocate report from a test engineering perspective, producing a Testability Assessment Report at {feature-dir}/test-expert/testability-assessment.md. USE FOR: evaluating feature spec testability, grading requirements as testable/non-testable, identifying structural testing risks, and projecting a testing strategy shape. DO NOT USE FOR: generating test code or test plans; consult the **spec-implement** skill for test execution.",
       "path": ".github/prompts/spec-testability-draft.prompt.md"
     },
     {
       "name": "spec-clarification.prompt.md",
       "type": "file",
-      "description": "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers and writing to disk only after explicit user approval. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes.",
+      "description": "Conducts a structured multi-pass ambiguity scan on a feature spec file and resolves critical gaps through a configurable interactive questioning loop, accumulating all answers in an in-memory Answer Buffer and writing them to the spec file after the question loop completes. USE FOR: reducing spec ambiguity before planning, detecting missing acceptance criteria, encoding clarifications into spec sections. DO NOT USE FOR: drafting new specs, producing implementation plans, or executing code changes.",
       "path": ".github/prompts/spec-clarification.prompt.md"
     },
     {
       "name": "spec-feature-analysis.prompt.md",
       "type": "file",
-      "description": "Inspects all spec-flow pipeline artifacts in a feature directory, producing a Feature Analysis Report with artifact inventory, staleness signals, [NEEDS CLARIFICATION] marker counts, tasks state breakdown, cross-artifact consistency findings, and a readiness verdict. USE FOR: verifying all upstream artifacts are complete, coherent, and non-stale before starting implementation. DO NOT USE FOR: modifying artifacts, re-running upstream pipeline skills, or implementing the feature.",
+      "description": "Inspects all spec-flow pipeline artifacts in a feature directory, producing a Feature Analysis Report with artifact inventory, staleness signals, [NEEDS CLARIFICATION] marker counts, tasks state breakdown, cross-artifact consistency findings, and a readiness verdict. USE FOR: verifying all upstream artifacts are complete, coherent, and non-stale before starting implementation. DO NOT USE FOR: modifying artifacts, re-running upstream pipeline skills, or implementing the feature — consult the **spec-implement** skill for implementation.",
       "path": ".github/prompts/spec-feature-analysis.prompt.md"
     },
     {
       "name": "spec-implement.prompt.md",
       "type": "file",
-      "description": "Executes a targeted phase (or explicit set of phases) from tasks.md, with checklist gate verification and progress tracking. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, or making architectural changes outside the task plan.",
+      "description": "Executes a targeted phase (or explicit set of phases) from tasks.md within a spec-flow feature directory, using lazy context loading, progress tracking, and bounded task-failure escalation. Requires spec-flow artifacts: tasks.md, spec.md, and a resolved feature-dir. This is the implementation skill for the spec-flow pipeline. Defaults to the next single incomplete phase unless the user explicitly requests more. USE FOR: executing one implementation phase at a time from a tasks.md plan after spec-tasks-draft has completed; feature work with an active spec-flow branch and spec.md present. DO NOT USE FOR: generating tasks, drafting specs, evaluating spec quality, making architectural changes outside the task plan, or implementation without spec-flow artifacts — for non-spec-flow implementation, use impl-implement.",
       "path": ".github/prompts/spec-implement.prompt.md"
     },
     {

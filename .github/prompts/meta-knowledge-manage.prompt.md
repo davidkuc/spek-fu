@@ -4,4 +4,4 @@ description: "Appends lessons to, retrieves lessons from, and searches `knowledg
 anti-scope: "Does NOT implement tasks, apply code changes, or manage any file other than `knowledge-database.md`."
 ---
 
-Consult the skill from `ai/plugins/skf/skills/meta-knowledge-manage.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/skf/skills/meta-knowledge-manage.md`. Execute its full protocol exactly as described.

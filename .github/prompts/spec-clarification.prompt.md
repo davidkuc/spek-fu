@@ -4,4 +4,4 @@ description: "Conducts a structured multi-pass ambiguity scan on a feature spec 
 anti-scope: "Does not create new spec files, produce implementation plans, or make code changes. For spec drafting use spec-feature-draft; for adversarial review use spec-devils-advocate."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-clarification.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-clarification.md`. Execute its full protocol exactly as described.

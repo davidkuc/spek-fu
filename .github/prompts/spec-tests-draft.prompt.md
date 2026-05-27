@@ -4,4 +4,4 @@ description: "Analyzes spec.md and a prior devils-advocate report from a test en
 anti-scope: "Does not generate test code, test plans, or implementation artifacts. Does not modify spec.md or any upstream artifact. Read-only analysis only."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-testability-draft.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-testability-draft.md`. Execute its full protocol exactly as described.

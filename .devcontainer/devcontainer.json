@@ -47,8 +47,8 @@
                     "cargo test": true,
                     "go test": true,
                     "/^git\\s+(status|diff|log|show|branch)\\b/": true,
-                    "ai/scripts/**": true,
-                    "/^pwsh\\s+ai\\/scripts/": true,
+                    "spek-fu/ai/scripts/**": true,
+                    "/^pwsh\\s+spek-fu\\/ai\\/scripts/": true,
                     "rm": false,
                     "rmdir": false,
                     "del": false,
@@ -69,9 +69,7 @@
                     "/^terraform\\s+(apply|destroy)\\b/": false
                 },
                 "chat.customAgentInSubagent.enabled": true,
-                "files.watcherExclude": {
-                    "**/.orchestration-temp/**": true
-                },
+                "files.watcherExclude": {},
                 "search.exclude": {
                     "**/node_modules": true,
                     "**/bin": true,

@@ -5,10 +5,9 @@
 Spek-Fu is an **AI agentic development framework** built around a general-purpose orchestrator that:
 - Decomposes requests into **subagent waves**
 - Routes each wave through a **tiered agent pool**
+- Keeps **humans in control during specification** while AI drives implementation
 - Progressively distills operational experience into **reusable behavioral patterns**
 - Compounds gained knowledge with **every session**
-
-
 
 ## Framework Architecture
 
@@ -29,8 +28,8 @@ Two complementary databases feed the orchestration cycle:
 
 | Database | Purpose | Example |
 |----------|---------|----------|
-| **Knowledge** `ai/plugins/skf/knowledge/` | Operation-specific lessons (project-scoped) | "Always read devcontainer-guidelines.md before writing" |
-| **Patterns** `ai/plugins/skf/patterns/` | Reusable behavioral strategies (PT0xx files) | PT007: Just-in-Time Retrieval, PT023: Parallelization |
+| **Knowledge** `spek-fu/ai/plugins/skf/knowledge/` | Operation-specific lessons (project-scoped) | "Always read devcontainer-guidelines.md before writing" |
+| **Patterns** `spek-fu/ai/plugins/skf/patterns/` | Reusable behavioral strategies (PT0xx files) | PT007: Just-in-Time Retrieval, PT023: Parallelization |
 
 **Key distinction:** Lessons are specific & operational (stay local) • Patterns are general & structural (travel across projects)
 
@@ -38,7 +37,7 @@ Two complementary databases feed the orchestration cycle:
 ### Self-Learning Loop
 
 1. **Lessons accumulate** in `knowledge-database.md` through normal operation.
-2. **Threshold check**: When the lesson count reaches the configured threshold (`knowledgeDistillationThreshold` in `ai/plugins/skf/skills/config.json`), `meta-knowledge-manage` emits a `distillation-recommended: true` signal.
+2. **Threshold check**: When the lesson count reaches the configured threshold (`knowledgeDistillationThreshold` in `spek-fu/ai/plugins/skf/skills/config.json`), `meta-knowledge-manage` emits a `distillation-recommended: true` signal.
 3. **Signal detection**: The orchestrator's close runbook detects this signal and dispatches `meta-knowledge-distillation`.
 4. **Classification**: Lessons are classified as project-specific (kept) or general-recurring (promoted).
 5. **Pattern generation**: Clusters of 3+ related general-recurring lessons are generalized into new PT0xx pattern files.
@@ -47,26 +46,112 @@ Two complementary databases feed the orchestration cycle:
 8. **Pattern availability**: The new patterns immediately become available to future orchestration cycles.
 
 
+## ⚡ Workflow Modes
 
-## Orchestration Flow
+Spek-Fu supports two primary workflow paths. Both are driven by the same orchestrator and benefit from the same self-learning engine.
 
-1. **Request intake**: A request enters `@skf-general-orchestrator`.
-2. **Index traversal**: The orchestrator reads the intake runbook and traverses the index chain to locate applicable skills and patterns.
-3. **Plan production**: An orchestration plan is created and decomposed into ordered waves.
-4. **Wave dispatch**: Each wave is dispatched as a clean-slate subagent with a structured manifest (skill, inputs, agent tier, verification criteria).
-5. **Skill execution**: Subagents execute the skill protocol exactly and return structured output.
-6. **Output verification**: The orchestrator verifies each output against the wave's acceptance criteria before advancing.
-7. **Lesson capture**: After all waves complete, the close runbook captures lessons via `meta-knowledge-manage`.
-8. **Distillation check**: If the distillation threshold is crossed, `meta-knowledge-distillation` is dispatched to distill accumulated lessons into new patterns.
-9. **Pattern feedback**: New patterns feed back into future orchestration cycles, compounding the system's behavioral repertoire over time.
+---
+
+### Spec-Flow: Spec-Driven Feature Development
+
+Use the **Spec-Flow path** when building a new feature from a raw idea. You drive specification interactively with AI assistance — the orchestrator does not touch code until the full spec package is complete and passes the readiness gate.
+
+```
+Human-driven, AI-assisted                  AI-driven, orchestrated
+──────────────────────────────────────     ──────────────────────────────────────────
+ /spec-feature-draft                        @skf-general-orchestrator
+ /spec-clarification                            dispatches → spec-implement
+ /spec-devils-advocate                          (phase by phase)
+ /spec-testability-draft
+ /spec-technical-draft
+ /spec-tdd-draft
+ /spec-tasks-draft
+ /spec-feature-analysis  ← readiness gate ─►  implementation begins
+```
+
+**When to use:** Building new features, multi-component or multi-phase work, or any task where upfront clarity prevents costly downstream rework.
+
+See [Spec-Flow Plugin](#-spec-flow-plugin) for the full step-by-step reference.
+
+---
+
+### General Purpose: Direct Orchestration
+
+Use the **general-purpose path** for any request where scope is already clear — refactoring, bug fixes, framework maintenance, exploratory tasks, or anything that does not warrant a full spec pipeline.
+
+```
+User request  →  @skf-general-orchestrator  →  wave decomposition  →  impl-implement
+```
+
+The orchestrator decomposes the request into ordered waves, selects skills, and dispatches subagents with verification gates — no spec pipeline required.
+
+**When to use:** Scope is clear, refactoring, debugging, framework changes, or exploratory work.
+
+---
 
 
 
-## 📋 Quickstart
+## � How-To Guides
+
+### How to Run the Spec-Flow Pipeline
+
+Spec-Flow is a **manual, session-by-session workflow**. Each slash command runs in its own VS Code Chat session — review the output, iterate until satisfied, then open a new session for the next step. Do not chain multiple spec steps in a single session.
+
+**Step-by-step:**
+
+1. **Open a new chat session** for each spec step and run the commands in order:
+
+   | Session | Command | When to move on |
+   |---------|---------|------------------|
+   | 1 | `/spec-feature-draft` | Spec looks complete and captures your intent |
+   | 2 | `/spec-clarification` | All ambiguities resolved; no `[NEEDS CLARIFICATION]` markers remain |
+   | 3 | `/spec-devils-advocate` | Findings reviewed; if critical issues found, re-run `/spec-clarification` with report as context, then re-run this step |
+   | 4 | `/spec-testability-draft` | Findings reviewed; if non-testable requirements found, re-run `/spec-clarification` with report as context, then re-run this step |
+   | 5 | `/spec-technical-draft` | Technical design looks sound |
+   | 6 | `/spec-tdd-draft` | TDD contract reviewed |
+   | 7 | `/spec-tasks-draft` | Task list looks complete and correctly phased |
+   | 8 | `/spec-feature-analysis` | Verdict is `READY` or `READY WITH WARNINGS` |
+
+2. **After a `READY` verdict**, open a **new chat session**, select the orchestrator agent and provide instructions to implement the spec feature.
+
+   The orchestrator reads `tasks.md` and all spec artifacts from the feature directory, then drives `spec-implement` phase by phase until all tasks are complete.
+
+**Key rules:**
+- Each slash command is its own fresh chat session.
+- The feature directory path (e.g. `spek-fu/features/<feature-name>/`) is the primary input to the orchestrator — it locates `tasks.md`, `spec.md`, and all other artifacts automatically.
+- If `spec-feature-analysis` returns `BLOCKED`, resolve the flagged issues and re-run it before handing off.
+- You can re-run any step as many times as needed before moving on.
+
+---
+
+### How to Run General-Purpose Work
+
+For tasks with clear, bounded scope — bug fixes, refactoring, framework changes, exploratory tasks — skip the spec pipeline and go directly to the orchestrator.
+
+**Step-by-step:**
+
+1. **Open a new chat session** in VS Code Chat.
+
+2. **Invoke the orchestrator** with your request
+
+3. The orchestrator decomposes the request into ordered waves, selects the appropriate skills, and dispatches subagents to execute each wave with verification gates between them.
+
+4. **Review wave outputs** if the orchestrator pauses for confirmation between phases.
+
+**Key rules:**
+- Use this mode when scope is already clear and upfront specification would add no value. Best results are achieved with a pre-generated plan. The native Github /plan agent is highly recommended for this.
+- The orchestrator handles all decomposition — you do not need to break the work down manually.
+- For large, multi-component, or ambiguous requests, prefer the Spec-Flow pipeline to avoid costly downstream rework.
+
+---
+
+
+
+## �📋 Quickstart
 
 1. **Clone** this repository into your project root
 2. **Open** in VS Code with GitHub Copilot Chat enabled
-3. **Configure** `constitution/` and `project/` with your own content
+3. **Configure** `spek-fu/constitution/` and `spek-fu/project/` with your own content
 4. **Use** `@skf-general-orchestrator` for free-form requests, or invoke `/` commands for scoped operations
 5. *(Optional)* **Extend** with a custom plugin — see [Creating a Custom Plugin](#creating-a-custom-plugin)
 
@@ -75,7 +160,8 @@ Two complementary databases feed the orchestration cycle:
 
 | Workflow | Approach | Details |
 |----------|----------|----------|
-| **Free-form requests** | `@skf-general-orchestrator` | Analyzes request, selects skills, sequences work end-to-end |
+| **Spec-driven feature** | Spec-Flow pipeline → `@skf-general-orchestrator` | Step through spec skills interactively; orchestrator drives implementation phase |
+| **General-purpose work** | `@skf-general-orchestrator` | Analyzes request, selects skills, sequences work end-to-end |
 | **Direct commands** | `/` slash commands | Use when operation is already well-defined |
 | **Framework changes** | `/gov-update` | Run after adding/renaming/removing artifacts |
 | **Custom plugin** | `create-plugin.py` + `/gov-update` | Scaffold plugin, add skills, sync index |
@@ -105,18 +191,18 @@ Syncs all `*-index.json` files with the actual filesystem state:
 - Extracts frontmatter data
 - Preserves existing descriptions
 
-Recommended pre-commit check: `python3 ai/scripts/python/sync-index-files.py --check`.
+Recommended pre-commit check: `python3 spek-fu/ai/scripts/python/sync-index-files.py --check`.
 
 Run after adding, renaming, or removing any indexed framework artifact.
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/sync-index-files.py
+python3 spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/sync-index-files.py
+python spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 ---
@@ -128,20 +214,20 @@ Run after creating or modifying any user-facing skill, or after adding a new plu
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/generate-prompt-files.py
+python3 spek-fu/ai/scripts/python/generate-prompt-files.py
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/generate-prompt-files.py
+python spek-fu/ai/scripts/python/generate-prompt-files.py
 ```
 
 ---
 
 **`create-plugin.py`**  
-Scaffolds a new custom plugin folder under `ai/plugins/` with standard structure:
+Scaffolds a new custom plugin folder under `spek-fu/ai/plugins/` with standard structure:
 ```
-ai/plugins/<plugin-name>/
+spek-fu/ai/plugins/<plugin-name>/
 ├── <plugin-name>-index.json
 ├── knowledge/
 ├── skills/
@@ -154,14 +240,14 @@ ai/plugins/<plugin-name>/
 
 **Linux/macOS (bash):**
 ```bash
-python3 ai/scripts/python/create-plugin.py --name <plugin-name>
-python3 ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
+python3 spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name>
+python3 spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
 ```
 
 **Windows (PowerShell/CMD):**
 ```powershell
-python ai/scripts/python/create-plugin.py --name <plugin-name>
-python ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
+python spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name>
+python spek-fu/ai/scripts/python/create-plugin.py --name <plugin-name> --dry-run
 ```
 
 
@@ -174,7 +260,7 @@ Plugins are the primary **extension point** of the framework. The scaffolding sc
 ### What the scaffold creates
 
 ```
-ai/plugins/<plugin-name>/
+spek-fu/ai/plugins/<plugin-name>/
 ├── <plugin-name>-index.json    # Plugin-level index, registered in plugins-index.json
 ├── knowledge/
 │   └── knowledge-index.json   # Ready for domain-specific knowledge files
@@ -184,23 +270,23 @@ ai/plugins/<plugin-name>/
     └── templates-index.json   # Ready for scaffolding templates
 ```
 
-The plugin is automatically registered in `ai/plugins/plugins-index.json` so the orchestrator can traverse into it from the root index chain.
+The plugin is automatically registered in `spek-fu/ai/plugins/plugins-index.json` so the orchestrator can traverse into it from the root index chain.
 
 
 ### Step-by-step
 
 ```bash
 # 1. Preview the scaffold (no files written)
-python3 ai/scripts/python/create-plugin.py --name my-plugin --dry-run
+python3 spek-fu/ai/scripts/python/create-plugin.py --name my-plugin --dry-run
 
 # 2. Scaffold the plugin
-python3 ai/scripts/python/create-plugin.py --name my-plugin
+python3 spek-fu/ai/scripts/python/create-plugin.py --name my-plugin
 
-# 3. Add skill files to ai/plugins/my-plugin/skills/
+# 3. Add skill files to spek-fu/ai/plugins/my-plugin/skills/
 #    Use /meta-skill-manage to create them following the standard format.
 
 # 4. Register new skills in the index chain
-python3 ai/scripts/python/sync-index-files.py
+python3 spek-fu/ai/scripts/python/sync-index-files.py
 #    Or: run /gov-update — it calls sync automatically.
 ```
 
@@ -208,16 +294,16 @@ python3 ai/scripts/python/sync-index-files.py
 
 ```powershell
 # 1. Preview the scaffold (no files written)
-python ai/scripts/python/create-plugin.py --name my-plugin --dry-run
+python spek-fu/ai/scripts/python/create-plugin.py --name my-plugin --dry-run
 
 # 2. Scaffold the plugin
-python ai/scripts/python/create-plugin.py --name my-plugin
+python spek-fu/ai/scripts/python/create-plugin.py --name my-plugin
 
-# 3. Add skill files to ai/plugins/my-plugin/skills/
+# 3. Add skill files to spek-fu/ai/plugins/my-plugin/skills/
 #    Use /meta-skill-manage to create them following the standard format.
 
 # 4. Register new skills in the index chain
-python ai/scripts/python/sync-index-files.py
+python spek-fu/ai/scripts/python/sync-index-files.py
 #    Or: run /gov-update — it calls sync automatically.
 ```
 
@@ -232,7 +318,7 @@ The `--name` slug must be lowercase alphanumeric with hyphens (e.g. `dotnet`, `d
 
 ## � Spec-Flow Plugin
 
-**Spec-Flow** is a built-in plugin that implements an **eight-step feature specification pipeline**, transforming raw ideas into implementation-ready task lists through structured, adversarial review and test-driven design.
+**Spec-Flow** is a built-in plugin that implements an **eight-step specification pipeline** followed by an orchestrator-driven implementation phase. You drive specification interactively with AI assistance — the orchestrator does not touch code until every artifact is complete and the feature-analysis readiness gate passes. This separation keeps humans in control of *what* gets built while the AI handles *how* to build it.
 
 ### Workflow Chain
 
@@ -247,16 +333,19 @@ spec-devils-advocate
       ↓
 spec-testability-draft
       ↓
-spec-tdd-draft
-      ↓
 spec-technical-draft
       ↓
+spec-tdd-draft
+      ↓
 spec-tasks-draft
-   ↓
-spec-implement
+      ↓
+spec-feature-analysis
+      ↓
+@skf-general-orchestrator
+  (dispatches → spec-implement)
 ```
 
-### Eight Steps
+### Ten Steps
 
 | # | Step | Purpose | Output Artifact | Required |
 |----|------|---------|-----------------|----------|
@@ -264,25 +353,33 @@ spec-implement
 | 2 | **spec-clarification** | Resolve ambiguities through structured Q&A | `FEATURE_DIR/spec.md` (amended) | ✅ Required |
 | 3 | **spec-devils-advocate** | Red-team spec to surface failure modes | `FEATURE_DIR/devils-advocate/devils-advocate-report.md` | 🔶 Strongly recommended |
 | 4 | **spec-testability-draft** | Evaluate from test-engineering perspective | `FEATURE_DIR/test-expert/testability-assessment.md` | ✅ Required |
-| 5 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
-| 6 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
+| 5 | **spec-technical-draft** | Produce technical design & architecture decisions | `FEATURE_DIR/research.md`, `FEATURE_DIR/data-model.md`, `FEATURE_DIR/contracts/`, `FEATURE_DIR/quickstart.md` | ✅ Required |
+| 6 | **spec-tdd-draft** | Convert testability findings into TDD design | `FEATURE_DIR/tdd-designer/report.md` | ✅ Required |
 | 7 | **spec-tasks-draft** | Decompose design into phased, ordered task list | `FEATURE_DIR/tasks.md` | ✅ Required |
-| 8 | **spec-implement** | Execute the task plan phase by phase | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
+| 8 | **spec-feature-analysis** | Surface staleness, unresolved clarifications, and coverage gaps | `FEATURE_DIR/feature-analysis-report.md` | ✅ Required |
+| 9 | **spec-implement** | Execute a single task plan phase (dispatched by the orchestrator) | Implementation changes in the feature branch; `FEATURE_DIR/tasks.md` updated | ✅ Required |
+| 10 | **@skf-general-orchestrator** | Orchestrate full implementation by dispatching `spec-implement` phase by phase, using all spec artifacts as context | All phases completed; `FEATURE_DIR/tasks.md` fully resolved | ✅ Required |
 
 ### Invocation Pattern
 
-The spec-flow pipeline is best invoked manually using prompt slash commands like `/spec-devils-advocate`, since there is a lot of user interaction involved in this flow.
+The spec-flow pipeline is invoked step by step using slash commands (e.g. `/spec-feature-draft`, `/spec-devils-advocate`). Each step is interactive — you review the output, ask follow-up questions, and iterate before moving to the next step. Once all eight spec steps are complete and the feature-analysis verdict is `READY`, hand off to `@skf-general-orchestrator` for implementation.
 
 ### Key Design Principles
 
-- **Fail-fast adversarial review**: Step 3 (devils-advocate) surfaces architectural fragility before downstream planning, reducing rework.
-- **Test-first design**: Step 5 converts testability analysis into a TDD implementation contract that developers follow before writing code.
-- **Incremental clarity**: Step 2 (clarification) prevents ambiguities from cascading into every downstream artifact.
+- **Fail-fast adversarial review**: Step 3 (devils-advocate) surfaces architectural fragility before downstream planning, reducing rework. The report does not modify the spec — feed findings back through `/spec-clarification` if spec changes are needed.
+- **Test-first design**: Step 6 converts testability analysis into a TDD implementation contract that developers follow before writing code. If non-testable requirements are found in step 4, address them via `/spec-clarification` before continuing.
+- **Incremental clarity**: `/spec-clarification` is the **only approved mechanism** for modifying `spec.md` at any point in the pipeline — including after receiving adversarial or testability findings.
 - **Phased decomposition**: Step 7 produces implementation waves with explicit dependencies and verification criteria.
 
 ### Required Execution
 
-All eight steps are required for the canonical spec-flow pipeline. Skipping any step introduces uncompensated risk into specification quality and implementation accuracy.
+All eight specification steps are required. Skipping any step introduces uncompensated risk into specification quality and therefore into implementation accuracy — the orchestrator's output is only as good as the spec it receives.
+
+**Spec amendment rule**: `spec-clarification` is the only step that writes to `spec.md`. Report steps (`spec-devils-advocate`, `spec-testability-draft`) never modify the spec. If either report surfaces issues that require spec changes, re-run `/spec-clarification` with the report as context, then re-run the report step to verify the spec was correctly updated before proceeding.
+
+`spec-feature-analysis` (step 8) is the readiness gate: it surfaces staleness, unresolved clarifications, and coverage gaps before the orchestrator touches any code. It will return `BLOCKED` if `spec.md` was not updated after a report that identified issues requiring spec changes. A `BLOCKED` verdict halts progress until the underlying issues are resolved.
+
+Once the full spec package is ready, `@skf-general-orchestrator` drives implementation by dispatching `spec-implement` phase by phase. Invoking `spec-implement` directly is valid for single-phase execution, but the orchestrator is required for full end-to-end delivery.
 
 ### Example: Generating a Feature Spec
 
@@ -295,7 +392,7 @@ For an **API Rate Limiting** feature, you would work through the pipeline manual
 
 2. /spec-clarification
    Input: FEATURE_DIR/spec.md
-   Output: Amended spec.md with clarifications
+   Output: FEATURE_DIR/spec.md (amended with clarifications)
    
 3. /spec-devils-advocate
    Input: FEATURE_DIR/spec.md
@@ -305,24 +402,32 @@ For an **API Rate Limiting** feature, you would work through the pipeline manual
    Input: FEATURE_DIR with spec.md and devils-advocate report
    Output: FEATURE_DIR/test-expert/testability-assessment.md
    
-5. /spec-tdd-draft
-   Input: FEATURE_DIR with testability assessment
-   Output: FEATURE_DIR/tdd-designer/report.md
-   
-6. /spec-technical-draft
+5. /spec-technical-draft
    Input: FEATURE_DIR with upstream artifacts
    Output: FEATURE_DIR/research.md, FEATURE_DIR/data-model.md, FEATURE_DIR/contracts/, FEATURE_DIR/quickstart.md
+   
+6. /spec-tdd-draft
+   Input: FEATURE_DIR with technical design artifacts
+   Output: FEATURE_DIR/tdd-designer/report.md
    
 7. /spec-tasks-draft
    Input: FEATURE_DIR with research.md, data-model.md, contracts/, quickstart.md, and spec.md
    Output: FEATURE_DIR/tasks.md
 
-8. /spec-implement
-   Input: FEATURE_DIR with tasks.md and optional upstream design artifacts
-   Output: implementation changes in the feature branch and completed tasks marked in FEATURE_DIR/tasks.md
+8. /spec-feature-analysis
+   Input: FEATURE_DIR with all pipeline artifacts
+   Output: FEATURE_DIR/feature-analysis-report.md
+
+9. /spec-implement  (dispatched by orchestrator — not invoked directly for full delivery)
+   Input: FEATURE_DIR with tasks.md and design artifacts
+   Output: implementation changes for the targeted phase; completed tasks marked in FEATURE_DIR/tasks.md
+
+10. @skf-general-orchestrator
+    Input: FEATURE_DIR with tasks.md and all spec artifacts
+    Output: all phases implemented end-to-end; FEATURE_DIR/tasks.md fully resolved
 ```
 
-Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is then executed by `spec-implement`.
+Each step is invoked interactively, allowing you to review outputs, ask follow-up questions, and iterate before proceeding to the next step. The final `tasks.md` is consumed by `@skf-general-orchestrator`, which drives `spec-implement` phase by phase to deliver the full implementation.
 
 
 
@@ -337,7 +442,7 @@ This separation ensures the management layer stays accessible while keeping orch
 
 ### Interactive Skills
 
-Skills marked **Interactive skill** at the top of their file call `vscode_askQuestions` to collect decisions during execution. All four user-facing skills are interactive. When the orchestrator dispatches any of these as a stateless subagent, the approval and decision steps are bypassed and the skill runs non-interactively. When you invoke them directly as slash commands in VS Code Chat, they run fully interactively.
+Skills marked **Interactive skill** at the top of their file call `vscode_askQuestions` to collect decisions during execution. All user-facing skills — including all `spec-` pipeline skills — are interactive. When the orchestrator dispatches any of these as a stateless subagent, the approval and decision steps are bypassed and the skill runs non-interactively. When you invoke them directly as slash commands in VS Code Chat, they run fully interactively.
 
 
 ### Commands
@@ -347,8 +452,17 @@ Skills marked **Interactive skill** at the top of their file call `vscode_askQue
 | `/gov-update` | Apply governance file updates; always runs index sync at the end | Yes |
 | `/meta-knowledge-manage` | Record lessons, surface advisory lessons, or search the knowledge database | Yes |
 | `/meta-knowledge-distillation` | Distill general-recurring lessons into PT0xx patterns, or merge duplicate/similar lessons | Yes |
-| `/meta-script-manage` | Scaffold and validate framework scripts in `ai/scripts/` | Yes |
+| `/meta-script-manage` | Scaffold and validate framework scripts in `spek-fu/ai/scripts/` | Yes |
 | `/meta-skill-manage` | Create, evaluate, and refine skill files | Yes |
+| `/spec-feature-draft` | Generate initial feature spec from raw idea | Yes |
+| `/spec-clarification` | Resolve ambiguities in a spec through structured Q&A | Yes |
+| `/spec-devils-advocate` | Red-team spec to surface failure modes and assumptions | Yes |
+| `/spec-testability-draft` | Evaluate spec from a test-engineering perspective | Yes |
+| `/spec-technical-draft` | Produce technical design, contracts, and data model | Yes |
+| `/spec-tdd-draft` | Convert testability findings into a TDD implementation design | Yes |
+| `/spec-tasks-draft` | Decompose design into phased, dependency-ordered task list | Yes |
+| `/spec-feature-analysis` | Validate all spec artifacts and produce readiness verdict | Yes |
+| `/spec-implement` | Execute a single implementation phase (single-phase use; full delivery requires orchestrator) | Yes |
 
 ### Usage Examples
 
@@ -358,7 +472,7 @@ Skills marked **Interactive skill** at the top of their file call `vscode_askQue
 /meta-knowledge-distillation distill
 /meta-knowledge-distillation merge
 /meta-skill-manage create "A skill that validates ADR structure against the ADR template"
-/meta-script-manage validate ai/scripts/python/sync-index-files.py
+/meta-script-manage validate spek-fu/ai/scripts/python/sync-index-files.py
 ```
 
 
@@ -433,11 +547,11 @@ Example traversal chain:
 
 ```text
 skf-root-index.json
-  -> ai/ai-index.json
-    -> ai/plugins/plugins-index.json
-      -> ai/plugins/skf/skf-index.json
-        -> ai/plugins/skf/skills/skills-index.json
-          -> ai/plugins/skf/skills/meta-knowledge-distillation.md
+   -> spek-fu/ai/ai-index.json
+      -> spek-fu/ai/plugins/plugins-index.json
+         -> spek-fu/ai/plugins/skf/skf-index.json
+            -> spek-fu/ai/plugins/skf/skills/skills-index.json
+               -> spek-fu/ai/plugins/skf/skills/meta-knowledge-distillation.md
 ```
 
 Loads each index only when needed to navigate into that layer. Stops as soon as the file or folder needed is found.
@@ -453,35 +567,28 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 ├── skf-root-index.json              # Root index — entry point for the index-driven loading chain
 ├── context.md                       # Working context artifact for session management
 ├── skf-config.json                  # Runtime environment mode (auto | devcontainer | host)
-├── constitution/                    # Project governance (sub-file structure)
-│   ├── constitution.md              # Main file — sub-file table, loading rules
-│   ├── governance.md                # Project governance rules
-│   ├── company-principles.md        # Organization values and culture
-│   ├── project-constraints.md       # Tech stack and architecture boundaries
-│   ├── coding-standards.md          # Principles-level coding standards
-│   ├── testing-guidelines.md        # Test strategy, coverage, naming
-│   └── ai-behavior.md               # Agent constraints and scope limits
-├── project/                         # Project documentation
-│   ├── project-spec.md              # High-level project specification
-│   ├── business-requirements.md     # Business goals, stakeholders, use cases
-│   ├── technical-spec.md            # Technical architecture and design decisions
-│   └── adrs/                        # Architectural decision records
-├── ai/                              # AI framework
-│   ├── ai-index.json                # AI-level index — links scripts and plugins
-│   ├── scripts/
-│   │   └── python/                  # Python automation and validation scripts
-│   └── plugins/
-│       ├── skf/                     # Built-in plugin — skills, runbooks, knowledge, patterns, and support assets
-│       │   ├── knowledge/           # Reference databases and guidance files
-│       │   ├── patterns/            # Behavioral patterns and tag vocabularies
-│       │   ├── runbooks/            # Dispatch contract and phase procedures
-│       │   ├── skills/              # Skill definitions across 4 groups
-│       │   └── templates/           # Framework authoring and orchestration templates
-│       └── <custom-plugin>/         # Your own plugin (scaffolded via create-plugin.py)
-│           ├── knowledge/           # Domain-specific knowledge files
-│           ├── skills/              # Custom skill definitions (auto-discovered via index chain)
-│           └── templates/           # Custom scaffolding templates
-├── reports/                         # Analysis output (auto-generated, git-tracked)
+├── spek-fu/
+│   ├── constitution/                # Project governance
+│   │   └── constitution.md          # Consolidated governance: principles, standards, guidelines
+│   ├── project/                     # Project documentation
+│   │   └── project.md               # Consolidated specification: business requirements and technical design
+│   ├── ai/                          # AI framework
+│   │   ├── ai-index.json            # AI-level index — links scripts and plugins
+│   │   ├── scripts/
+│   │   │   └── python/              # Python automation and validation scripts
+│   │   └── plugins/
+│   │       ├── skf/                 # Built-in plugin — skills, runbooks, knowledge, patterns, and support assets
+│   │       │   ├── knowledge/       # Reference databases and guidance files
+│   │       │   ├── patterns/        # Behavioral patterns and tag vocabularies
+│   │       │   ├── runbooks/        # Dispatch contract and phase procedures
+│   │       │   ├── skills/          # Skill definitions across 4 groups
+│   │       │   └── templates/       # Framework authoring and orchestration templates
+│   │       └── <custom-plugin>/     # Your own plugin (scaffolded via create-plugin.py)
+│   │           ├── knowledge/       # Domain-specific knowledge files
+│   │           ├── skills/          # Custom skill definitions (auto-discovered via index chain)
+│   │           └── templates/       # Custom scaffolding templates
+│   ├── features/                    # Spec-flow feature workspaces
+│   └── reports/                     # Analysis output (auto-generated, git-tracked)
 ├── .github/
 │   ├── copilot-instructions.md      # Bootstrap Copilot context — SSOT pointers only
 │   ├── agents/                      # Canonical agent definitions used by VS Code chat
@@ -519,15 +626,15 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 - Selected & bundled by the orchestration layer
 - Created automatically via self-learning distillation loop
 - Promoted manually via `meta-knowledge-distillation`
-- Stored as **PT0xx** files in `ai/plugins/skf/patterns/`
+- Stored as **PT0xx** files in `spek-fu/ai/plugins/skf/patterns/`
 
-📌 **Authoritative inventory:** `ai/plugins/skf/patterns/patterns-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/patterns/patterns-index.json`
 
 
 ### Runbooks
 
 **Runbooks** are per-phase orchestrator execution guides:
-- **Shared rules:** `ai/plugins/skf/runbooks/runbook-shared.md`
+- **Shared rules:** `spek-fu/ai/plugins/skf/runbooks/runbook-shared.md`
 - **Phase-specific rules:** co-located in same folder
 
 
@@ -535,24 +642,24 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 
 **Knowledge base** — collection of reference databases, taxonomies, and advisory documents used by skills and orchestrators via just-in-time retrieval.
 
-📌 **Authoritative inventory:** `ai/plugins/skf/knowledge/knowledge-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/knowledge/knowledge-index.json`
 
 
 ### Templates
 
 **Templates** scaffold framework components and orchestration artifacts.
 
-📌 **Authoritative inventory:** `ai/plugins/skf/templates/templates-index.json`
+📌 **Authoritative inventory:** `spek-fu/ai/plugins/skf/templates/templates-index.json`
 
 
 ### Scripts
 
-**Python helper scripts** under `ai/scripts/python/` support:
+**Python helper scripts** under `spek-fu/ai/scripts/python/` support:
 - Index traversal
 - Validation
 - Frontmatter-driven discovery
 
-📌 **Authoritative inventory:** `ai/scripts/python/python-index.json`  
+📌 **Authoritative inventory:** `spek-fu/ai/scripts/python/python-index.json`  
 📌 **Quick reference:** [Scripts Cheat Sheet](#scripts-cheat-sheet)
 
 
@@ -576,14 +683,14 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 - Verification gates
 
 **Defined in:**
-- `ai/plugins/skf/runbooks/`
-- `ai/plugins/skf/templates/`
+- `spek-fu/ai/plugins/skf/runbooks/`
+- `spek-fu/ai/plugins/skf/templates/`
 
 
 ### Plugins
 
 **Plugins** are the extension unit of the framework:
-- Built-in plugin (`skf`) at `ai/plugins/skf/`
+- Built-in plugin (`skf`) at `spek-fu/ai/plugins/skf/`
 - Add unlimited custom plugins with `skills/`, `knowledge/`, `templates/` sub-folders
 - Each plugin is independently discoverable
 
@@ -594,21 +701,16 @@ Loads each index only when needed to navigate into that layer. Stops as soon as 
 4. **Any registered skill is immediately available for dispatch** — no manual wiring needed
 
 
-
 ## 📚 Documentation Philosophy
 
 Framework documentation is organized into **three branches**:
 
 | Branch | Location | Contains |
 |--------|----------|----------|
-| **Constitution** | `constitution/` | Governance principles, project constraints, coding standards, non-negotiable rules |
-| **Project** | `project/` | Project specs, business requirements, technical decisions, ADRs |
-| **Framework** | `ai/`, `reports/`, roots | Skills, agents, templates, runbooks, indexes, generated reports |
+| **Constitution** | `spek-fu/constitution/` | Governance principles, project constraints, coding standards, non-negotiable rules |
+| **Project** | `spek-fu/project/` | Project specs, documentation, business requirements, technical decisions, ADRs |
+| **Framework** | `spek-fu/ai/`, `spek-fu/reports/`, roots | Skills, agents, templates, runbooks, indexes, generated reports |
 
----
-
-**Navigation SSOT:** Co-located `*-index.json` files own folder inventories and machine-readable traversal.  
-**Human-facing guide:** This `README.md` serves as overview, quickstart, and workflow reference.
 
 
 

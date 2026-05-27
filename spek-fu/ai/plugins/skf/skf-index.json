@@ -1,0 +1,42 @@
+{
+  "name": "skf-index.json",
+  "description": "Index of spek-fu/ai/plugins/skf — Spek-Fu plugin, all framework capabilities",
+  "path": "spek-fu/ai/plugins/skf/",
+  "children": [
+    {
+      "name": "knowledge",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/",
+      "index": "spek-fu/ai/plugins/skf/knowledge/knowledge-index.json"
+    },
+    {
+      "name": "patterns",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/patterns/",
+      "index": "spek-fu/ai/plugins/skf/patterns/patterns-index.json"
+    },
+    {
+      "name": "runbooks",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/runbooks/",
+      "index": "spek-fu/ai/plugins/skf/runbooks/runbooks-index.json"
+    },
+    {
+      "name": "skills",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/skills/",
+      "index": "spek-fu/ai/plugins/skf/skills/skills-index.json"
+    },
+    {
+      "name": "templates",
+      "type": "folder",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/templates/",
+      "index": "spek-fu/ai/plugins/skf/templates/templates-index.json"
+    }
+  ]
+}

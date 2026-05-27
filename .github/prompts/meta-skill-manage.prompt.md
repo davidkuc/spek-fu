@@ -4,4 +4,4 @@ description: "Scaffolds, evaluates, and refines skill files in the AI framework.
 anti-scope: "Does not run or invoke skills, handle documentation sync, or modify any file outside the skill directory without user approval."
 ---
 
-Consult the skill from `ai/plugins/skf/skills/meta-skill-manage.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/skf/skills/meta-skill-manage.md`. Execute its full protocol exactly as described.

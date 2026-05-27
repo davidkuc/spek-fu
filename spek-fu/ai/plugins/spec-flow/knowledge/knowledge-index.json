@@ -1,0 +1,37 @@
+{
+  "name": "knowledge-index.json",
+  "description": "Index of spek-fu/ai/plugins/spec-flow/knowledge",
+  "path": "spek-fu/ai/plugins/spec-flow/knowledge/",
+  "children": [
+    {
+      "name": "branch-detection.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/branch-detection.md"
+    },
+    {
+      "name": "needs-clarification-protocol.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/needs-clarification-protocol.md"
+    },
+    {
+      "name": "paginated-read.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/paginated-read.md"
+    },
+    {
+      "name": "skill-meta-rules.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/skill-meta-rules.md"
+    },
+    {
+      "name": "tech-stack-patterns.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/knowledge/tech-stack-patterns.md"
+    }
+  ]
+}

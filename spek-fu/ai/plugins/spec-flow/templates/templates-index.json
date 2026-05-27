@@ -1,0 +1,55 @@
+{
+  "name": "templates-index.json",
+  "description": "Index of spek-fu/ai/plugins/spec-flow/templates — scaffolding templates",
+  "path": "spek-fu/ai/plugins/spec-flow/templates/",
+  "children": [
+    {
+      "name": "devils-advocate-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/devils-advocate-template.md"
+    },
+    {
+      "name": "feature-analysis-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/feature-analysis-template.md"
+    },
+    {
+      "name": "quickstart-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/quickstart-template.md"
+    },
+    {
+      "name": "spec-feature-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/spec-feature-template.md"
+    },
+    {
+      "name": "spec-technical-plan-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/spec-technical-plan-template.md"
+    },
+    {
+      "name": "tasks-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/tasks-template.md"
+    },
+    {
+      "name": "tdd-report-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/tdd-report-template.md"
+    },
+    {
+      "name": "testability-template.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/spec-flow/templates/testability-template.md"
+    }
+  ]
+}

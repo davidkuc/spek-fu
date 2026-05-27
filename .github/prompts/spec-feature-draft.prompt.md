@@ -4,4 +4,4 @@ description: "Generates a feature specification file from a natural language fea
 anti-scope: "Does not produce implementation plans, run clarification sessions on existing specs, or apply any code changes. For post-spec clarification, use spec-clarification."
 ---
 
-Consult the skill from `ai/plugins/spec-flow/skills/spec-feature-draft.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/spec-flow/skills/spec-feature-draft.md`. Execute its full protocol exactly as described.

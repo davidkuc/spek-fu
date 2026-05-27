@@ -1,0 +1,49 @@
+{
+  "name": "knowledge-index.json",
+  "description": "Index of spek-fu/ai/plugins/skf/knowledge — reference databases and taxonomies",
+  "path": "spek-fu/ai/plugins/skf/knowledge/",
+  "children": [
+    {
+      "name": "devcontainer-guidelines.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/devcontainer-guidelines.md"
+    },
+    {
+      "name": "knowledge-database.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/knowledge-database.md"
+    },
+    {
+      "name": "powershell-scripting-guide.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/powershell-scripting-guide.md"
+    },
+    {
+      "name": "python-scripting-guide.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/python-scripting-guide.md"
+    },
+    {
+      "name": "skill-design-guide.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/skill-design-guide.md"
+    },
+    {
+      "name": "skill-groups.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/skill-groups.md"
+    },
+    {
+      "name": "skill-tags.md",
+      "type": "file",
+      "description": "",
+      "path": "spek-fu/ai/plugins/skf/knowledge/skill-tags.md"
+    }
+  ]
+}

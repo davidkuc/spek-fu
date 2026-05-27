@@ -4,4 +4,4 @@ description: "Applies governance file updates based on changed files or an orche
 anti-scope: "Does NOT perform analysis, modify source code, or touch iteration in-progress files."
 ---
 
-Consult the skill from `ai/plugins/skf/skills/gov-update.md`. Execute its full protocol exactly as described.
+Consult the skill from `spek-fu/ai/plugins/skf/skills/gov-update.md`. Execute its full protocol exactly as described.
