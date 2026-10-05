@@ -1,0 +1,32 @@
+{
+  "spec-feature-draft": {
+    "maxClarificationMarkers": 30
+  },
+  "spec-research": {
+    "maxDimensions": 8,
+    "defaultDimensions": ["Architecture", "Security", "Performance", "Reliability", "Operations", "Data", "UX", "Legal"]
+  },
+  "spec-devils-advocate": {
+    "maxFindings": 100
+  },
+  "spec-testability-draft": {
+    "maxFindings": 40
+  },
+  "spec-technical-draft": {
+    "contractsPath": "spek-fu/project/contracts"
+  },
+  "spec-clarification": {
+    "maxQuestionsPerLoop": 5,
+    "maxLoops": 20,
+    "questionMode": "sequential"
+  },
+  "spec-feature-analysis": {
+    "maxFindings": 50
+  },
+  "spec-implement": {
+    "maxFixCycles": 3
+  },
+  "spec-manual-implement": {
+    "maxFixCycles": 3
+  }
+}

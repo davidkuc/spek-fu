@@ -1,0 +1,32 @@
+{
+  "paths": {
+    "reportsRoot": "spek-fu/project/reports",
+    "codeDocsPath": "spek-fu/project/code-docs",
+    "specFeaturesPath": "spek-fu/project/spec-features",
+    "contractsPath": "spek-fu/project/contracts"
+  },
+  "project-research": {
+    "maxDimensions": 8,
+    "defaultDimensions": [
+      "Architecture",
+      "Security",
+      "Operations & Deployment",
+      "Data & Domain Model",
+      "UX & User Flows",
+      "Quality & Testing",
+      "Reliability",
+      "Compliance & Legal"
+    ]
+  },
+  "project-devils-advocate": {
+    "maxFindings": 100
+  },
+  "project-clarification": {
+    "maxQuestionsPerLoop": 5,
+    "maxLoops": 20,
+    "questionMode": "sequential"
+  },
+  "project-documentation-analysis": {
+    "maxFindings": 50
+  }
+}

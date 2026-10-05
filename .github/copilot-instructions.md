@@ -1,0 +1,1 @@
+Follow the constitution: `spek-fu\constitution\constitution.md`.
