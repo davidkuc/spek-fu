@@ -17,7 +17,6 @@ Section defining the guidelines and boundaries for artificial intelligence agent
 - Use plain, simple and common language.
 - Avoid professional, specialistic, scientific or technical language and wording.
 - Assume the reader does not have any technical/specialistic background and has beginner language skills.
-- The project is Polish languaged-based. Write specs and communicate in Polish. Write code in English.
 
 ### **II. Depth and Volume**
 
